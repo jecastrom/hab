@@ -5,42 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ring/Gruppe Search</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    select, input, button { padding: 8px; margin: 10px 0; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 10px;
+    }
+    h1 { font-size: 1.8em; text-align: center; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    select, input, button { 
+      width: 100%; 
+      padding: 10px; 
+      margin: 10px 0; 
+      box-sizing: border-box; 
+      font-size: 1em;
+    }
+    button { background: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+
+    /* Responsive table */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      min-width: 600px;
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 12px; 
+      text-align: left; 
+    }
     th { background: #f0f0f0; }
+    #loading { text-align: center; color: #666; margin-top: 20px; }
+
+    @media (min-width: 600px) {
+      .controls { display: flex; gap: 10px; align-items: end; }
+      select, input { width: auto; flex: 1; }
+      button { width: auto; }
+    }
   </style>
 </head>
 <body>
   <h1>Search by Gruppe or Ring</h1>
 
-  <label for="type">Select type:</label>
-  <select id="type">
-    <option value="Gruppe">Gruppe</option>
-    <option value="Ring">Ring</option>
-  </select>
+  <div class="controls">
+    <div style="flex: 1;">
+      <label for="type">Select type:</label>
+      <select id="type">
+        <option value="Gruppe">Gruppe</option>
+        <option value="Ring">Ring</option>
+      </select>
+    </div>
 
-  <br>
+    <div style="flex: 2;">
+      <label for="value">Enter number:</label>
+      <input type="text" id="value" placeholder="e.g. 101 or 121">
+    </div>
 
-  <label for="value">Enter number:</label>
-  <input type="text" id="value" placeholder="e.g. 101 or 121">
+    <div>
+      <label>&nbsp;</label>
+      <button onclick="search()">Search</button>
+    </div>
+  </div>
 
-  <button onclick="search()">Search</button>
-
+  <div id="loading">Loading data...</div>
   <div id="results"></div>
 
   <script>
-    let data = []; // Will hold the JSON data
+    let data = [];
 
-    // Load the JSON file when the page loads
-    fetch('data.json')  // Change path if your JSON is in a subfolder
-      .then(response => response.json())
+    fetch('data.json')  // Adjust path if your JSON is in a different folder
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to load data');
+        return response.json();
+      })
       .then(json => {
         data = json;
+        document.getElementById('loading').style.display = 'none';
         console.log('Data loaded:', data.length, 'rows');
       })
-      .catch(err => console.error('Error loading data:', err));
+      .catch(err => {
+        document.getElementById('loading').innerHTML = '<p style="color:red;">Error loading data: ' + err.message + '</p>';
+        console.error(err);
+      });
 
     function search() {
       const type = document.getElementById('type').value;
@@ -53,21 +104,25 @@
         return;
       }
 
-      // Filter data
-      let matches = data.filter(row => row[type] === value);
+      if (data.length === 0) {
+        resultsDiv.innerHTML = '<p>Data not loaded yet. Please wait or refresh the page.</p>';
+        return;
+      }
+
+      const matches = data.filter(row => row[type] === value);
 
       if (matches.length === 0) {
         resultsDiv.innerHTML = '<p>No results found.</p>';
         return;
       }
 
-      // Build table
-      let table = '<table><thead><tr>';
+      // Build responsive table
+      let table = '<div class="table-container"><table><thead><tr>';
 
       if (type === 'Ring') {
-        table += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Ans.Melder</th>';
+        table += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Anz. Melder</th>';
       } else { // Gruppe
-        table += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Ans.Melder</th>';
+        table += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Anz. Melder</th>';
       }
 
       table += '</tr></thead><tbody>';
@@ -75,14 +130,20 @@
       matches.forEach(row => {
         table += '<tr>';
         if (type === 'Ring') {
-          table += `<td>${row.Ring}</td><td>${row.Installationsort}</td><td>${row.Gruppe}</td><td>${row["Ans.Melder"]}</td>`;
+          table += `<td>${row.Ring || ''}</td>
+                    <td>${row.Installationsort || ''}</td>
+                    <td>${row.Gruppe || ''}</td>
+                    <td>${row["Anz.Melder"] || ''}</td>`;
         } else {
-          table += `<td>${row.Gruppe}</td><td>${row.Installationsort}</td><td>${row.Ring}</td><td>${row["Ans.Melder"]}</td>`;
+          table += `<td>${row.Gruppe || ''}</td>
+                    <td>${row.Installationsort || ''}</td>
+                    <td>${row.Ring || ''}</td>
+                    <td>${row["Anz.Melder"] || ''}</td>`;
         }
         table += '</tr>';
       });
 
-      table += '</tbody></table>';
+      table += '</tbody></table></div>';
       resultsDiv.innerHTML = table;
     }
   </script>

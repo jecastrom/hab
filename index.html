@@ -23,8 +23,12 @@
     }
     button { background: #007bff; color: white; border: none; cursor: pointer; }
     button:hover { background: #0056b3; }
+    #clearBtn { background: #6c757d; }
+    #clearBtn:hover { background: #545b62; }
 
-    /* Responsive table */
+    #loading { text-align: center; color: #666; margin-top: 20px; }
+
+    /* Desktop table */
     .table-container {
       overflow-x: auto;
       margin-top: 20px;
@@ -32,7 +36,6 @@
     table { 
       width: 100%; 
       border-collapse: collapse; 
-      min-width: 600px;
     }
     th, td { 
       border: 1px solid #ccc; 
@@ -40,12 +43,41 @@
       text-align: left; 
     }
     th { background: #f0f0f0; }
-    #loading { text-align: center; color: #666; margin-top: 20px; }
 
-    @media (min-width: 600px) {
+    /* Mobile cards */
+    .results-cards {
+      display: none;
+      margin-top: 20px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background: #f9f9f9;
+    }
+    .card div {
+      margin-bottom: 8px;
+    }
+    .card strong {
+      display: inline-block;
+      width: 120px;
+    }
+
+    @media (min-width: 768px) {
       .controls { display: flex; gap: 10px; align-items: end; }
       select, input { width: auto; flex: 1; }
-      button { width: auto; }
+      .button-group { display: flex; gap: 10px; }
+      .button-group button { flex: 1; }
+      .results-cards { display: none !important; }
+      .table-container { display: block; }
+    }
+
+    @media (max-width: 767px) {
+      .table-container { display: none; }
+      .results-cards { display: block; }
+      .button-group { display: flex; gap: 10px; }
+      .button-group button { flex: 1; }
     }
   </style>
 </head>
@@ -68,7 +100,10 @@
 
     <div>
       <label>&nbsp;</label>
-      <button onclick="search()">Search</button>
+      <div class="button-group">
+        <button onclick="search()">Search</button>
+        <button id="clearBtn" onclick="clearSearch()">Clear</button>
+      </div>
     </div>
   </div>
 
@@ -78,7 +113,7 @@
   <script>
     let data = [];
 
-    fetch('data.json')  // Adjust path if your JSON is in a different folder
+    fetch('data.json')
       .then(response => {
         if (!response.ok) throw new Error('Failed to load data');
         return response.json();
@@ -86,66 +121,16 @@
       .then(json => {
         data = json;
         document.getElementById('loading').style.display = 'none';
-        console.log('Data loaded:', data.length, 'rows');
       })
       .catch(err => {
         document.getElementById('loading').innerHTML = '<p style="color:red;">Error loading data: ' + err.message + '</p>';
-        console.error(err);
       });
 
-    function search() {
-      const type = document.getElementById('type').value;
-      const value = document.getElementById('value').value.trim();
-      const resultsDiv = document.getElementById('results');
-      resultsDiv.innerHTML = '';
-
-      if (!value) {
-        resultsDiv.innerHTML = '<p>Please enter a number.</p>';
-        return;
+    // Allow Enter key to trigger search
+    document.getElementById('value').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        search();
       }
+    });
 
-      if (data.length === 0) {
-        resultsDiv.innerHTML = '<p>Data not loaded yet. Please wait or refresh the page.</p>';
-        return;
-      }
-
-      const matches = data.filter(row => row[type] === value);
-
-      if (matches.length === 0) {
-        resultsDiv.innerHTML = '<p>No results found.</p>';
-        return;
-      }
-
-      // Build responsive table
-      let table = '<div class="table-container"><table><thead><tr>';
-
-      if (type === 'Ring') {
-        table += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Anz. Melder</th>';
-      } else { // Gruppe
-        table += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Anz. Melder</th>';
-      }
-
-      table += '</tr></thead><tbody>';
-
-      matches.forEach(row => {
-        table += '<tr>';
-        if (type === 'Ring') {
-          table += `<td>${row.Ring || ''}</td>
-                    <td>${row.Installationsort || ''}</td>
-                    <td>${row.Gruppe || ''}</td>
-                    <td>${row["Anz.Melder"] || ''}</td>`;
-        } else {
-          table += `<td>${row.Gruppe || ''}</td>
-                    <td>${row.Installationsort || ''}</td>
-                    <td>${row.Ring || ''}</td>
-                    <td>${row["Anz.Melder"] || ''}</td>`;
-        }
-        table += '</tr>';
-      });
-
-      table += '</tbody></table></div>';
-      resultsDiv.innerHTML = table;
-    }
-  </script>
-</body>
-</html>
+    function

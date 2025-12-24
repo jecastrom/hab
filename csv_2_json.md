@@ -1,4 +1,4 @@
-# CSV zu JSON Export (Excel VBA)
+# CSV zu JSON Export. (Excel VBA)
 
 Dieses VBA-Makro konvertiert eine **in Excel geöffnete CSV-Datei** in eine **UTF-8-kodierte JSON-Datei** und führt dabei automatisch eine kleine, aber wichtige Datenbereinigung durch.
 

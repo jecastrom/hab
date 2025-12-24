@@ -65,19 +65,12 @@
       height: 34px;
     }
 
-    .theme-toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
+    .theme-toggle input { opacity: 0; width: 0; height: 0; }
 
     .slider {
       position: absolute;
       cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       background-color: #ccc;
       transition: .4s;
       border-radius: 34px;
@@ -95,13 +88,8 @@
       border-radius: 50%;
     }
 
-    input:checked + .slider {
-      background-color: #2196F3;
-    }
-
-    input:checked + .slider:before {
-      transform: translateX(26px);
-    }
+    input:checked + .slider { background-color: #2196F3; }
+    input:checked + .slider:before { transform: translateX(26px); }
 
     .slider svg {
       position: absolute;
@@ -112,18 +100,8 @@
       transition: opacity 0.3s;
     }
 
-    .sun {
-      left: 8px;
-      fill: #ffd43b;
-      opacity: 1;
-    }
-
-    .moon {
-      right: 8px;
-      fill: #f1c40f;
-      opacity: 0;
-    }
-
+    .sun { left: 8px; fill: #ffd43b; opacity: 1; }
+    .moon { right: 8px; fill: #f1c40f; opacity: 0; }
     body.dark-mode .sun { opacity: 0; }
     body.dark-mode .moon { opacity: 1; }
 
@@ -151,7 +129,7 @@
     #clearBtn { background: var(--clear-bg); }
     #clearBtn:hover { background: var(--clear-hover); }
 
-    #loading { text-align: center; color: #666; margin-top: 20px; }
+    #status { text-align: center; margin-top: 20px; min-height: 24px; }
 
     .table-container { overflow-x: auto; margin-top: 20px; }
     table { width: 100%; border-collapse: collapse; }
@@ -215,6 +193,14 @@
 
   <div class="controls">
     <div style="flex: 1;">
+      <label for="object">Objekt auswählen:</label>
+      <select id="object">
+        <option value="hab">HaB</option>
+        <option value="ukb">UKB</option>
+      </select>
+    </div>
+
+    <div style="flex: 1;">
       <label for="type">Typ auswählen:</label>
       <select id="type">
         <option value="Gruppe">Gruppe</option>
@@ -236,13 +222,52 @@
     </div>
   </div>
 
-  <div id="loading">Daten werden geladen...</div>
+  <div id="status">Daten werden geladen...</div>
   <div id="results"></div>
 
   <script>
     let data = [];
+    const statusDiv = document.getElementById('status');
+    const resultsDiv = document.getElementById('results');
 
-    // Dark mode logic
+    // Map object keys to filenames
+    const objectFiles = {
+      hab: 'hab.json',
+      ukb: 'ukb.json'  // Will fail until you add the file
+    };
+
+    function loadData() {
+      const object = document.getElementById('object').value;
+      const filename = objectFiles[object];
+
+      statusDiv.textContent = 'Daten werden geladen...';
+      resultsDiv.innerHTML = '';
+      data = [];
+
+      fetch(filename)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Datei nicht gefunden');
+          }
+          return response.json();
+        })
+        .then(json => {
+          data = json;
+          statusDiv.textContent = `Daten geladen: ${data.length} Einträge (${object.toUpperCase()})`;
+        })
+        .catch(err => {
+          data = [];
+          statusDiv.innerHTML = '<p style="color:red;">Keine Daten verfügbar. Bitte die JSON-Datei hinzufügen.</p>';
+        });
+    }
+
+    // Load data when object changes
+    document.getElementById('object').addEventListener('change', loadData);
+
+    // Initial load (HaB)
+    loadData();
+
+    // Dark mode
     const toggle = document.getElementById('darkModeToggle');
     const body = document.body;
 
@@ -261,19 +286,7 @@
       }
     });
 
-    fetch('data.json')
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to load data');
-        return response.json();
-      })
-      .then(json => {
-        data = json;
-        document.getElementById('loading').style.display = 'none';
-      })
-      .catch(err => {
-        document.getElementById('loading').innerHTML = '<p style="color:red;">Fehler beim Laden der Daten: ' + err.message + '</p>';
-      });
-
+    // Enter key search
     document.getElementById('value').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         search();
@@ -283,7 +296,6 @@
     function search() {
       const type = document.getElementById('type').value;
       const value = document.getElementById('value').value.trim();
-      const resultsDiv = document.getElementById('results');
       resultsDiv.innerHTML = '';
 
       if (!value) {
@@ -292,7 +304,7 @@
       }
 
       if (data.length === 0) {
-        resultsDiv.innerHTML = '<p>Daten noch nicht geladen. Bitte warten oder Seite aktualisieren.</p>';
+        resultsDiv.innerHTML = '<p>Keine Daten geladen. Bitte ein Objekt mit verfügbaren Daten auswählen.</p>';
         return;
       }
 
@@ -346,7 +358,7 @@
     function clearSearch() {
       document.getElementById('type').value = 'Gruppe';
       document.getElementById('value').value = '';
-      document.getElementById('results').innerHTML = '';
+      resultsDiv.innerHTML = '';
       document.getElementById('value').focus();
     }
   </script>

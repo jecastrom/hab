@@ -65,9 +65,9 @@
       let table = '<table><thead><tr>';
 
       if (type === 'Ring') {
-        table += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Ans. Melder</th>';
+        table += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Ans.Melder</th>';
       } else { // Gruppe
-        table += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Ans. Melder</th>';
+        table += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Ans.Melder</th>';
       }
 
       table += '</tr></thead><tbody>';
@@ -75,9 +75,9 @@
       matches.forEach(row => {
         table += '<tr>';
         if (type === 'Ring') {
-          table += `<td>${row.Ring}</td><td>${row.Installationsort}</td><td>${row.Gruppe}</td><td>${row["Ans. Melder"]}</td>`;
+          table += `<td>${row.Ring}</td><td>${row.Installationsort}</td><td>${row.Gruppe}</td><td>${row["Ans.Melder"]}</td>`;
         } else {
-          table += `<td>${row.Gruppe}</td><td>${row.Installationsort}</td><td>${row.Ring}</td><td>${row["Ans. Melder"]}</td>`;
+          table += `<td>${row.Gruppe}</td><td>${row.Installationsort}</td><td>${row.Ring}</td><td>${row["Ans.Melder"]}</td>`;
         }
         table += '</tr>';
       });

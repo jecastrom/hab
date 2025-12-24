@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ring/Gruppe Search</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    select, input, button { padding: 8px; margin: 10px 0; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Search by Gruppe or Ring</h1>
+
+  <label for="type">Select type:</label>
+  <select id="type">
+    <option value="Gruppe">Gruppe</option>
+    <option value="Ring">Ring</option>
+  </select>
+
+  <br>
+
+  <label for="value">Enter number:</label>
+  <input type="text" id="value" placeholder="e.g. 101 or 121">
+
+  <button onclick="search()">Search</button>
+
+  <div id="results"></div>
+
+  <script>
+    let data = []; // Will hold the JSON data
+
+    // Load the JSON file when the page loads
+    fetch('data.json')  // Change path if your JSON is in a subfolder
+      .then(response => response.json())
+      .then(json => {
+        data = json;
+        console.log('Data loaded:', data.length, 'rows');
+      })
+      .catch(err => console.error('Error loading data:', err));
+
+    function search() {
+      const type = document.getElementById('type').value;
+      const value = document.getElementById('value').value.trim();
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '';
+
+      if (!value) {
+        resultsDiv.innerHTML = '<p>Please enter a number.</p>';
+        return;
+      }
+
+      // Filter data
+      let matches = data.filter(row => row[type] === value);
+
+      if (matches.length === 0) {
+        resultsDiv.innerHTML = '<p>No results found.</p>';
+        return;
+      }
+
+      // Build table
+      let table = '<table><thead><tr>';
+
+      if (type === 'Ring') {
+        table += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Ans. Melder</th>';
+      } else { // Gruppe
+        table += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Ans. Melder</th>';
+      }
+
+      table += '</tr></thead><tbody>';
+
+      matches.forEach(row => {
+        table += '<tr>';
+        if (type === 'Ring') {
+          table += `<td>${row.Ring}</td><td>${row.Installationsort}</td><td>${row.Gruppe}</td><td>${row["Ans. Melder"]}</td>`;
+        } else {
+          table += `<td>${row.Gruppe}</td><td>${row.Installationsort}</td><td>${row.Ring}</td><td>${row["Ans. Melder"]}</td>`;
+        }
+        table += '</tr>';
+      });
+
+      table += '</tbody></table>';
+      resultsDiv.innerHTML = table;
+    }
+  </script>
+</body>
+</html>

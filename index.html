@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ring/Gruppe Search</title>
+  <title>Suche nach Gruppe oder Ring</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -168,7 +168,7 @@
     }
 
     .card div { margin-bottom: 8px; }
-    .card strong { display: inline-block; width: 120px; }
+    .card strong { display: inline-block; width: 140px; }
 
     @media (min-width: 768px) {
       .controls { display: flex; gap: 10px; align-items: end; }
@@ -191,7 +191,7 @@
 </head>
 <body>
   <header>
-    <h1>Search by Gruppe or Ring</h1>
+    <h1>Suche nach Gruppe oder Ring</h1>
     <label class="theme-toggle">
       <input type="checkbox" id="darkModeToggle">
       <span class="slider">
@@ -215,7 +215,7 @@
 
   <div class="controls">
     <div style="flex: 1;">
-      <label for="type">Select type:</label>
+      <label for="type">Typ auswählen:</label>
       <select id="type">
         <option value="Gruppe">Gruppe</option>
         <option value="Ring">Ring</option>
@@ -223,20 +223,20 @@
     </div>
 
     <div style="flex: 2;">
-      <label for="value">Enter number:</label>
-      <input type="tel" id="value" placeholder="e.g. 101 or 121" pattern="[0-9]*" inputmode="numeric">
+      <label for="value">Nummer eingeben:</label>
+      <input type="tel" id="value" placeholder="z. B. 101 oder 121" pattern="[0-9]*" inputmode="numeric">
     </div>
 
     <div>
       <label>&nbsp;</label>
       <div class="button-group">
-        <button onclick="search()">Search</button>
-        <button id="clearBtn" onclick="clearSearch()">Clear</button>
+        <button onclick="search()">Suchen</button>
+        <button id="clearBtn" onclick="clearSearch()">Löschen</button>
       </div>
     </div>
   </div>
 
-  <div id="loading">Loading data...</div>
+  <div id="loading">Daten werden geladen...</div>
   <div id="results"></div>
 
   <script>
@@ -246,13 +246,11 @@
     const toggle = document.getElementById('darkModeToggle');
     const body = document.body;
 
-    // Load saved preference
     if (localStorage.getItem('darkMode') === 'enabled') {
       body.classList.add('dark-mode');
       toggle.checked = true;
     }
 
-    // Toggle handler
     toggle.addEventListener('change', () => {
       if (toggle.checked) {
         body.classList.add('dark-mode');
@@ -273,7 +271,7 @@
         document.getElementById('loading').style.display = 'none';
       })
       .catch(err => {
-        document.getElementById('loading').innerHTML = '<p style="color:red;">Error loading data: ' + err.message + '</p>';
+        document.getElementById('loading').innerHTML = '<p style="color:red;">Fehler beim Laden der Daten: ' + err.message + '</p>';
       });
 
     document.getElementById('value').addEventListener('keypress', function(e) {
@@ -289,19 +287,19 @@
       resultsDiv.innerHTML = '';
 
       if (!value) {
-        resultsDiv.innerHTML = '<p>Please enter a number.</p>';
+        resultsDiv.innerHTML = '<p>Bitte eine Nummer eingeben.</p>';
         return;
       }
 
       if (data.length === 0) {
-        resultsDiv.innerHTML = '<p>Data not loaded yet. Please wait or refresh the page.</p>';
+        resultsDiv.innerHTML = '<p>Daten noch nicht geladen. Bitte warten oder Seite aktualisieren.</p>';
         return;
       }
 
       const matches = data.filter(row => row[type] === value);
 
       if (matches.length === 0) {
-        resultsDiv.innerHTML = '<p>No results found.</p>';
+        resultsDiv.innerHTML = '<p>Keine Ergebnisse gefunden.</p>';
         return;
       }
 

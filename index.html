@@ -95,7 +95,13 @@
 
     <div style="flex: 2;">
       <label for="value">Enter number:</label>
-      <input type="text" id="value" placeholder="e.g. 101 or 121">
+      <input 
+        type="tel" 
+        id="value" 
+        placeholder="e.g. 101 or 121"
+        pattern="[0-9]*" 
+        inputmode="numeric"
+      >
     </div>
 
     <div>
@@ -126,11 +132,86 @@
         document.getElementById('loading').innerHTML = '<p style="color:red;">Error loading data: ' + err.message + '</p>';
       });
 
-    // Allow Enter key to trigger search
+    // Search on Enter key
     document.getElementById('value').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         search();
       }
     });
 
-    function
+    function search() {
+      const type = document.getElementById('type').value;
+      const value = document.getElementById('value').value.trim();
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '';
+
+      if (!value) {
+        resultsDiv.innerHTML = '<p>Please enter a number.</p>';
+        return;
+      }
+
+      if (data.length === 0) {
+        resultsDiv.innerHTML = '<p>Data not loaded yet. Please wait or refresh the page.</p>';
+        return;
+      }
+
+      const matches = data.filter(row => row[type] === value);
+
+      if (matches.length === 0) {
+        resultsDiv.innerHTML = '<p>No results found.</p>';
+        return;
+      }
+
+      // Desktop: Table
+      let tableHTML = '<div class="table-container"><table><thead><tr>';
+      if (type === 'Ring') {
+        tableHTML += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Anz. Melder</th>';
+      } else {
+        tableHTML += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Anz. Melder</th>';
+      }
+      tableHTML += '</tr></thead><tbody>';
+
+      // Mobile: Cards
+      let cardsHTML = '<div class="results-cards">';
+
+      matches.forEach(row => {
+        // Table row
+        tableHTML += '<tr>';
+        if (type === 'Ring') {
+          tableHTML += `<td>${row.Ring || ''}</td><td>${row.Installationsort || ''}</td><td>${row.Gruppe || ''}</td><td>${row["Anz.Melder"] || ''}</td>`;
+        } else {
+          tableHTML += `<td>${row.Gruppe || ''}</td><td>${row.Installationsort || ''}</td><td>${row.Ring || ''}</td><td>${row["Anz.Melder"] || ''}</td>`;
+        }
+        tableHTML += '</tr>';
+
+        // Card
+        cardsHTML += '<div class="card">';
+        if (type === 'Ring') {
+          cardsHTML += `<div><strong>Ring:</strong> ${row.Ring || ''}</div>`;
+          cardsHTML += `<div><strong>Installationsort:</strong> ${row.Installationsort || ''}</div>`;
+          cardsHTML += `<div><strong>Gruppe:</strong> ${row.Gruppe || ''}</div>`;
+          cardsHTML += `<div><strong>Anz. Melder:</strong> ${row["Anz.Melder"] || ''}</div>`;
+        } else {
+          cardsHTML += `<div><strong>Gruppe:</strong> ${row.Gruppe || ''}</div>`;
+          cardsHTML += `<div><strong>Installationsort:</strong> ${row.Installationsort || ''}</div>`;
+          cardsHTML += `<div><strong>Ring:</strong> ${row.Ring || ''}</div>`;
+          cardsHTML += `<div><strong>Anz. Melder:</strong> ${row["Anz.Melder"] || ''}</div>`;
+        }
+        cardsHTML += '</div>';
+      });
+
+      tableHTML += '</tbody></table></div>';
+      cardsHTML += '</div>';
+
+      resultsDiv.innerHTML = tableHTML + cardsHTML;
+    }
+
+    function clearSearch() {
+      document.getElementById('type').value = 'Gruppe';
+      document.getElementById('value').value = '';
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('value').focus();
+    }
+  </script>
+</body>
+</html>

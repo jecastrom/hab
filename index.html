@@ -5,64 +5,170 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ring/Gruppe Search</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      margin: 20px; 
-      max-width: 800px; 
-      margin: 0 auto; 
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+      --card-bg: #f9f9f9;
+      --border: #ccc;
+      --header-bg: #f0f0f0;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+      --clear-bg: #6c757d;
+      --clear-hover: #545b62;
+      --th-bg: #f0f0f0;
+    }
+
+    body.dark-mode {
+      --bg: #121212;
+      --text: #e0e0e0;
+      --card-bg: #1e1e1e;
+      --border: #444;
+      --header-bg: #1f1f1f;
+      --button-bg: #0d6efd;
+      --button-hover: #0b5ed7;
+      --clear-bg: #495057;
+      --clear-hover: #343a40;
+      --th-bg: #2c2c2c;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 800px;
+      margin: 0 auto;
       padding: 10px;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
     }
-    h1 { font-size: 1.8em; text-align: center; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1 {
+      font-size: 1.8em;
+      margin: 0;
+      text-align: left;
+    }
+
+    /* Toggle Switch */
+    .theme-toggle {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .theme-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    .slider svg {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      transition: opacity 0.3s;
+    }
+
+    .sun {
+      left: 8px;
+      fill: #ffd43b;
+      opacity: 1;
+    }
+
+    .moon {
+      right: 8px;
+      fill: #f1c40f;
+      opacity: 0;
+    }
+
+    body.dark-mode .sun { opacity: 0; }
+    body.dark-mode .moon { opacity: 1; }
+
     label { display: block; margin-top: 15px; font-weight: bold; }
-    select, input, button { 
-      width: 100%; 
-      padding: 10px; 
-      margin: 10px 0; 
-      box-sizing: border-box; 
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      box-sizing: border-box;
       font-size: 1em;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
     }
-    button { background: #007bff; color: white; border: none; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    #clearBtn { background: #6c757d; }
-    #clearBtn:hover { background: #545b62; }
+
+    button {
+      background: var(--button-bg);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--button-hover); }
+
+    #clearBtn { background: var(--clear-bg); }
+    #clearBtn:hover { background: var(--clear-hover); }
 
     #loading { text-align: center; color: #666; margin-top: 20px; }
 
-    /* Desktop table */
-    .table-container {
-      overflow-x: auto;
-      margin-top: 20px;
-    }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-    }
-    th, td { 
-      border: 1px solid #ccc; 
-      padding: 12px; 
-      text-align: left; 
-    }
-    th { background: #f0f0f0; }
+    .table-container { overflow-x: auto; margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
+    th { background: var(--th-bg); }
 
-    /* Mobile cards */
-    .results-cards {
-      display: none;
-      margin-top: 20px;
-    }
+    .results-cards { display: none; margin-top: 20px; }
     .card {
-      border: 1px solid #ccc;
+      border: 1px solid var(--border);
       border-radius: 8px;
       padding: 15px;
       margin-bottom: 15px;
-      background: #f9f9f9;
+      background: var(--card-bg);
     }
-    .card div {
-      margin-bottom: 8px;
-    }
-    .card strong {
-      display: inline-block;
-      width: 120px;
-    }
+
+    .card div { margin-bottom: 8px; }
+    .card strong { display: inline-block; width: 120px; }
 
     @media (min-width: 768px) {
       .controls { display: flex; gap: 10px; align-items: end; }
@@ -78,11 +184,34 @@
       .results-cards { display: block; }
       .button-group { display: flex; gap: 10px; }
       .button-group button { flex: 1; }
+      header { flex-direction: column; align-items: flex-start; }
+      .theme-toggle { margin-top: 10px; align-self: flex-end; }
     }
   </style>
 </head>
 <body>
-  <h1>Search by Gruppe or Ring</h1>
+  <header>
+    <h1>Search by Gruppe or Ring</h1>
+    <label class="theme-toggle">
+      <input type="checkbox" id="darkModeToggle">
+      <span class="slider">
+        <svg class="sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <svg class="moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </span>
+    </label>
+  </header>
 
   <div class="controls">
     <div style="flex: 1;">
@@ -95,13 +224,7 @@
 
     <div style="flex: 2;">
       <label for="value">Enter number:</label>
-      <input 
-        type="tel" 
-        id="value" 
-        placeholder="e.g. 101 or 121"
-        pattern="[0-9]*" 
-        inputmode="numeric"
-      >
+      <input type="tel" id="value" placeholder="e.g. 101 or 121" pattern="[0-9]*" inputmode="numeric">
     </div>
 
     <div>
@@ -119,6 +242,27 @@
   <script>
     let data = [];
 
+    // Dark mode logic
+    const toggle = document.getElementById('darkModeToggle');
+    const body = document.body;
+
+    // Load saved preference
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      body.classList.add('dark-mode');
+      toggle.checked = true;
+    }
+
+    // Toggle handler
+    toggle.addEventListener('change', () => {
+      if (toggle.checked) {
+        body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'enabled');
+      } else {
+        body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'disabled');
+      }
+    });
+
     fetch('data.json')
       .then(response => {
         if (!response.ok) throw new Error('Failed to load data');
@@ -132,7 +276,6 @@
         document.getElementById('loading').innerHTML = '<p style="color:red;">Error loading data: ' + err.message + '</p>';
       });
 
-    // Search on Enter key
     document.getElementById('value').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         search();
@@ -162,7 +305,6 @@
         return;
       }
 
-      // Desktop: Table
       let tableHTML = '<div class="table-container"><table><thead><tr>';
       if (type === 'Ring') {
         tableHTML += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Anz. Melder</th>';
@@ -171,11 +313,9 @@
       }
       tableHTML += '</tr></thead><tbody>';
 
-      // Mobile: Cards
       let cardsHTML = '<div class="results-cards">';
 
       matches.forEach(row => {
-        // Table row
         tableHTML += '<tr>';
         if (type === 'Ring') {
           tableHTML += `<td>${row.Ring || ''}</td><td>${row.Installationsort || ''}</td><td>${row.Gruppe || ''}</td><td>${row["Anz.Melder"] || ''}</td>`;
@@ -184,7 +324,6 @@
         }
         tableHTML += '</tr>';
 
-        // Card
         cardsHTML += '<div class="card">';
         if (type === 'Ring') {
           cardsHTML += `<div><strong>Ring:</strong> ${row.Ring || ''}</div>`;

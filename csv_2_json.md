@@ -46,7 +46,7 @@ Das Makro ist so aufgebaut, dass es **zuverlässig auf englischen und deutschen 
 
 ---
 
-## 🧠 VBA-Code
+## 🧠 VBA-Code:
 
 ```vba
 Sub ExportCSVtoJSON()

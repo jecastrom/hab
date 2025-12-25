@@ -20,8 +20,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const owner = "jecastrom";  // Replace with exact (case-sensitive)
-  const repo = "hab";         // Replace with exact (case-sensitive)
+  const owner = "jecastrom";  // ← Replace exactly!
+  const repo = "hab";         // ← Replace exactly!
   const branch = "main";
 
   context.log('Target repo:', `${owner}/${repo}@${branch}`);
@@ -65,14 +65,14 @@ module.exports = async function (context, req) {
 
     // Commit updated index.html
     context.log('Committing index.html...');
-    await commitFile('index.html', htmlContent, indexData.sha, token, owner, repo, branch);
+    await commitFile(context, 'index.html', htmlContent, indexData.sha, token, owner, repo, branch);
     context.log('index.html committed');
 
     // Optional JSON file
     if (jsonContent) {
       context.log('Committing JSON file...');
       const jsonDecoded = Buffer.from(jsonContent, 'base64').toString('utf8');
-      await commitFile(`${code}.json`, jsonDecoded, null, token, owner, repo, branch);
+      await commitFile(context, `${code}.json`, jsonDecoded, null, token, owner, repo, branch);
       context.log('JSON committed');
       context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt inklusive JSON-Datei.` };
     } else {
@@ -82,11 +82,11 @@ module.exports = async function (context, req) {
     context.log('=== Success ===');
   } catch (e) {
     context.log('ERROR:', e.message, e.stack);
-    context.res = { status: 500, body: `Fehler: ${e.message || 'Unbekannter Fehler'} (Details: ${e.stack || 'Keine Details'})` };
+    context.res = { status: 500, body: `Fehler: ${e.message || 'Unbekannter Fehler'}` };
   }
 };
 
-async function commitFile(path, content, sha, token, owner, repo, branch) {
+async function commitFile(context, path, content, sha, token, owner, repo, branch) {
   context.log(`Preparing commit for ${path}`);
   const body = {
     message: `Admin: Neues Objekt ${path} hinzufügen`,

@@ -4,77 +4,131 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin – Neues Objekt hinzufügen</title>
-
-  
   <style>
-      :root {
-    --bg: #ffffff;
-    --text: #000000;
-    --card-bg: #f9f9f9;
-    --border: #ccc;
-    --header-bg: #f0f0f0;
-    --button-bg: #007bff;
-    --button-hover: #0056b3;
-    --clear-bg: #6c757d;
-    --clear-hover: #545b62;
-    --th-bg: #f0f0f0;
-  }
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+      --container-bg: #ffffff;
+      --border: #ccc;
+      --button-bg: #28a745;
+      --button-hover: #218838;
+      --input-bg: #ffffff;
+      --input-border: #ccc;
+      --help-text: #666;
+    }
 
-  body.dark-mode {
-    --bg: #121212;
-    --text: #e0e0e0;
-    --card-bg: #1e1e1e;
-    --border: #444;
-    --header-bg: #1f1f1f;
-    --button-bg: #0d6efd;
-    --button-hover: #0b5ed7;
-    --clear-bg: #495057;
-    --clear-hover: #343a40;
-    --th-bg: #2c2c2c;
-  }
+    body.dark-mode {
+      --bg: #121212;
+      --text: #e0e0e0;
+      --container-bg: #1e1e1e;
+      --border: #444;
+      --button-bg: #218838;
+      --button-hover: #1e672e;
+      --input-bg: #2c2c2c;
+      --input-border: #555;
+      --help-text: #aaa;
+    }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    transition: background 0.3s, color 0.3s;
-  }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
 
-  .container {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-  }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--container-bg);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      border: 1px solid var(--border);
+    }
 
-  button {
-    background: var(--button-bg);
-  }
-  button:hover {
-    background: var(--button-hover);
-  }
-  /* Add more elements if needed, e.g. inputs, labels */
-  input, select {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-    body { font-family: Arial, sans-serif; margin: 40px; background: #f4f4f4; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #007bff; }
-    label { display: block; margin: 15px 0 5px; font-weight: bold; }
-    input, button { width: 100%; padding: 10px; font-size: 1em; box-sizing: border-box; margin-bottom: 10px; }
-    button { background: #28a745; color: white; border: none; cursor: pointer; font-size: 1.1em; border-radius: 5px; }
-    button:hover { background: #218838; }
-    #message { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; }
-    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    .help { font-size: 0.9em; color: #666; margin-top: 5px; }
-    a.back { display: block; text-align: center; margin-top: 30px; color: #007bff; text-decoration: none; }
-    a.back:hover { text-decoration: underline; }
+    h1 {
+      text-align: center;
+      color: #007bff;
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: bold;
+    }
+
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 1em;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+      background: var(--input-bg);
+      color: var(--text);
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: var(--button-bg);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1em;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background: var(--button-hover);
+    }
+
+    #message {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      display: none;
+    }
+
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .help {
+      font-size: 0.9em;
+      color: var(--help-text);
+      margin-top: 5px;
+      margin-bottom: 15px;
+    }
+
+    a.back {
+      display: block;
+      text-align: center;
+      margin-top: 30px;
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    a.back:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Admin: Neues Objekt hinzufügen</h1>
-    <p>Fülle die Felder aus und lade (falls vorhanden) die JSON-Datei hoch. Das System aktualisiert automatisch die Webseite.</p>
+    <p>Fülle die Felder aus und lade (falls vorhanden) die JSON-Datei hoch. Das System aktualisiert automatisch die Webseite und das GitHub-Repository.</p>
 
     <label for="code">Interner Code (klein, z. B. "mno"):</label>
     <input type="text" id="code" placeholder="mno">
@@ -82,10 +136,10 @@
     <label for="name">Anzeigename (z. B. "MNO"):</label>
     <input type="text" id="name" placeholder="MNO">
 
-    <label for="jsonFile">JSON-Datei mit den Objektdaten (optional, falls noch nicht vorhanden):</label>
+    <label for="jsonFile">JSON-Datei mit den Objektdaten (optional):</label>
     <input type="file" id="jsonFile" accept=".json">
     <div class="help">Bitte lade hier die JSON-Datei hoch, die die Daten für dieses Objekt enthält (gleiche Struktur wie hab.json). 
-    Wenn die Datei noch nicht existiert, kannst du dieses Feld leer lassen – sie wird später hinzugefügt.</div>
+    Wenn die Datei noch nicht existiert oder später hinzugefügt werden soll, kannst du dieses Feld leer lassen.</div>
 
     <button onclick="addObject()">Objekt hinzufügen</button>
 
@@ -145,12 +199,11 @@
         messageDiv.style.display = 'block';
       }
     }
+
+    // Site-wide dark mode synchronization
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
   </script>
-  <script>
-  // Apply saved dark mode preference on page load
-  if (localStorage.getItem('darkMode') === 'enabled') {
-    document.body.classList.add('dark-mode');
-  }
-</script>
 </body>
 </html>

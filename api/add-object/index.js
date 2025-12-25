@@ -13,8 +13,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const owner = "jecastrom"; // Ersetze genau
-  const repo = "hab"; // Ersetze genau
+  const owner = "jecastrom";
+  const repo = "hab";
   const branch = "main";
 
   const baseUrl = `https://api.github.com/repos/${owner}/${repo}`;
@@ -33,21 +33,25 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let htmlContent = Buffer.from(indexData.content, 'base64').toString('utf8');
 
-    // Super flexible dropdown marker search (ignores extra spaces, line breaks)
-    const dropdownRegex = /<!--\s*Neue\s*Objekte\s*hier\s*einfügen\s*\(\s*siehe\s*Hinweis\s*oben\s*\)\s*-->/i;
-    if (!dropdownRegex.test(htmlContent)) {
-      throw new Error('Dropdown-Marker nicht gefunden. Prüfe den Kommentar in index.html (sollte genau so lauten: <!-- Neue Objekte hier einfügen (siehe Hinweis oben) -->)');
+    // 1. Dropdown: Füge neue Option vor dem schließenden </select> ein
+    const selectCloseRegex = /<\/select>/i;
+    const optionLine = `        <option value="${code}">${name}</option>\n        `;
+    if (selectCloseRegex.test(htmlContent)) {
+      htmlContent = htmlContent.replace(selectCloseRegex, `${optionLine}</select>`);
+      context.log('Dropdown-Option hinzugefügt (vor </select>)');
+    } else {
+      throw new Error('</select>-Tag nicht gefunden – Dropdown konnte nicht aktualisiert werden');
     }
-    const optionLine = `        <option value="${code}">${name}</option>`;
-    htmlContent = htmlContent.replace(dropdownRegex, `$0\n        ${optionLine}`);
 
-    // Super flexible map marker search
-    const mapRegex = /\/\/\s*Neue\s*Objekte\s*hier\s*einfügen\s*\(\s*siehe\s*Hinweis\s*oben\s*\)\s*/i;
-    if (!mapRegex.test(htmlContent)) {
-      throw new Error('objectFiles-Marker nicht gefunden. Prüfe den Kommentar in index.html (sollte genau so lauten: // Neue Objekte hier einfügen (siehe Hinweis oben))');
+    // 2. objectFiles: Füge neue Zeile vor dem schließenden } ein
+    const objectFilesCloseRegex = /\}\s*;?\s*$/m;  // Findet das letzte } am Ende des objectFiles
+    const mapLine = `      ${code}: '${code}.json',\n`;
+    if (objectFilesCloseRegex.test(htmlContent)) {
+      htmlContent = htmlContent.replace(objectFilesCloseRegex, `${mapLine}    }`);
+      context.log('objectFiles-Eintrag hinzugefügt (vor letztem })');
+    } else {
+      throw new Error('Schließende } von objectFiles nicht gefunden');
     }
-    const mapLine = `      ${code}: '${code}.json',`;
-    htmlContent = htmlContent.replace(mapRegex, `$0\n      ${mapLine}`);
 
     // Commit updated index.html
     await commitFile(context, 'index.html', htmlContent, indexData.sha, token, owner, repo, branch);

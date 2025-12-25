@@ -33,7 +33,7 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // 1. Dropdown: Insert before </select> of id="object"
+    // 1. Dropdown: Neue Option vor </select> des id="object" einfügen
     let objectSelectStart = lines.findIndex(line => line.trim().includes('<select id="object"'));
     if (objectSelectStart === -1) throw new Error('Objekt-Select (id="object") nicht gefunden');
 
@@ -42,21 +42,12 @@ module.exports = async function (context, req) {
 
     lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
 
-    // 2. objectFiles: Insert right before the closing } of the objectFiles block
-    let closingBraceIndex = -1;
-    for (let i = lines.length - 1; i >= 0; i--) {
-      if (lines[i].trim() === '}') {
-        // Make sure it's the objectFiles closing brace by checking the previous non-empty line has an existing object or the comment
-        const prevNonEmpty = lines.slice(0, i).reverse().find(line => line.trim() !== '');
-        if (prevNonEmpty && (prevNonEmpty.trim().startsWith('// Neue Objekte') || prevNonEmpty.trim().match(/^(hab|keh|kwf):/))) {
-          closingBraceIndex = i;
-          break;
-        }
-      }
-    }
-    if (closingBraceIndex === -1) throw new Error('Schließende } von objectFiles nicht gefunden');
+    // 2. objectFiles: Füge direkt nach dem Kommentar "// Neue Objekte hier einfügen" ein
+    const commentText = '// Neue Objekte hier einfügen (siehe Hinweis oben)';
+    let commentIndex = lines.findIndex(line => line.trim() === commentText);
+    if (commentIndex === -1) throw new Error('Kommentar "// Neue Objekte hier einfügen" nicht gefunden');
 
-    lines.splice(closingBraceIndex, 0, `      ${code}: '${code}.json',`);
+    lines.splice(commentIndex + 1, 0, `      ${code}: '${code}.json',`);
 
     const updatedHtml = lines.join('\n');
 

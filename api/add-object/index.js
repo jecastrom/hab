@@ -42,12 +42,18 @@ module.exports = async function (context, req) {
 
     lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
 
-    // 2. objectFiles: Insert the new line BEFORE the comment
-    const commentText = '// Neue Objekte hier einfügen (siehe Hinweis oben)';
-    let commentIndex = lines.findIndex(line => line.trim() === commentText);
-    if (commentIndex === -1) throw new Error('Kommentar "// Neue Objekte hier einfügen" nicht gefunden');
+    // 2. objectFiles: Insert new entry right after the opening {
+    let objectFilesOpen = lines.findIndex(line => line.trim() === 'const objectFiles = {');
+    if (objectFilesOpen === -1) throw new Error('const objectFiles = { nicht gefunden');
 
-    lines.splice(commentIndex, 0, `      ${code}: '${code}.json',`);
+    // Find the first non-empty line after the opening {
+    let insertIndex = objectFilesOpen + 1;
+    while (insertIndex < lines.length && lines[insertIndex].trim() === '') {
+      insertIndex++;
+    }
+
+    // Add the new line with comma
+    lines.splice(insertIndex, 0, `      ${code}: '${code}.json',`);
 
     const updatedHtml = lines.join('\n');
 

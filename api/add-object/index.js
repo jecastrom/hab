@@ -13,8 +13,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const owner = "jecastrom";
-  const repo = "hab";
+  const owner = "jecastrom"; // Ersetze genau
+  const repo = "hab"; // Ersetze genau
   const branch = "main";
 
   const baseUrl = `https://api.github.com/repos/${owner}/${repo}`;
@@ -33,21 +33,21 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let htmlContent = Buffer.from(indexData.content, 'base64').toString('utf8');
 
-    // Very flexible search for dropdown marker (ignores spaces, case, extra text)
-    const dropdownRegex = /<!--\s*Neue\s*Objekte\s*hier\s*einfügen\s*\(?\s*siehe\s*Hinweis\s*oben\s*\)?\s*-->/i;
+    // Super flexible dropdown marker search (ignores extra spaces, line breaks)
+    const dropdownRegex = /<!--\s*Neue\s*Objekte\s*hier\s*einfügen\s*\(\s*siehe\s*Hinweis\s*oben\s*\)\s*-->/i;
     if (!dropdownRegex.test(htmlContent)) {
-      throw new Error('Dropdown-Marker nicht gefunden. Prüfe den Kommentar in index.html.');
+      throw new Error('Dropdown-Marker nicht gefunden. Prüfe den Kommentar in index.html (sollte genau so lauten: <!-- Neue Objekte hier einfügen (siehe Hinweis oben) -->)');
     }
     const optionLine = `        <option value="${code}">${name}</option>`;
-    htmlContent = htmlContent.replace(dropdownRegex, `$&\n        ${optionLine}`);
+    htmlContent = htmlContent.replace(dropdownRegex, `$0\n        ${optionLine}`);
 
-    // Flexible search for objectFiles marker
-    const mapRegex = /\/\/\s*Neue\s*Objekte\s*hier\s*einfügen\s*\(?\s*siehe\s*Hinweis\s*oben\s*\)?/i;
+    // Super flexible map marker search
+    const mapRegex = /\/\/\s*Neue\s*Objekte\s*hier\s*einfügen\s*\(\s*siehe\s*Hinweis\s*oben\s*\)\s*/i;
     if (!mapRegex.test(htmlContent)) {
-      throw new Error('objectFiles-Marker nicht gefunden. Prüfe den Kommentar in index.html.');
+      throw new Error('objectFiles-Marker nicht gefunden. Prüfe den Kommentar in index.html (sollte genau so lauten: // Neue Objekte hier einfügen (siehe Hinweis oben))');
     }
     const mapLine = `      ${code}: '${code}.json',`;
-    htmlContent = htmlContent.replace(mapRegex, `$&\n      ${mapLine}`);
+    htmlContent = htmlContent.replace(mapRegex, `$0\n      ${mapLine}`);
 
     // Commit updated index.html
     await commitFile(context, 'index.html', htmlContent, indexData.sha, token, owner, repo, branch);

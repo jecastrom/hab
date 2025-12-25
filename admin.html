@@ -1,0 +1,36 @@
+<!-- Same style as before, plus file upload -->
+<input type="file" id="jsonFile" accept=".json">
+<button onclick="addObject()">Objekt hinzufügen</button>
+
+<script>
+  async function addObject() {
+    const code = document.getElementById('code').value.trim().toLowerCase();
+    const name = document.getElementById('name').value.trim();
+    const fileInput = document.getElementById('jsonFile');
+    let jsonContent = null;
+
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      jsonContent = await file.text(); // or toBase64 if needed
+      // For simplicity, we'll send as base64
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        jsonContent = reader.result.split(',')[1]; // base64 part
+        await sendRequest(code, name, jsonContent);
+      };
+      return;
+    }
+    await sendRequest(code, name, jsonContent);
+  }
+
+  async function sendRequest(code, name, jsonContent) {
+    const res = await fetch('/api/add-object', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, name, jsonContent })
+    });
+    const text = await res.text();
+    alert(res.ok ? text : 'Error: ' + text);
+  }
+</script>

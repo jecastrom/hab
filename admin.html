@@ -11,104 +11,140 @@
       --card-bg: #ffffff;
       --border: #dee2e6;
       --primary: #0d6efd;
-      --danger: #dc3545;
       --success: #198754;
+      --danger: #dc3545;
+      --help: #6c757d;
     }
     body.dark-mode {
       --bg: #121212;
       --text: #e9ecef;
       --card-bg: #1e1e1e;
       --border: #495057;
+      --help: #adb5bd;
     }
     body {
       font-family: Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       margin: 0;
-      padding: 0;
-    }
-    .container {
-      display: flex;
+      padding: 20px;
       min-height: 100vh;
     }
-    .sidebar {
-      width: 300px;
-      background: var(--card-bg);
-      border-right: 1px solid var(--border);
-      padding: 20px;
-    }
-    .main {
-      flex: 1;
-      padding: 30px;
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
     }
     h1, h2 {
       color: var(--primary);
+      text-align: center;
     }
+    .section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: bold;
+    }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.1em;
+      cursor: pointer;
+    }
+    .btn-add { background: var(--success); color: white; }
+    .btn-delete { background: var(--danger); color: white; }
+    .btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+    .help {
+      font-size: 0.9em;
+      color: var(--help);
+      margin-top: 10px;
+    }
+    #message {
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 5px;
+      display: none;
+    }
+    .success { background: #d1e7dd; color: #0f5132; }
+    .error { background: #f8d7da; color: #842029; }
     .objekt-list {
       list-style: none;
       padding: 0;
+      margin: 0;
     }
     .objekt-item {
       display: flex;
       align-items: center;
-      padding: 10px;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border);
     }
     .objekt-item input {
-      margin-right: 10px;
+      margin-right: 12px;
     }
-    button {
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    .btn-add { background: var(--success); color: white; }
-    .btn-delete { background: var(--danger); color: white; }
-    .help { font-size: 0.9em; color: #666; margin-top: 10px; }
     a.back {
       display: block;
+      text-align: center;
       margin-top: 30px;
       color: var(--primary);
       text-decoration: none;
+      font-size: 1.1em;
+    }
+    @media (min-width: 768px) {
+      button { width: auto; padding: 12px 30px; }
+      .btn-add { width: auto; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="sidebar">
-      <h2>Aktuelle Objekte</h2>
-      <ul class="objekt-list" id="objektList">
-        <li>Lade Objekte...</li>
-      </ul>
-      <button class="btn-delete" onclick="deleteSelected()" id="deleteBtn" disabled>Löschen</button>
-    </div>
+    <h1>Admin: Objekte verwalten</h1>
 
-    <div class="main">
-      <h1>Admin: Neues Objekt hinzufügen</h1>
-      <p>Fülle die Felder aus und lade optional die JSON-Datei hoch.</p>
-
-      <label>Interner Code (klein, z. B. "mno"):</label>
+    <div class="section">
+      <h2>Neues Objekt hinzufügen</h2>
+      <label for="code">Interner Code (klein, z. B. "mno"):</label>
       <input type="text" id="code" placeholder="mno">
 
-      <label>Anzeigename (z. B. "MNO"):</label>
+      <label for="name">Anzeigename (z. B. "MNO"):</label>
       <input type="text" id="name" placeholder="MNO">
 
-      <label>JSON-Datei (optional):</label>
+      <label for="jsonFile">JSON-Datei (optional):</label>
       <input type="file" id="jsonFile" accept=".json">
       <div class="help">Wenn du die Datei nicht hochlädst, kannst du sie später manuell hinzufügen.</div>
 
       <button class="btn-add" onclick="addObject()">Objekt hinzufügen</button>
-
-      <div id="message" style="margin-top: 20px; padding: 15px; border-radius: 5px; display: none;"></div>
-
-      <a class="back" href="index.html">← Zurück zur Suchseite</a>
     </div>
+
+    <div class="section">
+      <h2>Aktuelle Objekte</h2>
+      <ul class="objekt-list" id="objektList">
+        <li>Lade Objekte...</li>
+      </ul>
+      <button class="btn-delete" onclick="deleteSelected()" id="deleteBtn" disabled>Ausgewählte löschen</button>
+    </div>
+
+    <div id="message"></div>
+
+    <a class="back" href="index.html">← Zurück zur Suchseite</a>
   </div>
 
   <script>
-    // Load current Objekte from GitHub index.html
     async function loadObjekte() {
       try {
         const res = await fetch('index.html');
@@ -118,6 +154,11 @@
         list.innerHTML = '';
 
         const options = lines.filter(line => line.trim().includes('<option value="') && !line.trim().includes('Gruppe') && !line.trim().includes('Ring'));
+        if (options.length === 0) {
+          list.innerHTML = '<li>Keine Objekte vorhanden</li>';
+          return;
+        }
+
         options.forEach(line => {
           const match = line.match(/value="([^"]*)">([^<]+)</);
           if (match) {
@@ -141,8 +182,52 @@
     }
 
     async function addObject() {
-      // Your existing addObject code (same as before)
-      // ... (keep your current addObject function)
+      const code = document.getElementById('code').value.trim().toLowerCase();
+      const name = document.getElementById('name').value.trim();
+      const fileInput = document.getElementById('jsonFile');
+      const messageDiv = document.getElementById('message');
+
+      messageDiv.style.display = 'none';
+
+      if (!code || !name) {
+        showMessage('Bitte Code und Anzeigename ausfüllen!', false);
+        return;
+      }
+
+      let jsonBase64 = null;
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        if (!file.name.endsWith('.json')) {
+          showMessage('Bitte nur .json-Dateien hochladen!', false);
+          return;
+        }
+        const reader = new FileReader();
+        await new Promise((resolve) => {
+          reader.onload = () => {
+            jsonBase64 = reader.result.split(',')[1];
+            resolve();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      try {
+        const res = await fetch('/api/add-object', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, name, jsonContent: jsonBase64 })
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) {
+          document.getElementById('code').value = '';
+          document.getElementById('name').value = '';
+          fileInput.value = '';
+          loadObjekte();
+        }
+      } catch (e) {
+        showMessage('Verbindungsfehler: ' + e.message, false);
+      }
     }
 
     async function deleteSelected() {
@@ -158,21 +243,25 @@
         });
         const text = await res.text();
         showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
-        loadObjekte();
+        if (res.ok) loadObjekte();
       } catch (e) {
-        showMessage('Verbindungsfehler', false);
+        showMessage('Verbindungsfehler: ' + e.message, false);
       }
     }
 
     function showMessage(text, success) {
       const msg = document.getElementById('message');
       msg.textContent = text;
-      msg.style.background = success ? '#d4edda' : '#f8d7da';
-      msg.style.color = success ? '#155724' : '#721c24';
+      msg.className = success ? 'success' : 'error';
       msg.style.display = 'block';
     }
 
     loadObjekte();
+
+    // Dark mode sync with main page
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
   </script>
 </body>
 </html>

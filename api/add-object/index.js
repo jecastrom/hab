@@ -81,12 +81,13 @@ module.exports = async function (context, req) {
     }
 
     context.log('=== Success! ===');
-  } catch (e) {
-    context.log('CRITICAL ERROR:', e.message);
-    context.log('Stack:', e.stack);
-    context.res = { status: 500, body: `Fehler: ${e.message}` };
+   } catch (e) {
+    context.log('CRITICAL ERROR:', e);
+    context.res = { 
+      status: 500, 
+      body: `Fehler beim Hinzufügen des Objekts: ${e.message}\nDetails: ${e.stack || 'Kein Stack verfügbar'}\nÜberprüfe Token, Repo-Name oder Berechtigungen.` 
+    };
   }
-};
 
 async function commitFile(path, content, sha, token, owner, repo, branch) {
   context.log(`Committing file: ${path}`);

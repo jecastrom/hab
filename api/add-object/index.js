@@ -81,11 +81,14 @@ module.exports = async function (context, req) {
     }
 
     context.log('=== Success! ===');
-   } catch (e) {
-    context.log('CRITICAL ERROR:', e);
-    context.res = { 
-      status: 500, 
-      body: `Fehler beim Hinzufügen des Objekts: ${e.message}\nDetails: ${e.stack || 'Kein Stack verfügbar'}\nÜberprüfe Token, Repo-Name oder Berechtigungen.` 
+     } catch (e) {
+    const errorMessage = e.message || 'Unbekannter Fehler';
+    const errorStack = e.stack || 'Kein Stack verfügbar';
+    context.log('FEHLER DETAILS:', errorMessage, errorStack); // For any basic logging
+
+    context.res = {
+      status: 500,
+      body: `Fehler beim Hinzufügen: ${errorMessage}\n\nDetails (für Debugging):\n${errorStack}\n\nÜberprüfe: Token-Berechtigungen, Repo-Name (genaue Schreibweise), Branch "main".`
     };
   }
 

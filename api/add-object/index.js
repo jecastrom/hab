@@ -19,8 +19,6 @@ module.exports = async function (context, req) {
 
   const baseUrl = `https://api.github.com/repos/${owner}/${repo}`;
 
-  let jsonSuccess = false;
-
   try {
     const indexRes = await fetch(`${baseUrl}/contents/index.html?ref=${branch}`, {
       headers: {
@@ -35,47 +33,59 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // Add to object dropdown
+    // 1. Find the line with <select id="object">
+    let objectSelectStart = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim().includes('<select id="object"')) {
+        objectSelectStart = i;
+        break;
+      }
+    }
+    if (objectSelectStart === -1) throw new Error('Objekt-Select (id="object") nicht gefunden');
+
+    // Find the next </select> after that line
     let objectSelectEnd = -1;
-    for (let i = lines.length - 1; i >= 0; i--) {
-      if (lines[i].trim() === '</select>' && lines[i-3]?.trim().includes('id="object"')) {
+    for (let i = objectSelectStart + 1; i < lines.length; i++) {
+      if (lines[i].trim() === '</select>') {
         objectSelectEnd = i;
         break;
       }
     }
-    if (objectSelectEnd === -1) throw new Error('Objekt-Select nicht gefunden');
+    if (objectSelectEnd === -1) throw new Error('Schließendes </select> für Objekt-Select nicht gefunden');
+
+    // Insert the new option just before </select>
     lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
 
-    // Add to objectFiles
+    // 2. objectFiles block
     let objectFilesClose = -1;
     for (let i = lines.length - 1; i >= 0; i--) {
       if (lines[i].trim() === '}') {
-        if (lines[i-1]?.trim().match(/(hab|keh|kwf|Neue Objekte)/)) {
+        // Check if previous line has one of the existing objects or the comment
+        if (lines[i-1]?.trim().match(/(hab|keh|kwf|\/\/ Neue Objekte)/)) {
           objectFilesClose = i;
           break;
         }
       }
     }
     if (objectFilesClose === -1) throw new Error('objectFiles-Block nicht gefunden');
+
     lines.splice(objectFilesClose, 0, `      ${code}: '${code}.json',`);
 
     const updatedHtml = lines.join('\n');
+
     await commitFile(context, 'index.html', updatedHtml, indexData.sha, token, owner, repo, branch);
 
-    // Try to upload JSON file (optional)
     if (jsonContent) {
       try {
         const jsonDecoded = Buffer.from(jsonContent, 'base64').toString('utf8');
         await commitFile(context, `${code}.json`, jsonDecoded, null, token, owner, repo, branch);
-        jsonSuccess = true;
+        context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt inklusive JSON-Datei.` };
       } catch (jsonErr) {
-        context.log('JSON file upload failed:', jsonErr.message);
-        // Don't fail the whole operation
+        context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt (JSON-Datei fehlgeschlagen – bitte manuell hochladen).` };
       }
+    } else {
+      context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt (ohne JSON-Datei).` };
     }
-
-    const jsonMsg = jsonSuccess ? 'inklusive JSON-Datei' : '(JSON-Datei konnte nicht hochgeladen werden – bitte manuell hinzufügen)';
-    context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt ${jsonMsg}.` };
   } catch (e) {
     context.res = { status: 500, body: `Fehler: ${e.message}` };
   }

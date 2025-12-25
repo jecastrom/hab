@@ -190,7 +190,17 @@
       </span>
     </label>
   </header>
-
+  <!-- 
+    HINWEIS FÜR NEUE OBJEKTE HINZUFÜGEN:
+    Um ein neues Objekt hinzuzufügen, trage hier eine neue Zeile ein:
+    <option value="kleinergeschriebenercode">Anzeigename</option>
+    
+    Beispiel für ein neues Objekt "MNO":
+    <option value="mno">MNO</option>
+    
+    Der "value" muss klein geschrieben sein und genau dem Dateinamen (ohne .json) entsprechen.
+    Der Text zwischen > und < ist das, was der Benutzer im Dropdown sieht.
+    -->
   <div class="controls">
     <div style="flex: 1;">
       <label for="object">Objekt auswählen:</label>
@@ -232,10 +242,21 @@
     const resultsDiv = document.getElementById('results');
 
     // Map object keys to filenames
+    
+    // HINWEIS FÜR NEUE OBJEKTE HINZUFÜGEN:
+    // Um ein neues Objekt hinzuzufügen, trage hier eine neue Zeile ein:
+    // kleinergeschriebenercode: 'kleinergeschriebenercode.json',
+    //
+    // Beispiel für ein neues Objekt "MNO":
+    // mno: 'mno.json',
+    //
+    // Der Schlüssel (links) muss exakt mit dem "value" aus dem HTML-Dropdown oben übereinstimmen.
+    // Die Datei muss danach im GitHub-Repo hochgeladen werden (gleicher Ordner wie index.html).
     const objectFiles = {
       hab: 'hab.json',
       keh: 'keh.json',
       kwf: 'kwf.json'
+      // Neue Objekte hier einfügen (siehe Hinweis oben)
     };
 
     function loadData() {
@@ -366,3 +387,4 @@
   </script>
 </body>
 </html>
+

@@ -1,14 +1,11 @@
-const fetch = require('node-fetch');
-
 module.exports = async function (context, req) {
   context.log('=== Admin API called ===');
   context.log('Request body:', req.body);
 
   const token = process.env.GITHUB_TOKEN;
-  context.log('Token exists:', !!token); // true/false – checks if token is loaded
+  context.log('Token exists:', !!token);
 
   if (!token) {
-    context.log('ERROR: No GITHUB_TOKEN found in environment variables');
     context.res = { status: 500, body: "Server-Fehler: Kein GitHub-Token konfiguriert" };
     return;
   }
@@ -16,38 +13,38 @@ module.exports = async function (context, req) {
   const { code, name, jsonContent } = req.body || {};
   context.log('Received code:', code);
   context.log('Received name:', name);
-  context.log('JSON file uploaded:', !!jsonContent);
+  context.log('JSON uploaded:', !!jsonContent);
 
   if (!code || !name) {
-    context.log('ERROR: Missing code or name');
     context.res = { status: 400, body: "Fehler: Code und Name sind erforderlich" };
     return;
   }
 
-  const owner = "jecastrom";  // ← Replace with exact username (case-sensitive!)
-  const repo = "hab";         // ← Replace with exact repo name (case-sensitive!)
+  const owner = "jecastrom";  // Replace with exact (case-sensitive)
+  const repo = "hab";         // Replace with exact (case-sensitive)
   const branch = "main";
 
-  context.log('Target repo:', `${owner}/${repo}`);
-  context.log('Branch:', branch);
+  context.log('Target repo:', `${owner}/${repo}@${branch}`);
 
   const baseUrl = `https://api.github.com/repos/${owner}/${repo}`;
 
   try {
-    // Get current index.html
-    context.log('Fetching index.html from GitHub...');
+    context.log('Fetching index.html...');
     const indexRes = await fetch(`${baseUrl}/contents/index.html?ref=${branch}`, {
-      headers: { Authorization: `token ${token}`, 'User-Agent': 'swa-admin' }
+      headers: {
+        Authorization: `token ${token}`,
+        'User-Agent': 'swa-admin',
+        Accept: 'application/vnd.github.v3+json'
+      }
     });
 
     if (!indexRes.ok) {
       const errText = await indexRes.text();
-      context.log('ERROR fetching index.html:', indexRes.status, errText);
-      throw new Error(`Konnte index.html nicht laden (Status: ${indexRes.status})`);
+      context.log('Fetch failed:', indexRes.status, errText);
+      throw new Error(`index.html laden fehlgeschlagen (${indexRes.status}): ${errText}`);
     }
 
     const indexData = await indexRes.json();
-    context.log('Successfully loaded index.html, SHA:', indexData.sha);
     let htmlContent = Buffer.from(indexData.content, 'base64').toString('utf8');
 
     // Add to dropdown
@@ -58,7 +55,7 @@ module.exports = async function (context, req) {
     );
     context.log('Added dropdown option');
 
-    // Add to objectFiles map
+    // Add to objectFiles
     const mapLine = `      ${code}: '${code}.json',`;
     htmlContent = htmlContent.replace(
       /(\/\/ Neue Objekte hier einfügen \(siehe Hinweis oben\)\n)/,
@@ -67,43 +64,46 @@ module.exports = async function (context, req) {
     context.log('Added objectFiles entry');
 
     // Commit updated index.html
-    context.log('Committing updated index.html...');
+    context.log('Committing index.html...');
     await commitFile('index.html', htmlContent, indexData.sha, token, owner, repo, branch);
+    context.log('index.html committed');
 
-    // Optional: Create JSON file if uploaded
+    // Optional JSON file
     if (jsonContent) {
-      context.log('Committing new JSON file:', `${code}.json`);
+      context.log('Committing JSON file...');
       const jsonDecoded = Buffer.from(jsonContent, 'base64').toString('utf8');
       await commitFile(`${code}.json`, jsonDecoded, null, token, owner, repo, branch);
+      context.log('JSON committed');
       context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt inklusive JSON-Datei.` };
     } else {
       context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt (ohne JSON-Datei).` };
     }
 
-    context.log('=== Success! ===');
-     } catch (e) {
-    const errorMessage = e.message || 'Unbekannter Fehler';
-    const errorStack = e.stack || 'Kein Stack verfügbar';
-    context.log('FEHLER DETAILS:', errorMessage, errorStack); // For any basic logging
-
-    context.res = {
-      status: 500,
-      body: `Fehler beim Hinzufügen: ${errorMessage}\n\nDetails (für Debugging):\n${errorStack}\n\nÜberprüfe: Token-Berechtigungen, Repo-Name (genaue Schreibweise), Branch "main".`
-    };
+    context.log('=== Success ===');
+  } catch (e) {
+    context.log('ERROR:', e.message, e.stack);
+    context.res = { status: 500, body: `Fehler: ${e.message || 'Unbekannter Fehler'} (Details: ${e.stack || 'Keine Details'})` };
   }
+};
 
 async function commitFile(path, content, sha, token, owner, repo, branch) {
-  context.log(`Committing file: ${path}`);
+  context.log(`Preparing commit for ${path}`);
   const body = {
-    message: `Admin: Neues Objekt "${path}" hinzufügen`,
+    message: `Admin: Neues Objekt ${path} hinzufügen`,
     content: Buffer.from(content).toString('base64'),
     branch,
   };
   if (sha) body.sha = sha;
 
+  context.log('Sending commit request');
   const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
     method: 'PUT',
-    headers: { Authorization: `token ${token}`, 'User-Agent': 'swa-admin', 'Content-Type': 'application/json' },
+    headers: {
+      Authorization: `token ${token}`,
+      'User-Agent': 'swa-admin',
+      Accept: 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
     body: JSON.stringify(body)
   });
 
@@ -112,5 +112,6 @@ async function commitFile(path, content, sha, token, owner, repo, branch) {
     context.log('Commit failed:', res.status, err);
     throw new Error(err.message || 'Commit fehlgeschlagen');
   }
-  context.log(`Successfully committed ${path}`);
+
+  context.log(`${path} committed successfully`);
 }

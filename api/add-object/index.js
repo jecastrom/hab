@@ -33,7 +33,7 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // 1. Dropdown: Neue Option vor </select> des id="object" einfügen
+    // 1. Dropdown: Insert before </select> of id="object"
     let objectSelectStart = lines.findIndex(line => line.trim().includes('<select id="object"'));
     if (objectSelectStart === -1) throw new Error('Objekt-Select (id="object") nicht gefunden');
 
@@ -42,12 +42,12 @@ module.exports = async function (context, req) {
 
     lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
 
-    // 2. objectFiles: Füge direkt nach dem Kommentar "// Neue Objekte hier einfügen" ein
+    // 2. objectFiles: Insert the new line BEFORE the comment
     const commentText = '// Neue Objekte hier einfügen (siehe Hinweis oben)';
     let commentIndex = lines.findIndex(line => line.trim() === commentText);
     if (commentIndex === -1) throw new Error('Kommentar "// Neue Objekte hier einfügen" nicht gefunden');
 
-    lines.splice(commentIndex + 1, 0, `      ${code}: '${code}.json',`);
+    lines.splice(commentIndex, 0, `      ${code}: '${code}.json',`);
 
     const updatedHtml = lines.join('\n');
 

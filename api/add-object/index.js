@@ -20,8 +20,8 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const owner = "jecastrom";  // ← Replace exactly!
-  const repo = "hab";         // ← Replace exactly!
+  const owner = "jecastrom";  // ← Already correct!
+  const repo = "hab";         // ← Already correct!
   const branch = "main";
 
   context.log('Target repo:', `${owner}/${repo}@${branch}`);
@@ -41,61 +41,65 @@ module.exports = async function (context, req) {
     if (!indexRes.ok) {
       const errText = await indexRes.text();
       context.log('Fetch failed:', indexRes.status, errText);
-      throw new Error(`index.html laden fehlgeschlagen (${indexRes.status}): ${errText}`);
+      throw new Error(`index.html laden fehlgeschlagen (${indexRes.status})`);
     }
 
     const indexData = await indexRes.json();
     let htmlContent = Buffer.from(indexData.content, 'base64').toString('utf8');
 
-    // Add to dropdown
+    // More flexible replace for dropdown (ignores extra spaces/tabs)
+    const dropdownMarker = '<!-- Neue Objekte hier einfügen (siehe Hinweis oben) -->';
+    if (!htmlContent.includes(dropdownMarker)) {
+      throw new Error('Dropdown-Marker nicht gefunden in index.html');
+    }
     const optionLine = `        <option value="${code}">${name}</option>`;
     htmlContent = htmlContent.replace(
-      /(<!-- Neue Objekte hier einfügen \(siehe Hinweis oben\) -->\n)/,
-      `$1${' '.repeat(8)}${optionLine}\n`
+      new RegExp(`(${dropdownMarker}\\s*\\n)`),
+      `$1        ${optionLine}\n`
     );
-    context.log('Added dropdown option');
+    context.log('Dropdown option added');
 
-    // Add to objectFiles
+    // More flexible replace for objectFiles
+    const mapMarker = '// Neue Objekte hier einfügen (siehe Hinweis oben)';
+    if (!htmlContent.includes(mapMarker)) {
+      throw new Error('objectFiles-Marker nicht gefunden in index.html');
+    }
     const mapLine = `      ${code}: '${code}.json',`;
     htmlContent = htmlContent.replace(
-      /(\/\/ Neue Objekte hier einfügen \(siehe Hinweis oben\)\n)/,
-      `$1${' '.repeat(6)}${mapLine}\n`
+      new RegExp(`(${mapMarker}\\s*\\n)`),
+      `$1      ${mapLine}\n`
     );
-    context.log('Added objectFiles entry');
+    context.log('objectFiles entry added');
 
     // Commit updated index.html
-    context.log('Committing index.html...');
+    context.log('Committing updated index.html...');
     await commitFile(context, 'index.html', htmlContent, indexData.sha, token, owner, repo, branch);
-    context.log('index.html committed');
 
     // Optional JSON file
     if (jsonContent) {
-      context.log('Committing JSON file...');
       const jsonDecoded = Buffer.from(jsonContent, 'base64').toString('utf8');
       await commitFile(context, `${code}.json`, jsonDecoded, null, token, owner, repo, branch);
-      context.log('JSON committed');
       context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt inklusive JSON-Datei.` };
     } else {
       context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt (ohne JSON-Datei).` };
     }
 
-    context.log('=== Success ===');
+    context.log('=== All done successfully ===');
   } catch (e) {
-    context.log('ERROR:', e.message, e.stack);
-    context.res = { status: 500, body: `Fehler: ${e.message || 'Unbekannter Fehler'}` };
+    context.log('ERROR:', e.message);
+    context.res = { status: 500, body: `Fehler: ${e.message}` };
   }
 };
 
 async function commitFile(context, path, content, sha, token, owner, repo, branch) {
-  context.log(`Preparing commit for ${path}`);
+  context.log(`Committing ${path}...`);
   const body = {
-    message: `Admin: Neues Objekt ${path} hinzufügen`,
+    message: `Admin: Neues Objekt "${path}" hinzufügen`,
     content: Buffer.from(content).toString('base64'),
     branch,
   };
   if (sha) body.sha = sha;
 
-  context.log('Sending commit request');
   const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
     method: 'PUT',
     headers: {
@@ -109,9 +113,8 @@ async function commitFile(context, path, content, sha, token, owner, repo, branc
 
   if (!res.ok) {
     const err = await res.json();
-    context.log('Commit failed:', res.status, err);
+    context.log('Commit failed:', err);
     throw new Error(err.message || 'Commit fehlgeschlagen');
   }
-
-  context.log(`${path} committed successfully`);
+  context.log(`${path} committed`);
 }

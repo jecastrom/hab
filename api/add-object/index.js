@@ -31,30 +31,34 @@ module.exports = async function (context, req) {
     if (!indexRes.ok) throw new Error(`index.html laden fehlgeschlagen (${indexRes.status})`);
 
     const indexData = await indexRes.json();
-    let htmlContent = Buffer.from(indexData.content, 'base64').toString('utf8');
+    let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // 1. Dropdown: Füge neue Option vor dem schließenden </select> ein
-    const selectCloseRegex = /<\/select>/i;
-    const optionLine = `        <option value="${code}">${name}</option>\n        `;
-    if (selectCloseRegex.test(htmlContent)) {
-      htmlContent = htmlContent.replace(selectCloseRegex, `${optionLine}</select>`);
-      context.log('Dropdown-Option hinzugefügt (vor </select>)');
-    } else {
-      throw new Error('</select>-Tag nicht gefunden – Dropdown konnte nicht aktualisiert werden');
+    // 1. Dropdown: Neue Option vor dem letzten </select> einfügen
+    let selectFound = false;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (lines[i].trim().startsWith('</select>')) {
+        lines.splice(i, 0, `        <option value="${code}">${name}</option>`);
+        selectFound = true;
+        break;
+      }
     }
+    if (!selectFound) throw new Error('</select> nicht gefunden');
 
-    // 2. objectFiles: Füge neue Zeile vor dem schließenden } ein
-    const objectFilesCloseRegex = /\}\s*;?\s*$/m;  // Findet das letzte } am Ende des objectFiles
-    const mapLine = `      ${code}: '${code}.json',\n`;
-    if (objectFilesCloseRegex.test(htmlContent)) {
-      htmlContent = htmlContent.replace(objectFilesCloseRegex, `${mapLine}    }`);
-      context.log('objectFiles-Eintrag hinzugefügt (vor letztem })');
-    } else {
-      throw new Error('Schließende } von objectFiles nicht gefunden');
+    // 2. objectFiles: Neue Zeile vor der schließenden } einfügen
+    let objectFilesFound = false;
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (lines[i].trim() === '}') {
+        lines.splice(i, 0, `      ${code}: '${code}.json',`);
+        objectFilesFound = true;
+        break;
+      }
     }
+    if (!objectFilesFound) throw new Error('Schließende } von objectFiles nicht gefunden');
+
+    const updatedHtml = lines.join('\n');
 
     // Commit updated index.html
-    await commitFile(context, 'index.html', htmlContent, indexData.sha, token, owner, repo, branch);
+    await commitFile(context, 'index.html', updatedHtml, indexData.sha, token, owner, repo, branch);
 
     // Optional JSON file
     if (jsonContent) {

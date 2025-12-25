@@ -14,7 +14,6 @@
       --success: #198754;
       --danger: #dc3545;
       --help: #6c757d;
-      --selected: #e7f3ff;
     }
     body.dark-mode {
       --bg: #121212;
@@ -22,7 +21,6 @@
       --card-bg: #1e1e1e;
       --border: #495057;
       --help: #adb5bd;
-      --selected: #0d3a6d;
     }
     body {
       font-family: Arial, sans-serif;
@@ -92,14 +90,14 @@
       margin: 0;
     }
     .objekt-item {
-      padding: 15px;
+      display: flex;
+      align-items: center;
+      padding: 15px 0;
       border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      border-radius: 5px;
-      margin-bottom: 5px;
     }
-    .objekt-item.selected {
-      background: var(--selected);
+    .objekt-item input[type="checkbox"] {
+      margin-right: 15px;
+      transform: scale(1.3);
     }
     .objekt-title {
       font-weight: bold;
@@ -108,6 +106,7 @@
     .objekt-code {
       font-size: 0.9em;
       color: var(--help);
+      margin-left: 8px;
     }
     a.back {
       display: block;
@@ -142,11 +141,11 @@
     </div>
 
     <div class="section">
-      <h2>Aktuelle Objekte</h2>
+      <h2>Anzeigename</h2>
       <ul class="objekt-list" id="objektList">
         <li>Lade Objekte...</li>
       </ul>
-      <button class="btn-delete" onclick="deleteSelected()" id="deleteBtn" disabled>Ausgewähltes Objekt löschen</button>
+      <button class="btn-delete" onclick="deleteSelected()" id="deleteBtn" disabled>Ausgewählte löschen</button>
     </div>
 
     <div id="message"></div>
@@ -155,8 +154,6 @@
   </div>
 
   <script>
-    let selectedCode = null;
-
     async function loadObjekte() {
       try {
         const res = await fetch('index.html');
@@ -176,13 +173,13 @@
           if (match) {
             const code = match[1];
             const name = match[2];
-            // Ignore example entries like "MNO"
+            // Ignore example entries
             if (code.toLowerCase() === 'mno' || name.toLowerCase().includes('beispiel')) return;
 
             const li = document.createElement('li');
             li.className = 'objekt-item';
-            li.onclick = () => selectObjekt(code, li);
             li.innerHTML = `
+              <input type="checkbox" value="${code}">
               <div class="objekt-title">${name}</div>
               <div class="objekt-code">(${code})</div>
             `;
@@ -191,41 +188,15 @@
         });
 
         document.getElementById('deleteBtn').disabled = true;
+        list.addEventListener('change', () => {
+          const checked = list.querySelectorAll('input:checked').length > 0;
+          document.getElementById('deleteBtn').disabled = !checked;
+        });
       } catch (e) {
         document.getElementById('objektList').innerHTML = '<li>Fehler beim Laden der Objekte</li>';
       }
     }
 
-    function selectObjekt(code, element) {
-      // Deselect all
-      document.querySelectorAll('.objekt-item').forEach(item => item.classList.remove('selected'));
-      // Select this one
-      element.classList.add('selected');
-      selectedCode = code;
-      document.getElementById('deleteBtn').disabled = false;
-    }
-
-    async function deleteSelected() {
-      if (!selectedCode || !confirm(`Objekt "${selectedCode}" wirklich löschen?`)) return;
-
-      try {
-        const res = await fetch('/api/delete-object', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ codes: [selectedCode] })
-        });
-        const text = await res.text();
-        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
-        if (res.ok) {
-          selectedCode = null;
-          loadObjekte();
-        }
-      } catch (e) {
-        showMessage('Verbindungsfehler: ' + e.message, false);
-      }
-    }
-
-    // addObject() remains the same as before
     async function addObject() {
       const code = document.getElementById('code').value.trim().toLowerCase();
       const name = document.getElementById('name').value.trim();
@@ -270,6 +241,25 @@
           fileInput.value = '';
           loadObjekte();
         }
+      } catch (e) {
+        showMessage('Verbindungsfehler: ' + e.message, false);
+      }
+    }
+
+    async function deleteSelected() {
+      const checked = document.querySelectorAll('#objektList input:checked');
+      const codes = Array.from(checked).map(cb => cb.value);
+      if (codes.length === 0 || !confirm(`Wirklich ${codes.length} Objekt(e) löschen?`)) return;
+
+      try {
+        const res = await fetch('/api/delete-object', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ codes })
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) loadObjekte();
       } catch (e) {
         showMessage('Verbindungsfehler: ' + e.message, false);
       }

@@ -4,7 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin – Neues Objekt hinzufügen</title>
+
+  
   <style>
+      :root {
+    --bg: #ffffff;
+    --text: #000000;
+    --card-bg: #f9f9f9;
+    --border: #ccc;
+    --header-bg: #f0f0f0;
+    --button-bg: #007bff;
+    --button-hover: #0056b3;
+    --clear-bg: #6c757d;
+    --clear-hover: #545b62;
+    --th-bg: #f0f0f0;
+  }
+
+  body.dark-mode {
+    --bg: #121212;
+    --text: #e0e0e0;
+    --card-bg: #1e1e1e;
+    --border: #444;
+    --header-bg: #1f1f1f;
+    --button-bg: #0d6efd;
+    --button-hover: #0b5ed7;
+    --clear-bg: #495057;
+    --clear-hover: #343a40;
+    --th-bg: #2c2c2c;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .container {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+  }
+
+  button {
+    background: var(--button-bg);
+  }
+  button:hover {
+    background: var(--button-hover);
+  }
+  /* Add more elements if needed, e.g. inputs, labels */
+  input, select {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
     body { font-family: Arial, sans-serif; margin: 40px; background: #f4f4f4; color: #333; }
     .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     h1 { text-align: center; color: #007bff; }

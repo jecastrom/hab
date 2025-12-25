@@ -210,7 +210,6 @@
         <option value="hab">HaB</option>
         <option value="keh">KEH</option>
         <option value="kwf">KWF</option>
-        <option value="tes">TES</option>
         </select>
     </div>
 
@@ -274,7 +273,7 @@
         .then(response => {
           if (!response.ok) {
             throw new Error('Datei nicht gefunden');
-      tes: 'tes.json',
+      
           }
           return response.json();
         })
@@ -392,6 +391,7 @@
   </script>
 </body>
 </html>
+
 
 
 

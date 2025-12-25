@@ -33,27 +33,39 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // 1. Dropdown: Neue Option vor dem letzten </select> einfügen
-    let selectFound = false;
+    // 1. Objekt-Dropdown: Suche nach dem Select mit id="object"
+    let objectSelectFound = false;
     for (let i = lines.length - 1; i >= 0; i--) {
-      if (lines[i].trim().startsWith('</select>')) {
-        lines.splice(i, 0, `        <option value="${code}">${name}</option>`);
-        selectFound = true;
+      if (lines[i].trim().includes('<select id="object"')) {
+        // Suche rückwärts nach </select> ab dieser Position
+        for (let j = i; j < lines.length; j++) {
+          if (lines[j].trim() === '</select>') {
+            lines.splice(j, 0, `        <option value="${code}">${name}</option>`);
+            objectSelectFound = true;
+            break;
+          }
+        }
         break;
       }
     }
-    if (!selectFound) throw new Error('</select> nicht gefunden');
+    if (!objectSelectFound) throw new Error('Objekt-Select (id="object") nicht gefunden');
 
-    // 2. objectFiles: Neue Zeile vor der schließenden } einfügen
+    // 2. objectFiles: Suche nach der Zeile mit "const objectFiles = {"
     let objectFilesFound = false;
     for (let i = lines.length - 1; i >= 0; i--) {
-      if (lines[i].trim() === '}') {
-        lines.splice(i, 0, `      ${code}: '${code}.json',`);
-        objectFilesFound = true;
+      if (lines[i].trim().startsWith('const objectFiles = {')) {
+        // Suche rückwärts nach der schließenden } ab dieser Position
+        for (let j = i; j < lines.length; j++) {
+          if (lines[j].trim() === '}') {
+            lines.splice(j, 0, `      ${code}: '${code}.json',`);
+            objectFilesFound = true;
+            break;
+          }
+        }
         break;
       }
     }
-    if (!objectFilesFound) throw new Error('Schließende } von objectFiles nicht gefunden');
+    if (!objectFilesFound) throw new Error('objectFiles-Objekt nicht gefunden');
 
     const updatedHtml = lines.join('\n');
 

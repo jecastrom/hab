@@ -16,8 +16,8 @@
       --clear-bg: #6c757d;
       --clear-hover: #545b62;
       --th-bg: #f0f0f0;
-          
     }
+
     body.dark-mode {
       --bg: #121212;
       --text: #e0e0e0;
@@ -169,37 +169,38 @@
 </head>
 <body>
   <header>
-  <h1>Suche nach Gruppe oder Ring</h1>
-  <div style="display: flex; align-items: center; gap: 20px;">
-    <a href="admin.html" style="font-size: 0.9em; color: #007bff; text-decoration: none;">Admin</a>
-    <label class="theme-toggle">
-      <input type="checkbox" id="darkModeToggle">
-      <span class="slider">
-        <svg class="sun" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <svg class="moon" viewBox="0 0 24 24">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-        </svg>
-      </span>
-    </label>
+    <h1>Suche nach Gruppe oder Ring</h1>
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <a href="admin.html" style="font-size: 0.9em; color: #007bff; text-decoration: none;">Admin</a>
+      <label class="theme-toggle">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="slider">
+          <svg class="sun" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="moon" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </span>
+      </label>
+    </div>
   </header>
-    <!-- 
+  <!--
     HINWEIS FÜR NEUE OBJEKTE HINZUFÜGEN:
     Um ein neues Objekt hinzuzufügen, trage hier eine neue Zeile ein:
     <option value="kleinergeschriebenercode">Anzeigename</option>
-    
+   
     Beispiel für ein neues Objekt "MNO":
     <option value="mno">MNO</option>
-    
+   
     Der "value" muss klein geschrieben sein und genau dem Dateinamen (ohne .json) entsprechen.
     Der Text zwischen > und < ist das, was der Benutzer im Dropdown sieht.
     -->
@@ -210,9 +211,9 @@
         <option value="hab">HaB</option>
         <option value="keh">KEH</option>
         <option value="kwf">KWF</option>
-        </select>
+        <!-- Neue Objekte hier einfügen (siehe Hinweis oben) -->
+      </select>
     </div>
-
     <div style="flex: 1;">
       <label for="type">Typ auswählen:</label>
       <select id="type">
@@ -220,12 +221,10 @@
         <option value="Ring">Ring</option>
       </select>
     </div>
-
     <div style="flex: 2;">
       <label for="value">Nummer eingeben:</label>
       <input type="tel" id="value" placeholder="z. B. 101 oder 121" pattern="[0-9]*" inputmode="numeric">
     </div>
-
     <div>
       <label>&nbsp;</label>
       <div class="button-group">
@@ -234,42 +233,25 @@
       </div>
     </div>
   </div>
-
   <div id="status">Daten werden geladen...</div>
   <div id="results"></div>
-
   <script>
     let data = [];
     const statusDiv = document.getElementById('status');
     const resultsDiv = document.getElementById('results');
-
     // Map object keys to filenames
-    
-    // HINWEIS FÜR NEUE OBJEKTE HINZUFÜGEN:
-    // Um ein neues Objekt hinzuzufügen, trage hier eine neue Zeile ein:
-    // kleinergeschriebenercode: 'kleinergeschriebenercode.json',
-    //
-    // Beispiel für ein neues Objekt "MNO":
-    // mno: 'mno.json',
-    //
-    // Der Schlüssel (links) muss exakt mit dem "value" aus dem HTML-Dropdown oben übereinstimmen.
-    // Die Datei muss danach im GitHub-Repo hochgeladen werden (gleicher Ordner wie index.html).
     const objectFiles = {
       hab: 'hab.json',
       keh: 'keh.json',
       kwf: 'kwf.json'
       // Neue Objekte hier einfügen (siehe Hinweis oben)
-    
     };
-
     function loadData() {
       const object = document.getElementById('object').value;
       const filename = objectFiles[object];
-
       statusDiv.textContent = 'Daten werden geladen...';
       resultsDiv.innerHTML = '';
       data = [];
-
       fetch(filename)
         .then(response => {
           if (!response.ok) {
@@ -286,22 +268,17 @@
           statusDiv.innerHTML = '<p style="color:red;">Keine Daten verfügbar. Bitte die JSON-Datei hinzufügen.</p>';
         });
     }
-
     // Load data when object changes
     document.getElementById('object').addEventListener('change', loadData);
-
     // Initial load (HaB)
     loadData();
-
     // Dark mode
     const toggle = document.getElementById('darkModeToggle');
     const body = document.body;
-
     if (localStorage.getItem('darkMode') === 'enabled') {
       body.classList.add('dark-mode');
       toggle.checked = true;
     }
-
     toggle.addEventListener('change', () => {
       if (toggle.checked) {
         body.classList.add('dark-mode');
@@ -311,36 +288,29 @@
         localStorage.setItem('darkMode', 'disabled');
       }
     });
-
     // Enter key search
     document.getElementById('value').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         search();
       }
     });
-
     function search() {
       const type = document.getElementById('type').value;
       const value = document.getElementById('value').value.trim();
       resultsDiv.innerHTML = '';
-
       if (!value) {
         resultsDiv.innerHTML = '<p>Bitte eine Nummer eingeben.</p>';
         return;
       }
-
       if (data.length === 0) {
         resultsDiv.innerHTML = '<p>Keine Daten geladen. Bitte ein Objekt mit verfügbaren Daten auswählen.</p>';
         return;
       }
-
       const matches = data.filter(row => row[type] === value);
-
       if (matches.length === 0) {
         resultsDiv.innerHTML = '<p>Keine Ergebnisse gefunden.</p>';
         return;
       }
-
       let tableHTML = '<div class="table-container"><table><thead><tr>';
       if (type === 'Ring') {
         tableHTML += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Anz. Melder</th>';
@@ -348,9 +318,7 @@
         tableHTML += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Anz. Melder</th>';
       }
       tableHTML += '</tr></thead><tbody>';
-
       let cardsHTML = '<div class="results-cards">';
-
       matches.forEach(row => {
         tableHTML += '<tr>';
         if (type === 'Ring') {
@@ -359,7 +327,6 @@
           tableHTML += `<td>${row.Gruppe || ''}</td><td>${row.Installationsort || ''}</td><td>${row.Ring || ''}</td><td>${row["Anz.Melder"] || ''}</td>`;
         }
         tableHTML += '</tr>';
-
         cardsHTML += '<div class="card">';
         if (type === 'Ring') {
           cardsHTML += `<div><strong>Ring:</strong> ${row.Ring || ''}</div>`;
@@ -374,34 +341,16 @@
         }
         cardsHTML += '</div>';
       });
-
       tableHTML += '</tbody></table></div>';
       cardsHTML += '</div>';
-
       resultsDiv.innerHTML = tableHTML + cardsHTML;
     }
-
     function clearSearch() {
       document.getElementById('type').value = 'Gruppe';
       document.getElementById('value').value = '';
       resultsDiv.innerHTML = '';
       document.getElementById('value').focus();
-      
     }
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-

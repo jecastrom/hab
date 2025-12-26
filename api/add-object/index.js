@@ -33,26 +33,21 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // 1. Dropdown: Insert before the comment inside id="object" select
+    // 1. Dropdown: Insert before </select> of id="object"
     let objectSelectStart = lines.findIndex(line => line.trim().includes('<select id="object"'));
     if (objectSelectStart === -1) throw new Error('Objekt-Select (id="object") nicht gefunden');
 
-    let commentIndex = -1;
-    for (let i = objectSelectStart + 1; i < lines.length; i++) {
-      if (lines[i].trim() === '<!-- Neue Objekte hier einfügen (siehe Hinweis oben) -->') {
-        commentIndex = i;
-        break;
-      }
-    }
-    if (commentIndex === -1) throw new Error('Dropdown-Kommentar nicht gefunden');
+    let objectSelectEnd = lines.slice(objectSelectStart).findIndex(line => line.trim() === '</select>') + objectSelectStart;
+    if (objectSelectEnd === -1) throw new Error('Schließendes </select> nicht gefunden');
 
-    lines.splice(commentIndex, 0, `        <option value="${code}">${name}</option>`);
+    lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
 
-    // 2. objectFiles: Insert before the comment in objectFiles
-    let objectFilesCommentIndex = lines.findIndex(line => line.trim() === '// Neue Objekte hier einfügen (siehe Hinweis oben)');
-    if (objectFilesCommentIndex === -1) throw new Error('objectFiles-Kommentar nicht gefunden');
+    // 2. objectFiles: Insert right after the opening 'const objectFiles = {'
+    let objectFilesOpen = lines.findIndex(line => line.trim() === 'const objectFiles = {');
+    if (objectFilesOpen === -1) throw new Error('const objectFiles = { nicht gefunden');
 
-    lines.splice(objectFilesCommentIndex, 0, `      ${code}: '${code}.json',`);
+    // Insert the new line right after the opening {
+    lines.splice(objectFilesOpen + 1, 0, `      ${code}: '${code}.json',`);
 
     const updatedHtml = lines.join('\n');
 

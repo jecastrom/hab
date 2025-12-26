@@ -137,7 +137,7 @@
       <input type="file" id="jsonFile" accept=".json">
       <div class="help">Falls das Hinzufügen fehlschlägt, kannst du die Datei hier hochladen (Code und Name leer lassen).</div>
 
-      <button class="btn-add" onclick="addObject()">Objekt hinzufügen / Datei hochladen</button>
+      <button class="btn-add" onclick="addObject()">Objekt hinzufügen</button>
     </div>
 
     <div class="section">
@@ -155,7 +155,48 @@
 
   <script>
     async function loadObjekte() {
-      // Your existing loadObjekte code (no changes needed)
+      try {
+        const res = await fetch('index.html');
+        if (!res.ok) throw new Error('Fetch failed');
+        const text = await res.text();
+        const lines = text.split('\n');
+        const list = document.getElementById('objektList');
+        list.innerHTML = '';
+
+        const options = lines.filter(line => line.trim().includes('<option value="') && !line.trim().includes('Gruppe') && !line.trim().includes('Ring'));
+        if (options.length === 0) {
+          list.innerHTML = '<li>Keine Objekte vorhanden</li>';
+          return;
+        }
+
+        options.forEach(line => {
+          const match = line.match(/value="([^"]*)">([^<]+)</);
+          if (match) {
+            const code = match[1];
+            const name = match[2];
+            // Ignore example entries
+            if (code.toLowerCase() === 'mno' || name.toLowerCase().includes('beispiel')) return;
+
+            const li = document.createElement('li');
+            li.className = 'objekt-item';
+            li.innerHTML = `
+              <input type="checkbox" value="${code}">
+              <div class="objekt-title">${name}</div>
+              <div class="objekt-code">(${code})</div>
+            `;
+            list.appendChild(li);
+          }
+        });
+
+        document.getElementById('deleteBtn').disabled = true;
+        list.addEventListener('change', () => {
+          const checked = list.querySelectorAll('input:checked').length > 0;
+          document.getElementById('deleteBtn').disabled = !checked;
+        });
+      } catch (e) {
+        document.getElementById('objektList').innerHTML = '<li>Fehler beim Laden der Objekte: ' + e.message + '</li>';
+        console.error('Load error:', e);
+      }
     }
 
     async function addObject() {
@@ -175,7 +216,6 @@
         }
 
         const expectedCode = file.name.replace('.json', '');
-        // Check if code exists
         if (!currentCodes.includes(expectedCode)) {
           showMessage(`Fehler: Datei "${file.name}" passt zu keinem existierenden Objekt.`, false);
           return;
@@ -195,7 +235,7 @@
           const res = await fetch('/api/add-object', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code: expectedCode, name: 'dummy', jsonContent: jsonBase64, uploadOnly: true })  // uploadOnly flag to skip add
+            body: JSON.stringify({ code: expectedCode, name: 'dummy', jsonContent: jsonBase64, uploadOnly: true })
           });
           const text = await res.text();
           showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
@@ -214,16 +254,66 @@
         return;
       }
 
-      // Your existing add logic here...
-      // (keep the rest of the addObject code as is)
+      let jsonBase64 = null;
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        if (!file.name.endsWith('.json')) {
+          showMessage('Bitte nur .json-Dateien hochladen!', false);
+          return;
+        }
+        const reader = new FileReader();
+        await new Promise((resolve) => {
+          reader.onload = () => {
+            jsonBase64 = reader.result.split(',')[1];
+            resolve();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      try {
+        const res = await fetch('/api/add-object', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, name, jsonContent: jsonBase64 })
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) {
+          document.getElementById('code').value = '';
+          document.getElementById('name').value = '';
+          fileInput.value = '';
+          loadObjekte();
+        }
+      } catch (e) {
+        showMessage('Verbindungsfehler: ' + e.message, false);
+      }
     }
 
     async function deleteSelected() {
-      // Your existing deleteSelected code
+      const checked = document.querySelectorAll('#objektList input:checked');
+      const codes = Array.from(checked).map(cb => cb.value);
+      if (codes.length === 0 || !confirm(`Wirklich ${codes.length} Objekt(e) löschen?`)) return;
+
+      try {
+        const res = await fetch('/api/delete-object', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ codes })
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) loadObjekte();
+      } catch (e) {
+        showMessage('Verbindungsfehler: ' + e.message, false);
+      }
     }
 
     function showMessage(text, success) {
-      // Your existing showMessage code
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = success ? 'success' : 'error';
+      msg.style.display = 'block';
     }
 
     loadObjekte();

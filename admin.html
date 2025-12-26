@@ -234,6 +234,7 @@
         <input type="text" id="name" placeholder="MNO" required>
 
         <button class="btn-add" onclick="addObject()">Objekt hinzufügen</button>
+        <div class="help">Nach dem Hinzufügen kann die Bereitstellung 2-5 Minuten dauern. Warten Sie, bevor Sie weitere Änderungen vornehmen.</div>
       </section>
 
       <section id="upload" class="section">
@@ -243,11 +244,17 @@
           <!-- Populated dynamically -->
         </select>
 
-        <label for="jsonFile">JSON-Datei auswählen:</label>
-        <input type="file" id="jsonFile" accept=".json" required>
-        <div class="help">Die Datei wird als {code}.json hochgeladen und überschreibt ggf. die bestehende.</div>
+        <label for="source">Datenquelle auswählen:</label>
+        <select id="source">
+          <option value="esser">Esser Tools 8000 (CSV)</option>
+          <option value="hekatron">Hekatron</option>
+        </select>
 
-        <button class="btn-upload" onclick="uploadJson()">Hochladen</button>
+        <label for="uploadFile">Datei auswählen (CSV für Esser):</label>
+        <input type="file" id="uploadFile" accept=".csv,.json" required>
+        <div class="help">Die Datei wird verarbeitet und als {code}.json hochgeladen (überschreibt ggf. bestehende). Nach dem Hochladen kann die Bereitstellung 2-5 Minuten dauern. Warten Sie, bevor Sie weitere Änderungen vornehmen.</div>
+
+        <button class="btn-upload" onclick="uploadFileProcess()">Hochladen</button>
       </section>
 
       <section id="delete" class="section">
@@ -256,6 +263,7 @@
           <!-- Populated dynamically -->
         </ul>
         <button class="btn-delete" onclick="deleteSelected()" id="deleteBtn" disabled>Ausgewähltes löschen</button>
+        <div class="help">Nach dem Löschen kann die Bereitstellung 2-5 Minuten dauern. Warten Sie, bevor Sie weitere Änderungen vornehmen.</div>
       </section>
 
       <a class="back" href="index.html">← Zurück zur Suchseite</a>
@@ -396,16 +404,16 @@
         if (res.ok) {
           document.getElementById('code').value = '';
           document.getElementById('name').value = '';
-          // No need to reload here since create doesn't affect lists immediately (deployment async)
         }
       } catch (e) {
         showMessage('Verbindungsfehler: ' + e.message, false);
       }
     }
 
-    async function uploadJson() {
+    async function uploadFileProcess() {
       const selectedCode = document.getElementById('linkedObjekte').value;
-      const fileInput = document.getElementById('jsonFile');
+      const source = document.getElementById('source').value;
+      const fileInput = document.getElementById('uploadFile');
       const messageDiv = document.getElementById('message');
 
       messageDiv.style.display = 'none';
@@ -415,33 +423,43 @@
         return;
       }
       if (fileInput.files.length === 0) {
-        showMessage('Bitte eine JSON-Datei auswählen!', false);
+        showMessage('Bitte eine Datei auswählen!', false);
         return;
       }
 
       const file = fileInput.files[0];
-      if (!file.name.endsWith('.json')) {
-        showMessage('Bitte nur .json-Dateien hochladen!', false);
-        return;
-      }
+      let jsonContent = null;
 
-      let jsonBase64 = null;
-      const reader = new FileReader();
       try {
-        await new Promise((resolve, reject) => {
-          reader.onload = () => {
-            jsonBase64 = reader.result.split(',')[1];
-            resolve();
-          };
+        const fileText = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
           reader.onerror = () => reject(new Error('Fehler beim Lesen der Datei'));
-          reader.readAsDataURL(file);
+          reader.readAsText(file);
         });
-      } catch (e) {
-        showMessage(e.message, false);
-        return;
-      }
 
-      try {
+        if (source === 'esser') {
+          if (!file.name.endsWith('.csv')) {
+            showMessage('Für Esser bitte eine .csv-Datei hochladen!', false);
+            return;
+          }
+          jsonContent = processEsserCsv(fileText);
+        } else if (source === 'hekatron') {
+          showMessage('Hekatron-Verarbeitung noch nicht implementiert. Bitte kontaktieren Sie den Entwickler.', false);
+          return;
+          // Placeholder: jsonContent = processHekatron(fileText); // Implement when details available
+        } else {
+          showMessage('Ungültige Datenquelle ausgewählt.', false);
+          return;
+        }
+
+        if (!jsonContent) {
+          showMessage('Fehler bei der Dateiverarbeitung.', false);
+          return;
+        }
+
+        const jsonBase64 = btoa(unescape(encodeURIComponent(jsonContent))); // UTF-8 base64
+
         const res = await fetch('/api/add-object', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -453,8 +471,54 @@
           fileInput.value = '';
         }
       } catch (e) {
-        showMessage('Verbindungsfehler: ' + e.message, false);
+        showMessage('Verbindungs- oder Verarbeitungsfehler: ' + e.message, false);
       }
+    }
+
+    function processEsserCsv(csvText) {
+      const lines = csvText.split(/\r?\n/);
+      if (lines.length < 4) return null; // Mindestens Header + 1 Datensatz
+
+      const headerLine = lines[2].trim(); // Zeile 3 (Index 2)
+      const delimiter = headerLine.includes(';') ? ';' : ',';
+
+      const headers = headerLine.split(delimiter).map(h => h.trim());
+
+      const headerMap = {
+        "Nr.": "Gruppe",
+        "Zusatztext": "Installationsort",
+        "Installationsort": "Ring",
+        "Gruppentyp": "Gruppentyp",
+        "Betriebsart": "Betriebsart",
+        "Meldertechnik": "Meldertechnik",
+        "Anz.Melder": "Anz.Melder",
+        "Alarmreaktion": "Alarmreaktion"
+      };
+
+      const data = [];
+
+      for (let r = 3; r < lines.length; r++) {
+        const rowLine = lines[r].trim();
+        if (!rowLine) continue;
+
+        const values = rowLine.split(delimiter).map(v => v.trim());
+        const row = {};
+
+        for (let i = 0; i < headers.length; i++) {
+          const originalHeader = headers[i];
+          if (headerMap[originalHeader] && i < values.length) {
+            const key = headerMap[originalHeader];
+            let value = values[i].replace(/"/g, '\\"'); // Escape quotes
+            row[key] = value;
+          }
+        }
+
+        if (Object.keys(row).length > 0) {
+          data.push(row);
+        }
+      }
+
+      return JSON.stringify(data, null, 2);
     }
 
     async function deleteSelected() {

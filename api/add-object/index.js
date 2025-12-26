@@ -42,21 +42,23 @@ module.exports = async function (context, req) {
 
     lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
 
-    // 2. objectFiles: Insert before the closing } , add comma to previous if needed
+    // 2. objectFiles: Insert at the end before the closing };, with comma on previous if needed
     let objectFilesStart = lines.findIndex(line => line.trim().startsWith('const objectFiles = {'));
     if (objectFilesStart === -1) throw new Error('const objectFiles = { nicht gefunden');
 
     let objectFilesEnd = lines.slice(objectFilesStart).findIndex(line => line.trim() === '};') + objectFilesStart;
     if (objectFilesEnd === -1) throw new Error('Schließende }; für objectFiles nicht gefunden');
 
-    // Add comma to the last entry if it's not the first
+    // Add comma to previous last entry if the block has entries
     if (objectFilesEnd - objectFilesStart > 1) {
       let lastEntryIndex = objectFilesEnd - 1;
-      while (lines[lastEntryIndex].trim() === '') lastEntryIndex--;
-      lines[lastEntryIndex] = lines[lastEntryIndex].replace(/;?$/ , ',');  // Add comma if missing
+      while (lastEntryIndex > objectFilesStart && lines[lastEntryIndex].trim() === '') lastEntryIndex--;
+      if (lines[lastEntryIndex].trim() !== '') {
+        lines[lastEntryIndex] = lines[lastEntryIndex].replace(/([^\,])\s*$/, '$1,'); // Add comma if missing
+      }
     }
 
-    // Insert new entry before closing
+    // Insert the new entry before the closing }; (no comma on new one)
     lines.splice(objectFilesEnd, 0, `      ${code}: '${code}.json'`);
 
     const updatedHtml = lines.join('\n');
@@ -82,7 +84,7 @@ module.exports = async function (context, req) {
 async function commitFile(context, path, content, sha, token, owner, repo, branch) {
   const body = {
     message: `Admin: Neues Objekt "${path}" hinzufügen`,
-    content: Buffer.from(content).toString('base64'),
+    content: Buffer.from(content).toString('utf8'),
     branch,
   };
   if (sha) body.sha = sha;

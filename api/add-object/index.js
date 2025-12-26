@@ -33,20 +33,19 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // 1. Dropdown: Insert before </select> of id="object"
+    // 1. Dropdown: Insert new option BEFORE the comment
     let objectSelectStart = lines.findIndex(line => line.trim().includes('<select id="object"'));
     if (objectSelectStart === -1) throw new Error('Objekt-Select (id="object") nicht gefunden');
 
-    let objectSelectEnd = lines.slice(objectSelectStart).findIndex(line => line.trim() === '</select>') + objectSelectStart;
-    if (objectSelectEnd === -1) throw new Error('Schließendes </select> nicht gefunden');
+    let commentIndex = lines.slice(objectSelectStart).findIndex(line => line.trim() === '<!-- Neue Objekte hier einfügen (siehe Hinweis oben) -->') + objectSelectStart;
+    if (commentIndex === -1) throw new Error('Dropdown-Kommentar nicht gefunden');
 
-    lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
+    lines.splice(commentIndex, 0, `        <option value="${code}">${name}</option>`);
 
-    // 2. objectFiles: Insert right after the opening 'const objectFiles = {'
+    // 2. objectFiles: Insert right after the opening {
     let objectFilesOpen = lines.findIndex(line => line.trim() === 'const objectFiles = {');
     if (objectFilesOpen === -1) throw new Error('const objectFiles = { nicht gefunden');
 
-    // Insert the new line right after the opening {
     lines.splice(objectFilesOpen + 1, 0, `      ${code}: '${code}.json',`);
 
     const updatedHtml = lines.join('\n');

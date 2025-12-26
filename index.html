@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Suche nach Gruppe oder Ring</title>
   <style>
     :root {
@@ -40,6 +40,7 @@
       background: var(--bg);
       color: var(--text);
       transition: background 0.3s, color 0.3s;
+      min-height: calc(100vh - 60px); /* Adjust for tab bar */
     }
 
     header {
@@ -148,6 +149,36 @@
     .card div { margin-bottom: 8px; }
     .card strong { display: inline-block; width: 140px; }
 
+    /* Tab bar */
+    .tab-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      background: var(--card-bg);
+      border-top: 1px solid var(--border);
+      z-index: 1000;
+    }
+    .tab-bar a {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text);
+      transition: background 0.2s;
+    }
+    .tab-bar a.active {
+      background: var(--border);
+    }
+    .tab-bar svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--text);
+      display: block;
+      margin: 0 auto 5px;
+    }
+
     @media (min-width: 768px) {
       .controls { display: flex; gap: 10px; align-items: end; }
       select, input { width: auto; flex: 1; }
@@ -155,6 +186,7 @@
       .button-group button { flex: 1; }
       .results-cards { display: none !important; }
       .table-container { display: block; }
+      .tab-bar { display: none; } /* Hide on desktop */
     }
 
     @media (max-width: 767px) {
@@ -164,6 +196,7 @@
       .button-group button { flex: 1; }
       header { flex-direction: column; align-items: flex-start; }
       .theme-toggle { margin-top: 10px; align-self: flex-end; }
+      .tab-bar { display: flex; }
     }
   </style>
 </head>
@@ -187,40 +220,30 @@
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
           <svg class="moon" viewBox="0 0 24 24">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
           </svg>
         </span>
       </label>
     </div>
   </header>
-  <!--
-  HINWEIS FÜR NEUE OBJEKTE HINZUFÜGEN:
-  Um ein neues Objekt hinzuzufügen, trage hier eine neue Zeile ein:
-   
-  Beispiel für ein neues Objekt "MNO":
-  <option value="mno">MNO</option>
- 
-  Der "value" muss klein geschrieben sein und genau dem Dateinamen (ohne .json) entsprechen.
-  Der Text zwischen > und < ist das, was der Benutzer im Dropdown sieht.
-  -->
   <div class="controls">
-    <div style="flex: 1;">
-      <label for="object">Objekt auswählen:</label>
+    <div>
+      <label for="object">Objekt wählen:</label>
       <select id="object">
         <option value="hab">HaB</option>
-        <option value="keh">KEH</option>
-        <option value="kkk">KKK</option>
+        <option value="keh">KeH</option>
+        <!-- Add more as needed -->
       </select>
     </div>
-    <div style="flex: 1;">
-      <label for="type">Typ auswählen:</label>
+    <div>
+      <label for="type">Suchtyp:</label>
       <select id="type">
         <option value="Gruppe">Gruppe</option>
         <option value="Ring">Ring</option>
       </select>
     </div>
-    <div style="flex: 2;">
-      <label for="value">Nummer eingeben:</label>
+    <div>
+      <label for="value">Wert:</label>
       <input type="tel" id="value" placeholder="z. B. 101 oder 121" pattern="[0-9]*" inputmode="numeric">
     </div>
     <div>
@@ -233,6 +256,22 @@
   </div>
   <div id="status">Daten werden geladen...</div>
   <div id="results"></div>
+
+  <!-- Tab bar -->
+  <nav class="tab-bar">
+    <a href="index.html">
+      <svg width="24" height="24" viewBox="0 0 490 490" xmlns="http://www.w3.org/2000/svg">
+        <path d="M484.9 476.1L354.6 345.8c29.1-34 46.3-77.4 46.3-126.1 0-111.9-90.9-202.8-202.8-202.8S0 107.1 0 219s90.9 202.8 202.8 202.8c48.7 0 92.1-17.2 126.1-46.3l130.3 130.3c8.2 8.2 19.1 12.8 30.9 12.8s22.7-4.6 30.9-12.8c16.3-16.3 16.3-42.7 0-59zM202.8 378.8c-98.5 0-178.8-80.3-178.8-178.8S104.3 21 202.8 21s178.8 80.3 178.8 178.8-80.3 178.8-178.8 178.8z"/>
+      </svg>
+      Suchseite
+    </a>
+    <a href="admin.html" class="active">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 512 512">
+        <path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-17 17.2-28.9 16.8l-54-3.5c-8.5 7.3-17.6 14-27.2 19.8l-11.9 50.7c-2 8.5-9.2 14.7-18.4 14.7h-6.9c-9.2 0-16.5-6.2-18.4-14.7l-11.9-50.7c-9.6-5.8-18.7-12.5-27.2-19.8l-54 3.5c-11.9 .4-22.3-5.8-28.9-16.8l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 17-17.2 28.9-16.8l54 3.5c8.5-7.3 17.6-14 27.2-19.8l11.9-50.7c2-8.5 9.2-14.7 18.4-14.7h6.9c9.2 0 16.5 6.2 18.4 14.7l11.9 50.7c9.6 5.8 18.7 12.5 27.2 19.8l54-3.5c11.9-.4 22.3 5.8 28.9 16.8l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 464c114.9 0 208-93.1 208-208S370.9 48 256 48 48 141.1 48 256s93.1 208 208 208z"/>
+      </svg>
+      Admin
+    </a>
+  </nav>
   <script>
     let data = [];
     const statusDiv = document.getElementById('status');
@@ -240,8 +279,7 @@
     // Map object keys to filenames
     const objectFiles = {
       hab: 'hab.json',
-      keh: 'keh.json',
-      kkk: 'kkk.json'
+      keh: 'keh.json'
     };
     function loadData() {
       const object = document.getElementById('object').value;
@@ -351,16 +389,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -13,11 +13,19 @@ module.exports = async function (context, req) {
     if (!code || !jsonContent) {
       context.res = { status: 400, body: "Fehler: Code und JSON-Datei sind erforderlich für Upload-only" };
       return;
-    }
+  }
 
     try {
       const jsonDecoded = Buffer.from(jsonContent, 'base64').toString('utf8');
-      await commitFile(context, `${code}.json`, jsonDecoded, null, token, "jecastrom", "hab", "main");
+      let sha = null;
+      const fileRes = await fetch(`https://api.github.com/repos/jecastrom/hab/contents/${code}.json?ref=main`, {
+        headers: { Authorization: `token ${token}`, 'User-Agent': 'swa-admin' }
+      });
+      if (fileRes.ok) {
+        const fileData = await fileRes.json();
+        sha = fileData.sha;  // Get SHA for update
+      }
+      await commitFile(context, `${code}.json`, jsonDecoded, sha, token, "jecastrom", "hab", "main");
       context.res = { status: 200, body: `Erfolg! JSON-Datei für Objekt "${code}" hochgeladen.` };
     } catch (e) {
       context.res = { status: 500, body: `Fehler beim Upload: ${e.message || 'Unbekannt'}` };

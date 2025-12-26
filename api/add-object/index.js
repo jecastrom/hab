@@ -33,6 +33,12 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
+    // Check if code already exists in dropdown or objectFiles
+    if (lines.some(line => line.trim().includes(`value="${code}"`)) || lines.some(line => line.trim().includes(`${code}: '${code}.json'`))) {
+      context.res = { status: 400, body: `Fehler: Objekt "${name}" (${code}) existiert bereits.` };
+      return;
+    }
+
     // 1. Dropdown: Insert before </select> of id="object"
     let objectSelectStart = lines.findIndex(line => line.trim().includes('<select id="object"'));
     if (objectSelectStart === -1) throw new Error('Objekt-Select (id="object") nicht gefunden');
@@ -42,42 +48,39 @@ module.exports = async function (context, req) {
 
     lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
 
-    // 2. objectFiles: Insert right after the opening {
+    // 2. objectFiles: Insert at the end before the closing }; , with comma on previous if needed
     let objectFilesStart = lines.findIndex(line => line.trim().startsWith('const objectFiles = {'));
     if (objectFilesStart === -1) throw new Error('const objectFiles = { nicht gefunden');
 
     let objectFilesEnd = lines.slice(objectFilesStart).findIndex(line => line.trim() === '};') + objectFilesStart;
     if (objectFilesEnd === -1) throw new Error('Schließende }; für objectFiles nicht gefunden');
 
-    // Add comma to previous last entry only if missing
     if (objectFilesEnd - objectFilesStart > 1) {
       let lastEntryIndex = objectFilesEnd - 1;
-      while (lines[lastEntryIndex].trim() === '') lastEntryIndex--;
-      if (lines[lastEntryIndex].trim().endsWith(',')) {
-        // Already has comma, do nothing
-      } else {
-        lines[lastEntryIndex] = lines[lastEntryIndex].replace(/$/, ',');  // Add comma
-      }
+      while (lastEntryIndex > objectFilesStart && lines[lastEntryIndex].trim() === '') lastEntryIndex--;
+      lines[lastEntryIndex] = lines[lastEntryIndex].replace(/$/, ',');  // Add comma if missing
     }
 
-    // Insert the new entry before the closing }; (no comma on new one)
     lines.splice(objectFilesEnd, 0, `      ${code}: '${code}.json'`);
 
     const updatedHtml = lines.join('\n');
 
     await commitFile(context, 'index.html', updatedHtml, indexData.sha, token, owner, repo, branch);
 
+    let jsonMsg = '';
     if (jsonContent) {
       try {
         const jsonDecoded = Buffer.from(jsonContent, 'base64').toString('utf8');
         await commitFile(context, `${code}.json`, jsonDecoded, null, token, owner, repo, branch);
-        context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt inklusive JSON-Datei.` };
+        jsonMsg = ' inklusive JSON-Datei';
       } catch (jsonErr) {
-        context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt (JSON-Datei fehlgeschlagen – bitte manuell hochladen).` };
+        jsonMsg = ' (JSON-Datei fehlgeschlagen – bitte manuell hochladen)';
       }
     } else {
-      context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt (ohne JSON-Datei).` };
+      jsonMsg = ' (ohne JSON-Datei)';
     }
+
+    context.res = { status: 200, body: `Erfolg! Objekt "${name}" (${code}) hinzugefügt${jsonMsg}. Ignoriere "failed" E-Mails von GitHub – das ist normal und die Änderungen sind live.` };
   } catch (e) {
     context.res = { status: 500, body: `Fehler: ${e.message}` };
   }

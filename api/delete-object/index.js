@@ -5,7 +5,7 @@ module.exports = async function (context, req) {
     return;
   }
 
-  const { codes } = req.body || {}; 
+  const { codes } = req.body || {};
   if (!codes || !Array.isArray(codes) || codes.length === 0) {
     context.res = { status: 400, body: "Fehler: Keine Codes zum Löschen angegeben" };
     return;
@@ -24,17 +24,17 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // Remove from dropdown
-    lines = lines.filter(line => !codes.some(code => line.trim() === `        <option value="${code}">${getDisplayName(line)}</option>`));
+    // Remove from dropdown (flexible trim)
+    lines = lines.filter(line => !codes.some(code => line.trim().includes(`value="${code}"`)));
 
-    // Remove from objectFiles
-    lines = lines.filter(line => !codes.some(code => line.trim() === `      ${code}: '${code}.json',`));
+    // Remove from objectFiles (flexible, ignores spaces/comma)
+    lines = lines.filter(line => !codes.some(code => line.trim().replace(/,?$/, '').includes(`${code}: '${code}.json'`)));
 
-    // After removal, ensure the new last entry has no comma
+    // After removal, fix comma on new last entry in objectFiles
     let objectFilesStart = lines.findIndex(line => line.trim().startsWith('const objectFiles = {'));
     if (objectFilesStart !== -1) {
       let objectFilesEnd = lines.slice(objectFilesStart).findIndex(line => line.trim() === '};') + objectFilesStart;
-      if (objectFilesEnd !== -1 && objectFilesEnd - objectFilesStart > 1) {
+      if (objectFilesEnd - objectFilesStart > 1) {
         let lastEntryIndex = objectFilesEnd - 1;
         while (lines[lastEntryIndex].trim() === '') lastEntryIndex--;
         lines[lastEntryIndex] = lines[lastEntryIndex].replace(/,$/, '');  // Remove comma if present
@@ -65,7 +65,7 @@ module.exports = async function (context, req) {
 
     context.res = { status: 200, body: `Erfolg! ${codes.length} Objekt(e) gelöscht.` };
   } catch (e) {
-    context.res = { status: 500, body: `Fehler: ${e.message}` };
+    context.res = { status: 500, body: `Fehler: ${e.message || 'Unbekannter Fehler'}` };
   }
 };
 
@@ -87,9 +87,4 @@ async function commitFile(context, path, content, sha, token, owner, repo, branc
     const err = await res.json();
     throw new Error(err.message || 'Commit fehlgeschlagen');
   }
-}
-
-function getDisplayName(line) {
-  const match = line.match(/<option value="[^"]*">([^<]+)</option>/);
-  return match ? match[1] : '';
 }

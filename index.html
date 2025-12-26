@@ -112,7 +112,7 @@
     }
 
     label { margin-top: 5px; font-weight: bold; font-size: 0.9em; }
-    select, input, button {
+    select, input[type="tel"] {
       padding: 8px;
       margin: 0;
       box-sizing: border-box;
@@ -123,20 +123,31 @@
       border-radius: 4px;
     }
 
+    .button-group { 
+      display: flex; 
+      gap: 5px; 
+      margin-top: 5px; 
+    }
+
     button {
-      background: var(--button-bg);
+      flex: 1;
+      padding: 10px;
+      background: var(--clear-bg);
       color: white;
       border: none;
       cursor: pointer;
-      padding: 10px;
+      border-radius: 4px;
+      font-size: 1em;
     }
 
-    button:hover { background: var(--button-hover); }
+    button:hover { background: var(--clear-hover); }
 
-    #clearBtn { background: var(--clear-bg); }
-    #clearBtn:hover { background: var(--clear-hover); }
+    #searchBtn {
+      background: var(--button-bg);
+      flex: 2; /* Make search button wider/more prominent */
+    }
 
-    .button-group { display: flex; gap: 5px; margin-top: 5px; }
+    #searchBtn:hover { background: var(--button-hover); }
 
     #status { text-align: center; margin: 5px 0; min-height: 20px; font-size: 0.9em; }
 
@@ -202,7 +213,9 @@
       .controls { flex-direction: row; gap: 10px; align-items: end; padding: 20px 0; }
       select, input { width: auto; flex: 1; padding: 10px; }
       label { margin-top: 15px; font-size: 1em; }
-      .button-group { margin-top: 15px; gap: 10px; }
+      .button-group { margin-top: 15px; gap: 10px; flex-direction: row; }
+      button { flex: none; width: auto; padding: 10px 20px; }
+      #searchBtn { flex: none; }
       #status { margin-top: 20px; font-size: 1em; }
       #results { padding: 0; }
       th, td { padding: 12px; font-size: 1em; }
@@ -265,8 +278,8 @@
       <input type="tel" id="value" placeholder="z. B. 101 oder 121" pattern="[0-9]*" inputmode="numeric">
     </div>
     <div class="button-group">
-      <button onclick="search()">Suchen</button>
       <button id="clearBtn" onclick="clearSearch()">Löschen</button>
+      <button id="searchBtn" onclick="search()">Suchen</button>
     </div>
   </div>
   <div id="status">Daten werden geladen...</div>

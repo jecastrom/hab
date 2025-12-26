@@ -33,27 +33,26 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // 1. Dropdown: Insert before </select> of id="object"
+    // 1. Dropdown: Insert before the comment inside id="object" select
     let objectSelectStart = lines.findIndex(line => line.trim().includes('<select id="object"'));
     if (objectSelectStart === -1) throw new Error('Objekt-Select (id="object") nicht gefunden');
 
-    let objectSelectEnd = lines.slice(objectSelectStart).findIndex(line => line.trim() === '</select>') + objectSelectStart;
-    if (objectSelectEnd === -1) throw new Error('Schließendes </select> nicht gefunden');
-
-    lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
-
-    // 2. objectFiles: Insert new entry right after the opening {
-    let objectFilesOpen = lines.findIndex(line => line.trim() === 'const objectFiles = {');
-    if (objectFilesOpen === -1) throw new Error('const objectFiles = { nicht gefunden');
-
-    // Find the first non-empty line after the opening {
-    let insertIndex = objectFilesOpen + 1;
-    while (insertIndex < lines.length && lines[insertIndex].trim() === '') {
-      insertIndex++;
+    let commentIndex = -1;
+    for (let i = objectSelectStart + 1; i < lines.length; i++) {
+      if (lines[i].trim() === '<!-- Neue Objekte hier einfügen (siehe Hinweis oben) -->') {
+        commentIndex = i;
+        break;
+      }
     }
+    if (commentIndex === -1) throw new Error('Dropdown-Kommentar nicht gefunden');
 
-    // Add the new line with comma
-    lines.splice(insertIndex, 0, `      ${code}: '${code}.json',`);
+    lines.splice(commentIndex, 0, `        <option value="${code}">${name}</option>`);
+
+    // 2. objectFiles: Insert before the comment in objectFiles
+    let objectFilesCommentIndex = lines.findIndex(line => line.trim() === '// Neue Objekte hier einfügen (siehe Hinweis oben)');
+    if (objectFilesCommentIndex === -1) throw new Error('objectFiles-Kommentar nicht gefunden');
+
+    lines.splice(objectFilesCommentIndex, 0, `      ${code}: '${code}.json',`);
 
     const updatedHtml = lines.join('\n');
 

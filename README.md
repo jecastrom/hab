@@ -1,7 +1,7 @@
 # Gruppen & Ringe – Schnelle Lokalisierung für Brandmeldeanlagen
 
 ![Feuermelder Icon](https://img.shields.io/badge/Status-Entwickelt%20mit%20xAI-blue.svg)  
-*Ein intelligentes Tool für Informations- und Telekommunikationstechniker in der Brandmeldetechnik.*
+*Ein Tool für Informationselektroniker für Brandmeldetechnik und Gefahrenmeldeanlagen.*
 
 ## Überblick
 Dieses Web-Tool löst ein alltägliches Problem in der Wartung von Gefahrenmeldeanlagen: die rasche Zuordnung von Meldergruppen zu Ringen und umgekehrt. Es hilft Technikern, den Installationsort einer Gruppe zu finden, alle Gruppen in einem Ring aufzulisten und die Anzahl der Melder pro Gruppe einzusehen – alles in einer benutzerfreundlichen Oberfläche.

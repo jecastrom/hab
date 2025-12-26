@@ -50,16 +50,21 @@
       align-items: center;
       margin-bottom: 20px;
     }
-    .sidebar-header h2 {
-      font-size: 1.5em;
+    .sidebar-header h1 {
+      font-size: 1.8em;
       margin: 0;
+    }
+    .sidebar-header h2 {
+      font-size: 1.2em;
+      margin: 10px 0 30px;
+      color: var(--help);
     }
     .sidebar ul {
       list-style: none;
       padding: 0;
     }
     .sidebar li {
-      margin-bottom: 10px;
+      margin-bottom: 40px; /* Increased spacing to reach middle of screen */
       border-left: 4px solid transparent;
       padding-left: 10px;
     }
@@ -250,8 +255,9 @@
   <div class="container">
     <nav class="sidebar">
       <div class="sidebar-header">
-        <h2>Admin: Objekte verwalten</h2>
+        <h1>Gruppen & Ringe</h1>
       </div>
+      <h2>Admin: Objekte verwalten</h2>
       <ul>
         <li><a href="index.html">Suchseite</a></li>
         <li><a href="#create" class="active" onclick="showSection('create')">Neues Objekte hinzufügen</a></li>

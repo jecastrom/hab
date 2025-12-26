@@ -77,10 +77,15 @@
       margin-top: 10px;
     }
     #message {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
       padding: 15px;
-      margin-top: 20px;
-      border-radius: 5px;
+      text-align: center;
+      border-radius: 0 0 5px 5px;
       display: none;
+      z-index: 1000;
     }
     .success { background: #d1e7dd; color: #0f5132; }
     .error { background: #f8d7da; color: #842029; }
@@ -122,6 +127,8 @@
   </style>
 </head>
 <body>
+  <div id="message"></div>
+
   <div class="container">
     <h1>Admin: Objekte verwalten</h1>
 
@@ -147,8 +154,6 @@
       </ul>
       <button class="btn-delete" onclick="deleteSelected()" id="deleteBtn" disabled>Ausgewählte löschen</button>
     </div>
-
-    <div id="message"></div>
 
     <a class="back" href="index.html">← Zurück zur Suchseite</a>
   </div>
@@ -231,10 +236,10 @@
             jsonBase64 = reader.result.split(',')[1];
             resolve();
           };
-          reader.onerror = reject;
+          reader.onerror = () => reject(new Error('Fehler beim Lesen der Datei'));
           reader.readAsDataURL(file);
         }).catch(e => {
-          showMessage('Fehler beim Lesen der Datei.', false);
+          showMessage(e.message, false);
           return;
         });
 
@@ -269,12 +274,16 @@
           return;
         }
         const reader = new FileReader();
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
           reader.onload = () => {
             jsonBase64 = reader.result.split(',')[1];
             resolve();
           };
+          reader.onerror = reject;
           reader.readAsDataURL(file);
+        }).catch(e => {
+          showMessage('Fehler beim Lesen der Datei.', false);
+          return;
         });
       }
 

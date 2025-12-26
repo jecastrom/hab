@@ -33,20 +33,31 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // 1. Dropdown: Insert new option BEFORE the comment
+    // 1. Dropdown: Insert before </select> of id="object"
     let objectSelectStart = lines.findIndex(line => line.trim().includes('<select id="object"'));
     if (objectSelectStart === -1) throw new Error('Objekt-Select (id="object") nicht gefunden');
 
-    let commentIndex = lines.slice(objectSelectStart).findIndex(line => line.trim() === '<!-- Neue Objekte hier einfügen (siehe Hinweis oben) -->') + objectSelectStart;
-    if (commentIndex === -1) throw new Error('Dropdown-Kommentar nicht gefunden');
+    let objectSelectEnd = lines.slice(objectSelectStart).findIndex(line => line.trim() === '</select>') + objectSelectStart;
+    if (objectSelectEnd === -1) throw new Error('Schließendes </select> nicht gefunden');
 
-    lines.splice(commentIndex, 0, `        <option value="${code}">${name}</option>`);
+    lines.splice(objectSelectEnd, 0, `        <option value="${code}">${name}</option>`);
 
-    // 2. objectFiles: Insert right after the opening {
-    let objectFilesOpen = lines.findIndex(line => line.trim() === 'const objectFiles = {');
-    if (objectFilesOpen === -1) throw new Error('const objectFiles = { nicht gefunden');
+    // 2. objectFiles: Insert before the closing } , add comma to previous if needed
+    let objectFilesStart = lines.findIndex(line => line.trim().startsWith('const objectFiles = {'));
+    if (objectFilesStart === -1) throw new Error('const objectFiles = { nicht gefunden');
 
-    lines.splice(objectFilesOpen + 1, 0, `      ${code}: '${code}.json',`);
+    let objectFilesEnd = lines.slice(objectFilesStart).findIndex(line => line.trim() === '};') + objectFilesStart;
+    if (objectFilesEnd === -1) throw new Error('Schließende }; für objectFiles nicht gefunden');
+
+    // Add comma to the last entry if it's not the first
+    if (objectFilesEnd - objectFilesStart > 1) {
+      let lastEntryIndex = objectFilesEnd - 1;
+      while (lines[lastEntryIndex].trim() === '') lastEntryIndex--;
+      lines[lastEntryIndex] = lines[lastEntryIndex].replace(/;?$/ , ',');  // Add comma if missing
+    }
+
+    // Insert new entry before closing
+    lines.splice(objectFilesEnd, 0, `      ${code}: '${code}.json'`);
 
     const updatedHtml = lines.join('\n');
 

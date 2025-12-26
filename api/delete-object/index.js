@@ -24,10 +24,10 @@ module.exports = async function (context, req) {
     const indexData = await indexRes.json();
     let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
 
-    // Remove dropdown options
-    lines = lines.filter(line => !codes.some(code => line.trim() === `        <option value="${code}">${getDisplayName(line)}` || line.trim().includes(`value="${code}"`)));
+    // Remove from dropdown
+    lines = lines.filter(line => !codes.some(code => line.trim().includes(`value="${code}"`)));
 
-    // Remove objectFiles entries
+    // Remove from objectFiles
     lines = lines.filter(line => !codes.some(code => line.trim() === `      ${code}: '${code}.json',`));
 
     const updatedHtml = lines.join('\n');
@@ -68,11 +68,7 @@ async function commitFile(context, path, content, sha, token, owner, repo, branc
 
   const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
     method: 'PUT',
-    headers: {
-      Authorization: `token ${token}`,
-      'User-Agent': 'admin',
-      'Content-Type': 'application/json'
-    },
+    headers: { Authorization: `token ${token}`, 'User-Agent': 'admin', 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
 
@@ -80,9 +76,4 @@ async function commitFile(context, path, content, sha, token, owner, repo, branc
     const err = await res.json();
     throw new Error(err.message || 'Commit fehlgeschlagen');
   }
-}
-
-function getDisplayName(line) {
-  const match = line.match(/<option value="[^"]*">([^<]+)</);
-  return match ? match[1] : '';
 }

@@ -33,7 +33,12 @@ Für detaillierte Anleitungen siehe [Wiki](wiki-link-placeholder).
 *Entwickelt mit Fokus auf Einfachheit und Zuverlässigkeit.
 
 
-Project Structure:
+### Project Structure
+
+This repository is organized for Azure Static Web Apps (SWA) deployment: static files in root, Azure Functions in `/api/`. Below is the file tree:
+
+
+plain ```
 
 hab/
 ├── api/                  # Azure Functions backend
@@ -49,3 +54,11 @@ hab/
 ├── scripts/              # JS files if modularized
 │   └── auth.js           # Shared auth utils (e.g., JWT check)
 └── users.json            # Stored in root or data/ (committed to GitHub)
+
+```
+
+- **Static Files**: Served directly by SWA for performance.
+- **Functions**: Auto-deployed as API endpoints (e.g., `/api/login`).
+- **Data**: `users.json` acts as simple DB (GitHub-hosted; update via Functions for security).
+
+For deployment: Push to GitHub → SWA auto-builds. Configure `JWT_SECRET` in Azure Function app settings.

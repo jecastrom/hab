@@ -2,42 +2,112 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
-  <!-- Your styles here -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Login – Gruppen & Ringe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg, #f8f9fa);
+      color: var(--text, #212529);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark-mode { --bg: #121212; --text: #e9ecef; }
+    .login-container {
+      background: var(--card-bg, #ffffff);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+    h1 { color: var(--primary, #0d6efd); }
+    label { display: block; text-align: left; margin: 15px 0 5px; font-weight: bold; }
+    input {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid var(--border, #dee2e6);
+      border-radius: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background: var(--primary, #0d6efd);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+    button#biometricBtn { background: var(--success, #198754); margin-top: 10px; }
+    .error { color: #dc3545; margin-top: 10px; }
+  </style>
+  <script src="https://unpkg.com/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
 </head>
 <body>
-  <h1>Login</h1>
-  <form onsubmit="login(event)">
-    <label for="username">Benutzername:</label>
-    <input type="text" id="username" required>
-    <label for="password">Passwort:</label>
-    <input type="password" id="password" required>
-    <button type="submit">Anmelden</button>
-  </form>
+  <div class="login-container">
+    <h1>Login</h1>
+    <form id="loginForm">
+      <label for="username">Benutzername</label>
+      <input type="text" id="username" required autocomplete="username">
+
+      <label for="password">Passwort</label>
+      <input type="password" id="password" required autocomplete="current-password">
+
+      <button type="submit">Anmelden mit Passwort</button>
+    </form>
+    <button id="biometricBtn" style="display:none;">Anmelden mit Biometrie</button>
+    <div id="errorMsg" class="error"></div>
+  </div>
+
   <script>
-    async function login(e) {
+    const form = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+    const biometricBtn = document.getElementById('biometricBtn');
+
+    // Show biometric button if supported and registered (simple check)
+    if ('credentials' in navigator) {
+      biometricBtn.style.display = 'block';
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('username').value;
+      errorMsg.textContent = '';
+      const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
+
       try {
         const res = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
+
         if (res.ok) {
           const { token } = await res.json();
           localStorage.setItem('jwt', token);
           window.location.href = 'index.html';
         } else {
-          alert('Falsche Anmeldedaten');
+          const text = await res.text();
+          errorMsg.textContent = text || 'Falsche Anmeldedaten';
         }
       } catch (err) {
-        alert('Fehler: ' + err.message);
+        errorMsg.textContent = 'Verbindungsfehler';
       }
-    }
+    });
+
+    biometricBtn.addEventListener('click', async () => {
+      // Call your biometric login function here (from auth.js or inline)
+      // For now, placeholder alert
+      alert('Biometrie-Anmeldung (implementiere loginBiometric() aus auth.js)');
+    });
   </script>
 </body>
 </html>
-

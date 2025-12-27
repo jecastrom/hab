@@ -38,7 +38,7 @@ Für detaillierte Anleitungen siehe [Wiki](wiki-link-placeholder).
 This repository is organized for Azure Static Web Apps (SWA) deployment: static files in root, Azure Functions in `/api/`. Below is the file tree:
 
 
-plain ```
+plain```
 
 hab/
 ├── api/                  # Azure Functions backend

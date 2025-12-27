@@ -39,22 +39,33 @@ This repository is organized for Azure Static Web Apps (SWA) deployment: static 
 
 
 ```
-
 hab/
 ├── api/                  # Azure Functions backend
-│   ├── login/            # Function folder for /api/login
-│   │   ├── function.json # Binding config
-│   │   └── index.js      # Login logic code
-│   ├── add-object/       # Your existing functions...
-│   └── delete-object/
-├── login.html            # Static login page (root for direct access)
+│   ├── login/            # Password login
+│   │   ├── function.json
+│   │   └── index.js
+│   ├── register-biometric/ # Biometric registration
+│   │   ├── function.json
+│   │   └── index.js
+│   ├── login-biometric/  # Biometric login
+│   │   ├── function.json
+│   │   └── index.js
+│   ├── users/            # User management (CRUD)
+│   │   ├── function.json
+│   │   └── index.js
+│   ├── add-object/       # Existing
+│   │   ├── function.json
+│   │   └── index.js
+│   └── delete-object/    # Existing
+│       ├── function.json
+│       └── index.js
+├── login.html            # Static login page
 ├── index.html            # Main search page
 ├── admin.html            # Admin panel
-├── styles.css            # If separated (optional)
-├── scripts/              # JS files if modularized
-│   └── auth.js           # Shared auth utils (e.g., JWT check)
-└── users.json            # Stored in root or data/ (committed to GitHub)
-
+├── styles.css            # Shared CSS (optional)
+├── scripts/              # Modular JS (optional)
+│   └── auth.js           # Shared auth/biometric utils
+└── users.json            # User data (in root)
 ```
 
 - **Static Files**: Served directly by SWA for performance.

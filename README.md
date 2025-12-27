@@ -44,13 +44,13 @@ hab/
 │   ├── login/            # Password login
 │   │   ├── function.json
 │   │   └── index.js
-│   ├── register-biometric/ # Biometric registration
+│   ├── register-biometric/ # New: Biometric registration (after password login)
 │   │   ├── function.json
-│   │   └── index.js
-│   ├── login-biometric/  # Biometric login
+│   │   └── index.js      # Code below
+│   ├── login-biometric/  # New: Biometric login (challenge + verify)
 │   │   ├── function.json
-│   │   └── index.js
-│   ├── users/            # User management (CRUD)
+│   │   └── index.js      # Code below
+│   ├── users/            # User management (CRUD, admin-only)
 │   │   ├── function.json
 │   │   └── index.js
 │   ├── add-object/       # Existing
@@ -59,13 +59,13 @@ hab/
 │   └── delete-object/    # Existing
 │       ├── function.json
 │       └── index.js
-├── login.html            # Static login page
-├── index.html            # Main search page
-├── admin.html            # Admin panel
+├── login.html            # Static login page (with biometric buttons)
+├── index.html            # Main search page (protected)
+├── admin.html            # Admin panel (protected, with user mgmt)
 ├── styles.css            # Shared CSS (optional)
 ├── scripts/              # Modular JS (optional)
-│   └── auth.js           # Shared auth/biometric utils
-└── users.json            # User data (in root)
+│   └── auth.js           # Shared auth/biometric utils (code below)
+└── users.json            # User data (in root; add publicKey field)
 ```
 
 - **Static Files**: Served directly by SWA for performance.

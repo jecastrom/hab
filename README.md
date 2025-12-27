@@ -1,6 +1,6 @@
 # Gruppen & Ringe – Schnelle Lokalisierung für Brandmeldeanlagen
 
-![Feuermelder Icon](https://img.shields.io/badge/Status-Entwickelt%20mit%20xAI-blue.svg)  
+ 
 *Ein Tool für Informationselektroniker für Brandmeldetechnik und Gefahrenmeldeanlagen.*
 
 ## Überblick

@@ -4,7 +4,8 @@
   "description": "API for Gruppen & Ringe app",
   "main": "index.js",
   "scripts": {
-    "start": "func start"
+    "start": "func start",
+    "build": "echo 'No build needed'"  // No-op to satisfy Oryx
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",

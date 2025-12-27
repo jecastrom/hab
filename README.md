@@ -30,4 +30,22 @@ Entwickelt für den Praxiseinsatz, ermöglicht es eine effiziente Suche basieren
 
 Für detaillierte Anleitungen siehe [Wiki](wiki-link-placeholder).
 
-*Entwickelt mit Fokus auf Einfachheit und Zuverlässigkeit – Feedback willkommen!* 🚀
+*Entwickelt mit Fokus auf Einfachheit und Zuverlässigkeit.
+
+
+Project Structure:
+
+hab/
+├── api/                  # Azure Functions backend
+│   ├── login/            # Function folder for /api/login
+│   │   ├── function.json # Binding config
+│   │   └── index.js      # Login logic code
+│   ├── add-object/       # Your existing functions...
+│   └── delete-object/
+├── login.html            # Static login page (root for direct access)
+├── index.html            # Main search page
+├── admin.html            # Admin panel
+├── styles.css            # If separated (optional)
+├── scripts/              # JS files if modularized
+│   └── auth.js           # Shared auth utils (e.g., JWT check)
+└── users.json            # Stored in root or data/ (committed to GitHub)

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <!-- Your styles here -->
+</head>
+<body>
+  <h1>Login</h1>
+  <form onsubmit="login(event)">
+    <label for="username">Benutzername:</label>
+    <input type="text" id="username" required>
+    <label for="password">Passwort:</label>
+    <input type="password" id="password" required>
+    <button type="submit">Anmelden</button>
+  </form>
+  <script>
+    async function login(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        if (res.ok) {
+          const { token } = await res.json();
+          localStorage.setItem('jwt', token);
+          window.location.href = 'index.html';
+        } else {
+          alert('Falsche Anmeldedaten');
+        }
+      } catch (err) {
+        alert('Fehler: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

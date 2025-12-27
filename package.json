@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "func start",
-    "build": "echo 'No build needed'"  // No-op to satisfy Oryx
+    "build": "echo 'No build needed'"
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",

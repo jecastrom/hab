@@ -1,8 +1,8 @@
 [
   {
     "username": "admin",
-    "hashedPassword": "$2b$10$K.0Xt8y8m8Gq3QJ3b3b3bO3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b", // Hash of 'password' (generate real one)
+    "hashedPassword": "$2b$10$your-hashed-password-here",
     "role": "admin",
-    "publicKey": null // For biometrics
+    "publicKey": null
   }
 ]

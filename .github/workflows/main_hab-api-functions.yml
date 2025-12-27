@@ -12,16 +12,16 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Keep Ubuntu for faster builds
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4  # Upgraded to v4
+      - uses: actions/checkout@v4
 
       - name: Fix Git config permissions
-        run: chmod -R u+w .git/config  # Workaround for lock error
+        run: chmod -R u+w .git/config  # Ensures writable for config unset
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v4  # Upgrade to v4 if using
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -32,16 +32,16 @@ jobs:
           npm run build --if-present
 
       - name: Zip artifact for deployment
-        run: zip -r ../node-app.zip .  # Linux zip command
+        run: zip -r ../node-app.zip .
 
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4  # Upgraded to v4
+        uses: actions/upload-artifact@v4
         with:
           name: node-app
           path: node-app.zip
 
   deploy:
-    runs-on: ubuntu-latest  # Consistent with build
+    runs-on: ubuntu-latest
     needs: build
     environment:
       name: 'Production'
@@ -49,7 +49,7 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4  # Upgraded
+        uses: actions/download-artifact@v4
         with:
           name: node-app
 

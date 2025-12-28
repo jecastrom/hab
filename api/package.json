@@ -1,19 +1,15 @@
 {
-  "name": "hab-api",
+  "name": "hab-api-functions",
   "version": "1.0.0",
-  "description": "API for Gruppen & Ringe app",
-  "main": "index.js",
+  "description": "Backend APIs for Gruppen & Ringe Tool",
   "scripts": {
     "start": "func start",
-    "build": "echo 'No build needed'"
+    "test": "echo \"No tests yet\""
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",
     "bcryptjs": "^2.4.3",
     "@github/webauthn-json": "^2.1.1"
-  },
-  "devDependencies": {
-    "azure-functions-core-tools": "^4.0.0"
   },
   "engines": {
     "node": "20.x"

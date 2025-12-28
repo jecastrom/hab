@@ -201,6 +201,7 @@
         <option value="hab">HAB</option>
         <option value="keh">KEH</option>
         <!-- Add more as needed -->
+        <option value="test">Test Object</option>
       </select>
     </div>
     <div>
@@ -229,7 +230,8 @@
     // Map object keys to filenames
     const objectFiles = {
       hab: 'hab.json',
-      keh: 'keh.json'
+      keh: 'keh.json',
+      test: 'test.json'
     };
     function loadData() {
       const object = document.getElementById('object').value;

@@ -17,7 +17,7 @@ jobs:
       - name: Install Dependencies
         run: |
           cd api
-          npm ci  # Install in /api/
+          npm install  # Changed from ci to install for no-lock scenarios
       - name: ZIP API
         run: |
           cd api

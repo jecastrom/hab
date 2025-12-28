@@ -1,7 +1,7 @@
 [
   {
     "username": "admin",
-    "hashedPassword": "$2b$10$your-hashed-password-here",
+    "hashedPassword": "$2a$10$vl1Q8YRbAJ2J5AjpbcITX.fZ1TiL4d2emvquY0Ko7nQoL/M0D8lP2",
     "role": "admin",
     "publicKey": null
   }

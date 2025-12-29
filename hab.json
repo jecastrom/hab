@@ -11218,5 +11218,9 @@
     "Meldertechnik": "Analog TAL",
     "Anz.Melder": "1",
     "Alarmreaktion": " (direkt)"
+  },
+  {
+    "code": "unique-test-123",
+    "name": "Test Object Name"
   }
 ]

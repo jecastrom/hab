@@ -268,10 +268,8 @@
       <h1>Admin: Objekte verwalten</h1>
       <section id="create" class="section active">
         <h2>Neues Objekte hinzufügen</h2>
-        <label for="code">Interner Code (klein, z. B. "mno"):</label>
-        <input type="text" id="code" placeholder="mno" required>
-        <label for="name">Anzeigename (z. B. "MNO"):</label>
-        <input type="text" id="name" placeholder="MNO" required>
+        <label for="code">Objekte Code (alphanumerisch, Großbuchstaben, keine Leerzeichen):</label>
+        <input type="text" id="code" placeholder="MNO" required>
         <button class="btn-add" onclick="addObject()">Objekt hinzufügen</button>
         <div class="help">Nach dem Hinzufügen kann die Bereitstellung 2-5 Minuten dauern. Warten Sie, bevor Sie weitere Änderungen vornehmen.</div>
       </section>
@@ -303,7 +301,7 @@
     </main>
   </div>
   <script>
-    const FUNCTION_URL = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net';  // Direct Azure Functions domain (replace if staging/prod changes)
+    const FUNCTION_URL = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net';  // Direct Azure Functions domain
 
     let currentCodes = [];
     let currentObjekte = []; // Array of {code, name}
@@ -334,12 +332,9 @@
         loadObjekte();
       }
     }
-    // Input enforcement
+    // Input enforcement for single field (uppercase, alphanum, no spaces)
     document.getElementById('code').addEventListener('input', (e) => {
-      e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''); // Lowercase, alphanum only
-    });
-    document.getElementById('name').addEventListener('input', (e) => {
-      e.target.value = e.target.value.toUpperCase(); // Uppercase
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     });
     async function loadObjekte() {
       try {
@@ -359,4 +354,233 @@
           return;
         }
         options.forEach(line => {
-          const match
+          const match = line.match(/value="([^"]*)">([^<]+)</);
+          if (match) {
+            const code = match[1];
+            const name = match[2];
+            // Ignore examples
+            if (code.toLowerCase() === 'mno' || name.toLowerCase().includes('beispiel')) return;
+            currentCodes.push(code);
+            currentObjekte.push({ code, name });
+            // For delete list
+            const li = document.createElement('li');
+            li.className = 'objekt-item';
+            li.innerHTML = `
+              <input type="checkbox" value="${code}" onchange="handleCheckboxChange(this)">
+              <div class="objekt-title">${name}</div>
+              <div class="objekt-code">(${code})</div>
+            `;
+            list.appendChild(li);
+            // For upload select
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = `${name} (${code})`;
+            select.appendChild(opt);
+          }
+        });
+        document.getElementById('deleteBtn').disabled = true;
+      } catch (e) {
+        document.getElementById('objektList').innerHTML = '<li>Fehler beim Laden der Objekte</li>';
+        document.getElementById('linkedObjekte').innerHTML = '<option>Fehler beim Laden</option>';
+      }
+    }
+    // Enforce single checkbox for delete
+    function handleCheckboxChange(checkbox) {
+      const checkboxes = document.querySelectorAll('#objektList input[type="checkbox"]');
+      if (checkbox.checked) {
+        checkboxes.forEach(cb => {
+          if (cb !== checkbox) cb.disabled = true;
+        });
+        document.getElementById('deleteBtn').disabled = false;
+      } else {
+        checkboxes.forEach(cb => cb.disabled = false);
+        document.getElementById('deleteBtn').disabled = true;
+      }
+    }
+    async function addObject() {
+      const code = document.getElementById('code').value.trim();
+      const messageDiv = document.getElementById('message');
+      messageDiv.style.display = 'none';
+      if (!code) {
+        showMessage('Bitte Objekte Code ausfüllen!', false);
+        return;
+      }
+      try {
+        const token = localStorage.getItem('token');  // From login.html
+        if (!token) {
+          showMessage('Bitte einloggen!', false);
+          window.location.href = 'login.html';
+          return;
+        }
+        const res = await fetch(`${FUNCTION_URL}/api/add-object`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ code: code.toLowerCase(), name: code })  // Backend handles lower for code, upper for name
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) {
+          document.getElementById('code').value = '';
+        }
+      } catch (e) {
+        showMessage('Verbindungsfehler: ' + e.message, false);
+        console.error('Add object failed:', e);  // Temp for debug
+      }
+    }
+    async function uploadFileProcess() {
+      const selectedCode = document.getElementById('linkedObjekte').value;
+      const source = document.getElementById('source').value;
+      const fileInput = document.getElementById('uploadFile');
+      const messageDiv = document.getElementById('message');
+      messageDiv.style.display = 'none';
+      if (!selectedCode) {
+        showMessage('Bitte ein Objekte auswählen!', false);
+        return;
+      }
+      if (fileInput.files.length === 0) {
+        showMessage('Bitte eine Datei auswählen!', false);
+        return;
+      }
+      const file = fileInput.files[0];
+      let jsonContent = null;
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          showMessage('Bitte einloggen!', false);
+          window.location.href = 'login.html';
+          return;
+        }
+        const fileText = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Fehler beim Lesen der Datei'));
+          reader.readAsText(file);
+        });
+        if (source === 'esser') {
+          if (!file.name.endsWith('.csv')) {
+            showMessage('Für Esser bitte eine .csv-Datei hochladen!', false);
+            return;
+          }
+          jsonContent = processEsserCsv(fileText);
+        } else if (source === 'hekatron') {
+          showMessage('Hekatron-Verarbeitung noch nicht implementiert. Bitte kontaktieren Sie den Entwickler.', false);
+          return;
+        } else {
+          showMessage('Ungültige Datenquelle ausgewählt.', false);
+          return;
+        }
+        if (!jsonContent) {
+          showMessage('Fehler bei der Dateiverarbeitung.', false);
+          return;
+        }
+        const jsonBase64 = btoa(unescape(encodeURIComponent(jsonContent))); // UTF-8 base64
+        const res = await fetch(`${FUNCTION_URL}/api/add-object`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ code: selectedCode, jsonContent: jsonBase64, uploadOnly: true })
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) {
+          fileInput.value = '';
+        }
+      } catch (e) {
+        showMessage('Verbindungs- oder Verarbeitungsfehler: ' + e.message, false);
+        console.error('Upload failed:', e);
+      }
+    }
+    function processEsserCsv(csvText) {
+      const lines = csvText.split(/\r?\n/);
+      if (lines.length < 4) return null; // Mindestens Header + 1 Datensatz
+      const headerLine = lines[2].trim(); // Zeile 3 (Index 2)
+      const delimiter = headerLine.includes(';') ? ';' : ',';
+      const headers = headerLine.split(delimiter).map(h => h.trim());
+      const headerMap = {
+        "Nr.": "Gruppe",
+        "Zusatztext": "Installationsort",
+        "Installationsort": "Ring",
+        "Gruppentyp": "Gruppentyp",
+        "Betriebsart": "Betriebsart",
+        "Meldertechnik": "Meldertechnik",
+        "Anz.Melder": "Anz.Melder",
+        "Alarmreaktion": "Alarmreaktion"
+      };
+      const data = [];
+      for (let r = 3; r < lines.length; r++) {
+        const rowLine = lines[r].trim();
+        if (!rowLine) continue;
+        const values = rowLine.split(delimiter).map(v => v.trim());
+        const row = {};
+        for (let i = 0; i < headers.length; i++) {
+          const originalHeader = headers[i];
+          if (headerMap[originalHeader] && i < values.length) {
+            const key = headerMap[originalHeader];
+            let value = values[i].replace(/"/g, '\\"'); // Escape quotes
+            row[key] = value;
+          }
+        }
+        if (Object.keys(row).length > 0) {
+          data.push(row);
+        }
+      }
+      return JSON.stringify(data, null, 2);
+    }
+    async function deleteSelected() {
+      const checked = document.querySelector('#objektList input:checked');
+      if (!checked) return;
+      const code = checked.value;
+      if (!confirm(`Wirklich Objekt "${code}" löschen?`)) return;
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          showMessage('Bitte einloggen!', false);
+          window.location.href = 'login.html';
+          return;
+        }
+        const res = await fetch(`${FUNCTION_URL}/api/delete-object`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ codes: [code] })
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) loadObjekte();
+      } catch (e) {
+        showMessage('Verbindungsfehler: ' + e.message, false);
+        console.error('Delete failed:', e);
+      }
+    }
+    function showMessage(text, success) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = success ? 'success' : 'error';
+      msg.style.display = 'block';
+      if (success) {
+        setTimeout(() => { msg.style.display = 'none'; }, 5000);
+      }
+    }
+    // Swipe to close sidebar
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    document.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      if (touchStartX - touchEndX > 50 && document.querySelector('.sidebar').classList.contains('open')) {
+        toggleSidebar();
+      }
+    });
+    // Initial load
+    loadObjekte();
+    showSection('create');
+  </script>
+</body>
+</html>

@@ -1,13 +1,10 @@
-<<<<<<< HEAD
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key-here';  // Set in Azure
-
 module.exports = async function (context, req) {
-  context.log.info('Login function invoked');
+  context.log('Login invoked', req.body);
 
   const { username, password } = req.body || {};
   if (!username || !password) {
@@ -16,61 +13,38 @@ module.exports = async function (context, req) {
   }
 
   try {
+    // Load users.json
     const usersPath = path.join(__dirname, '../users.json');
-    const users = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
+    context.log('Loading users from', usersPath);
+    const usersData = fs.readFileSync(usersPath, 'utf8');
+    const users = JSON.parse(usersData);
 
     const user = users.find(u => u.username === username);
-    if (!user || !bcrypt.compareSync(password, user.password)) {
-      context.res = { status: 401, body: 'Invalid username or password' };
+    if (!user) {
+      context.res = { status: 401, body: 'Invalid credentials' };
       return;
     }
 
-    const token = jwt.sign({ username: user.username, role: user.role }, SECRET_KEY, { expiresIn: '4h' });
-
-    context.res = { status: 200, body: { token } };
-  } catch (e) {
-    context.log.error(`Login error: ${e.message}`);
-    context.res = { status: 500, body: 'Server error' };
-  }
-};
-
-// In JWT sign:
-=======
-const path = require('path');
-const fs = require('fs');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
-const SECRET_KEY = process.env.JWT_SECRET || 'your-secret-key-here';  // Set in Azure
-
-module.exports = async function (context, req) {
-  context.log.info('Login function invoked');
-
-  const { username, password } = req.body || {};
-  if (!username || !password) {
-    context.res = { status: 400, body: 'Missing username or password' };
-    return;
-  }
-
-  try {
-    const usersPath = path.join(__dirname, '../users.json');
-    const users = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
-
-    const user = users.find(u => u.username === username);
-    if (!user || !bcrypt.compareSync(password, user.password)) {
-      context.res = { status: 401, body: 'Invalid username or password' };
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      context.res = { status: 401, body: 'Invalid credentials' };
       return;
     }
 
-    const token = jwt.sign({ username: user.username, role: user.role }, SECRET_KEY, { expiresIn: '4h' });
+    const secret = process.env.JWT_SECRET || 'fallback-secret-change-in-prod';
+    const token = jwt.sign(
+      { username: user.username, role: user.role || 'user' },
+      secret,
+      { expiresIn: '4h' }
+    );
 
-    context.res = { status: 200, body: { token } };
+    context.res = {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: { token, role: user.role || 'user' }
+    };
   } catch (e) {
-    context.log.error(`Login error: ${e.message}`);
-    context.res = { status: 500, body: 'Server error' };
+    context.log.error('Login error:', e.message, e.stack);
+    context.res = { status: 500, body: 'Login failed - check logs' };
   }
 };
-
-// In JWT sign:
->>>>>>> 5f7c57059d74f35a74b7011c62a2fbc95ede488e
-jwt.sign({ username, role }, SECRET_KEY, { expiresIn: '4h' });

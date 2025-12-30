@@ -4,38 +4,412 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin – Objekte verwalten</title>
   <style>
-    <!-- Existing styles unchanged -->
+    :root {
+      --bg: #f8f9fa;
+      --text: #212529;
+      --card-bg: #ffffff;
+      --border: #dee2e6;
+      --primary: #0d6efd;
+      --success: #198754;
+      --danger: #dc3545;
+      --help: #6c757d;
+    }
+    body.dark-mode {
+      --bg: #121212;
+      --text: #e9ecef;
+      --card-bg: #1e1e1e;
+      --border: #495057;
+      --help: #adb5bd;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background: var(--card-bg);
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      transition: transform 0.3s;
+      border-right: 1px solid var(--border);
+    }
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .sidebar-header h1 {
+      font-size: 1.8em;
+      margin: 0;
+    }
+    .sidebar-header h2 {
+      font-size: 1.2em;
+      margin: 10px 0 30px;
+      color: var(--help);
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar li {
+      margin-bottom: 40px; /* Increased spacing to reach middle of screen */
+      border-left: 4px solid transparent;
+      padding-left: 10px;
+    }
+    .sidebar li:nth-child(1) {
+      border-left-color: #dc3545; /* Red for first item */
+    }
+    .sidebar li:nth-child(3) {
+      border-left-color: #0d6efd; /* Blue for third item */
+    }
+    .sidebar a {
+      display: block;
+      text-decoration: none;
+      color: var(--text);
+      transition: color 0.2s;
+    }
+    .sidebar a:hover, .sidebar a.active {
+      color: var(--primary);
+    }
+    /* Main content */
+    .main {
+      flex: 1;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .section {
+      display: none;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .section.active {
+      display: block;
+    }
+    h1, h2 {
+      color: var(--primary);
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: bold;
+    }
+    input[type="text"], input[type="file"], select {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.1em;
+      cursor: pointer;
+    }
+    .btn-add { background: var(--success); color: white; }
+    .btn-upload { background: var(--primary); color: white; }
+    .btn-delete { background: var(--danger); color: white; }
+    .btn-delete:disabled { opacity: 0.5; cursor: not-allowed; }
+    .help {
+      font-size: 0.9em;
+      color: var(--help);
+      margin-top: 10px;
+    }
+    #message {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 15px;
+      text-align: center;
+      border-radius: 0 0 5px 5px;
+      display: none;
+      z-index: 1000;
+    }
+    .success { background: #d1e7dd; color: #0f5132; }
+    .error { background: #f8d7da; color: #842029; }
+    .objekt-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .objekt-item {
+      display: flex;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .objekt-item input[type="checkbox"] {
+      margin-right: 15px;
+      transform: scale(1.3);
+    }
+    .objekt-title {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    .objekt-code {
+      font-size: 0.9em;
+      color: var(--help);
+      margin-left: 8px;
+    }
+    a.back {
+      display: block;
+      text-align: center;
+      margin-top: 30px;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 1.1em;
+    }
+    /* Hamburger for mobile */
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      cursor: pointer;
+      width: 25px;
+      height: 20px;
+    }
+    .hamburger span {
+      display: block;
+      width: 25px;
+      height: 3px;
+      background: var(--text);
+      position: absolute;
+      transition: 0.3s;
+    }
+    .hamburger span:nth-child(1) { top: 0; }
+    .hamburger span:nth-child(2) { top: 8px; }
+    .hamburger span:nth-child(3) { top: 16px; }
+    .hamburger.active span:nth-child(1) {
+      transform: rotate(45deg);
+      top: 8px;
+    }
+    .hamburger.active span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.active span:nth-child(3) {
+      transform: rotate(-45deg);
+      top: 8px;
+    }
+    /* Mobile responsive */
+    @media (max-width: 767px) {
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform: translateX(100%);
+        z-index: 9;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .hamburger {
+        display: block;
+      }
+      .container {
+        flex-direction: column;
+      }
+      .main {
+        padding: 10px;
+      }
+      button { width: 100%; }
+    }
+    @media (min-width: 768px) {
+      button { width: auto; padding: 12px 30px; }
+    }
   </style>
 </head>
 <body>
-  <!-- Existing HTML unchanged, except create section for single field -->
-  <section id="create" class="section active">
-    <h2>Neues Objekte hinzufügen</h2>
-    <label for="code">Objekte Code (alphanumerisch, Großbuchstaben, keine Leerzeichen):</label>
-    <input type="text" id="code" placeholder="MNO" required>
-    <button class="btn-add" onclick="addObject()">Objekt hinzufügen</button>
-    <div class="help">Nach dem Hinzufügen kann die Bereitstellung 2-5 Minuten dauern. Warten Sie, bevor Sie weitere Änderungen vornehmen.</div>
-  </section>
-  <!-- Rest unchanged -->
+  <div id="message"></div>
+  <div class="hamburger" onclick="toggleSidebar()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div class="container">
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>Gruppen & Ringe</h1>
+      </div>
+      <h2>Admin: Objekte verwalten</h2>
+      <ul>
+        <li><a href="index.html">Suchseite</a></li>
+        <li><a href="#create" class="active" onclick="showSection('create')">Neues Objekte hinzufügen</a></li>
+        <li><a href="#upload" onclick="showSection('upload')">Datendatei hochladen</a></li>
+        <li><a href="#delete" onclick="showSection('delete')">Objekte löschen</a></li>
+      </ul>
+    </nav>
+    <main class="main">
+      <h1>Admin: Objekte verwalten</h1>
+      <section id="create" class="section active">
+        <h2>Neues Objekte hinzufügen</h2>
+        <label for="code">Interner Code (klein, z. B. "mno"):</label>
+        <input type="text" id="code" placeholder="mno" required>
+        <label for="name">Anzeigename (z. B. "MNO"):</label>
+        <input type="text" id="name" placeholder="MNO" required>
+        <button class="btn-add" onclick="addObject()">Objekt hinzufügen</button>
+        <div class="help">Nach dem Hinzufügen kann die Bereitstellung 2-5 Minuten dauern. Warten Sie, bevor Sie weitere Änderungen vornehmen.</div>
+      </section>
+      <section id="upload" class="section">
+        <h2>Datendatei hochladen</h2>
+        <label for="linkedObjekte">Verknüpftes Objekte auswählen:</label>
+        <select id="linkedObjekte">
+          <!-- Populated dynamically -->
+        </select>
+        <label for="source">Datenquelle auswählen:</label>
+        <select id="source">
+          <option value="esser">Esser Tools 8000 (CSV)</option>
+          <option value="hekatron">Hekatron</option>
+        </select>
+        <label for="uploadFile">Datei auswählen (CSV für Esser):</label>
+        <input type="file" id="uploadFile" accept=".csv,.json" required>
+        <div class="help">Die Datei wird verarbeitet und als {code}.json hochgeladen (überschreibt ggf. bestehende). Nach dem Hochladen kann die Bereitstellung 2-5 Minuten dauern. Warten Sie, bevor Sie weitere Änderungen vornehmen.</div>
+        <button class="btn-upload" onclick="uploadFileProcess()">Hochladen</button>
+      </section>
+      <section id="delete" class="section">
+        <h2>Objekte löschen</h2>
+        <ul class="objekt-list" id="objektList">
+          <!-- Populated dynamically -->
+        </ul>
+        <button class="btn-delete" onclick="deleteSelected()" id="deleteBtn" disabled>Ausgewähltes löschen</button>
+        <div class="help">Nach dem Löschen kann die Bereitstellung 2-5 Minuten dauern. Warten Sie, bevor Sie weitere Änderungen vornehmen.</div>
+      </section>
+      <a class="back" href="index.html">← Zurück zur Suchseite</a>
+    </main>
+  </div>
   <script>
-    const FUNCTION_URL = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net';  // Direct domain
+    const FUNCTION_URL = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net';  // Direct Azure Functions domain
 
     let currentCodes = [];
     let currentObjekte = []; // Array of {code, name}
     let touchStartX = 0;
-    // Existing code...
-
-    // Input enforcement (upper, alphanum, no spaces)
+    // Dark mode sync
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
+    }
+    // Sidebar toggle for mobile
+    function toggleSidebar() {
+      const sidebar = document.querySelector('.sidebar');
+      const hamburger = document.querySelector('.hamburger');
+      sidebar.classList.toggle('open');
+      hamburger.classList.toggle('active');
+    }
+    // Show section
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+      document.querySelector(`.sidebar a[href="#${id}"]`).classList.add('active');
+      // Close sidebar on mobile after selection
+      if (window.innerWidth < 768) {
+        toggleSidebar();
+      }
+      // Reload data for the section if needed
+      if (id === 'upload' || id === 'delete') {
+        loadObjekte();
+      }
+    }
+    // Input enforcement
     document.getElementById('code').addEventListener('input', (e) => {
-      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''); // Lowercase, alphanum only
     });
-
+    document.getElementById('name').addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase(); // Uppercase
+    });
+    async function loadObjekte() {
+      try {
+        const res = await fetch('index.html');
+        const text = await res.text();
+        const lines = text.split('\n');
+        const list = document.getElementById('objektList');
+        const select = document.getElementById('linkedObjekte');
+        list.innerHTML = '';
+        select.innerHTML = '';
+        currentCodes = [];
+        currentObjekte = [];
+        const options = lines.filter(line => line.trim().includes('<option value="') && !line.trim().includes('Gruppe') && !line.trim().includes('Ring'));
+        if (options.length === 0) {
+          list.innerHTML = '<li>Keine Objekte vorhanden</li>';
+          select.innerHTML = '<option>Keine Objekte vorhanden</option>';
+          return;
+        }
+        options.forEach(line => {
+          const match = line.match(/value="([^"]*)">([^<]+)</);
+          if (match) {
+            const code = match[1];
+            const name = match[2];
+            // Ignore examples
+            if (code.toLowerCase() === 'mno' || name.toLowerCase().includes('beispiel')) return;
+            currentCodes.push(code);
+            currentObjekte.push({ code, name });
+            // For delete list
+            const li = document.createElement('li');
+            li.className = 'objekt-item';
+            li.innerHTML = `
+              <input type="checkbox" value="${code}" onchange="handleCheckboxChange(this)">
+              <div class="objekt-title">${name}</div>
+              <div class="objekt-code">(${code})</div>
+            `;
+            list.appendChild(li);
+            // For upload select
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = `${name} (${code})`;
+            select.appendChild(opt);
+          }
+        });
+        document.getElementById('deleteBtn').disabled = true;
+      } catch (e) {
+        document.getElementById('objektList').innerHTML = '<li>Fehler beim Laden der Objekte</li>';
+        document.getElementById('linkedObjekte').innerHTML = '<option>Fehler beim Laden</option>';
+      }
+    }
+    // Enforce single checkbox for delete
+    function handleCheckboxChange(checkbox) {
+      const checkboxes = document.querySelectorAll('#objektList input[type="checkbox"]');
+      if (checkbox.checked) {
+        checkboxes.forEach(cb => {
+          if (cb !== checkbox) cb.disabled = true;
+        });
+        document.getElementById('deleteBtn').disabled = false;
+      } else {
+        checkboxes.forEach(cb => cb.disabled = false);
+        document.getElementById('deleteBtn').disabled = true;
+      }
+    }
     async function addObject() {
       const code = document.getElementById('code').value.trim();
+      const name = document.getElementById('name').value.trim();
       const messageDiv = document.getElementById('message');
+      if (!messageDiv) return;  // Guard against null
       messageDiv.style.display = 'none';
-      if (!code) {
-        showMessage('Bitte Objekte Code ausfüllen!', false);
+      if (!code || !name) {
+        showMessage('Bitte Code und Anzeigename ausfüllen!', false);
         return;
       }
       try {
@@ -47,40 +421,167 @@
         }
         const res = await fetch(`${FUNCTION_URL}/api/add-object`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ code: code.toLowerCase(), name: code })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ code, name })
         });
         const text = await res.text();
         showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
         if (res.ok) {
           document.getElementById('code').value = '';
+          document.getElementById('name').value = '';
         }
       } catch (e) {
         showMessage('Verbindungsfehler: ' + e.message, false);
       }
     }
-
-    // Update uploadFileProcess and deleteSelected similarly with direct URL and token
     async function uploadFileProcess() {
-      // Existing...
-      const res = await fetch(`${FUNCTION_URL}/api/add-object`, {
-        // Existing headers/body...
-      });
-      // Existing...
+      const selectedCode = document.getElementById('linkedObjekte').value;
+      const source = document.getElementById('source').value;
+      const fileInput = document.getElementById('uploadFile');
+      const messageDiv = document.getElementById('message');
+      if (!messageDiv) return;
+      messageDiv.style.display = 'none';
+      if (!selectedCode) {
+        showMessage('Bitte ein Objekte auswählen!', false);
+        return;
+      }
+      if (fileInput.files.length === 0) {
+        showMessage('Bitte eine Datei auswählen!', false);
+        return;
+      }
+      const file = fileInput.files[0];
+      let jsonContent = null;
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          showMessage('Bitte einloggen!', false);
+          window.location.href = 'login.html';
+          return;
+        }
+        const fileText = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error('Fehler beim Lesen der Datei'));
+          reader.readAsText(file);
+        });
+        if (source === 'esser') {
+          if (!file.name.endsWith('.csv')) {
+            showMessage('Für Esser bitte eine .csv-Datei hochladen!', false);
+            return;
+          }
+          jsonContent = processEsserCsv(fileText);
+        } else if (source === 'hekatron') {
+          showMessage('Hekatron-Verarbeitung noch nicht implementiert. Bitte kontaktieren Sie den Entwickler.', false);
+          return;
+        } else {
+          showMessage('Ungültige Datenquelle ausgewählt.', false);
+          return;
+        }
+        if (!jsonContent) {
+          showMessage('Fehler bei der Dateiverarbeitung.', false);
+          return;
+        }
+        const jsonBase64 = btoa(unescape(encodeURIComponent(jsonContent))); // UTF-8 base64
+        const res = await fetch(`${FUNCTION_URL}/api/add-object`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ code: selectedCode, jsonContent: jsonBase64, uploadOnly: true })
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) {
+          fileInput.value = '';
+        }
+      } catch (e) {
+        showMessage('Verbindungs- oder Verarbeitungsfehler: ' + e.message, false);
+      }
     }
-
+    function processEsserCsv(csvText) {
+      const lines = csvText.split(/\r?\n/);
+      if (lines.length < 4) return null; // Mindestens Header + 1 Datensatz
+      const headerLine = lines[2].trim(); // Zeile 3 (Index 2)
+      const delimiter = headerLine.includes(';') ? ';' : ',';
+      const headers = headerLine.split(delimiter).map(h => h.trim());
+      const headerMap = {
+        "Nr.": "Gruppe",
+        "Zusatztext": "Installationsort",
+        "Installationsort": "Ring",
+        "Gruppentyp": "Gruppentyp",
+        "Betriebsart": "Betriebsart",
+        "Meldertechnik": "Meldertechnik",
+        "Anz.Melder": "Anz.Melder",
+        "Alarmreaktion": "Alarmreaktion"
+      };
+      const data = [];
+      for (let r = 3; r < lines.length; r++) {
+        const rowLine = lines[r].trim();
+        if (!rowLine) continue;
+        const values = rowLine.split(delimiter).map(v => v.trim());
+        const row = {};
+        for (let i = 0; i < headers.length; i++) {
+          const originalHeader = headers[i];
+          if (headerMap[originalHeader] && i < values.length) {
+            const key = headerMap[originalHeader];
+            let value = values[i].replace(/"/g, '\\"'); // Escape quotes
+            row[key] = value;
+          }
+        }
+        if (Object.keys(row).length > 0) {
+          data.push(row);
+        }
+      }
+      return JSON.stringify(data, null, 2);
+    }
     async function deleteSelected() {
-      // Existing...
-      const res = await fetch(`${FUNCTION_URL}/api/delete-object`, {
-        // Existing headers/body...
-      });
-      // Existing...
+      const checked = document.querySelector('#objektList input:checked');
+      if (!checked) return;
+      const code = checked.value;
+      if (!confirm(`Wirklich Objekte "${code}" löschen?`)) return;
+      const messageDiv = document.getElementById('message');
+      if (!messageDiv) return;
+      messageDiv.style.display = 'none';
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          showMessage('Bitte einloggen!', false);
+          window.location.href = 'login.html';
+          return;
+        }
+        const res = await fetch(`${FUNCTION_URL}/api/delete-object`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ code })
+        });
+        const text = await res.text();
+        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
+        if (res.ok) loadObjekte();
+      } catch (e) {
+        showMessage('Verbindungsfehler: ' + e.message, false);
+      }
     }
-
-    // Rest unchanged
+    function showMessage(text, success) {
+      const msg = document.getElementById('message');
+      if (!msg) return;
+      msg.textContent = text;
+      msg.className = success ? 'success' : 'error';
+      msg.style.display = 'block';
+      if (success) {
+        setTimeout(() => msg.style.display = 'none', 5000);
+      }
+    }
+    // Swipe to close sidebar
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+    document.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].screenX;
+      if (touchStartX - touchEndX > 50 && document.querySelector('.sidebar').classList.contains('open')) {
+        toggleSidebar();
+      }
+    });
+    // Initial load
+    loadObjekte();
+    showSection('create');
   </script>
 </body>
 </html>

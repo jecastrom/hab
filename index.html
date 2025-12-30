@@ -1,3 +1,41 @@
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Gruppen & Ringe Suchtool</title>
+  <style>
+    <!-- Add your existing CSS here -->
+  </style>
+</head>
+<body>
+  <!-- Add logoff button, e.g., in header or top right -->
+  <button id="logoff-btn" onclick="logoff()">Abmelden</button>
+
+  <!-- Your existing HTML content (search form, etc.) -->
+
+  <script>
+    const FUNCTION_URL = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net';
+
+    // Check token on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+      // Optional: Verify token validity (call /api/verify-token if implemented)
+    });
+
+    function logoff() {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    }
+
+    // Your existing JS (search logic, etc.)
+  </script>
+</body>
+</html>
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -231,7 +269,8 @@
     // Map object keys to filenames
     const objectFiles = {
       hab: 'hab.json',
-      keh: 'keh.json',
+      keh: 'keh.json'
+,
       test: 'test.json',
       test: 'test.json'
     };
@@ -343,4 +382,3 @@
   </script>
 </body>
 </html>
-

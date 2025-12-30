@@ -1,113 +1,167 @@
-<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Login – Gruppen & Ringe</title>
+  <title>Login – Gruppen & Ringe Admin</title>
   <style>
+    :root {
+      --bg: #f8f9fa;
+      --text: #212529;
+      --card-bg: #ffffff;
+      --border: #dee2e6;
+      --primary: #0d6efd;
+      --success: #198754;
+      --danger: #dc3545;
+      --help: #6c757d;
+    }
+    body.dark-mode {
+      --bg: #121212;
+      --text: #e9ecef;
+      --card-bg: #1e1e1e;
+      --border: #495057;
+      --help: #adb5bd;
+    }
     body {
       font-family: Arial, sans-serif;
-      background: var(--bg, #f8f9fa);
-      color: var(--text, #212529);
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      margin: 0;
-      transition: background 0.3s, color 0.3s;
+      transition: background-color 0.3s, color 0.3s;
     }
-    body.dark-mode { --bg: #121212; --text: #e9ecef; }
     .login-container {
-      background: var(--card-bg, #ffffff);
-      padding: 30px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      width: 90%;
+      padding: 30px;
       max-width: 400px;
-      text-align: center;
+      width: 100%;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h1 { color: var(--primary, #0d6efd); }
-    label { display: block; text-align: left; margin: 15px 0 5px; font-weight: bold; }
-    input {
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: bold;
+    }
+    input[type="text"], input[type="password"] {
       width: 100%;
       padding: 10px;
       box-sizing: border-box;
-      border: 1px solid var(--border, #dee2e6);
+      background: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
       border-radius: 5px;
     }
     button {
       width: 100%;
       padding: 12px;
       margin-top: 20px;
-      background: var(--primary, #0d6efd);
+      background: var(--primary);
       color: white;
       border: none;
       border-radius: 5px;
-      cursor: pointer;
       font-size: 1.1em;
+      cursor: pointer;
     }
-    button#biometricBtn { background: var(--success, #198754); margin-top: 10px; }
-    .error { color: #dc3545; margin-top: 10px; }
+    button:hover {
+      opacity: 0.9;
+    }
+    #message {
+      margin-top: 15px;
+      text-align: center;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    .success { background: #d1e7dd; color: #0f5132; }
+    .error { background: #f8d7da; color: #842029; }
+    @media (max-width: 767px) {
+      .login-container {
+        padding: 20px;
+      }
+    }
   </style>
-  <script src="https://unpkg.com/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
 </head>
 <body>
   <div class="login-container">
-    <h1>Login</h1>
-    <form id="loginForm">
-      <label for="username">Benutzername</label>
-      <input type="text" id="username" required autocomplete="username">
+    <h1>Admin Login</h1>
+    <form id="login-form">
+      <label for="username" aria-label="Benutzername">Benutzername:</label>
+      <input type="text" id="username" required aria-required="true" placeholder="admin">
 
-      <label for="password">Passwort</label>
-      <input type="password" id="password" required autocomplete="current-password">
+      <label for="password" aria-label="Passwort">Passwort:</label>
+      <input type="password" id="password" required aria-required="true" placeholder="********">
 
-      <button type="submit">Anmelden mit Passwort</button>
+      <button type="submit">Einloggen</button>
     </form>
-    <button id="biometricBtn" style="display:none;">Anmelden mit Biometrie</button>
-    <div id="errorMsg" class="error"></div>
+    <div id="message" role="alert" aria-live="polite"></div>
   </div>
-
   <script>
-    const form = document.getElementById('loginForm');
-    const errorMsg = document.getElementById('errorMsg');
-    const biometricBtn = document.getElementById('biometricBtn');
+    const FUNCTION_URL = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net';  // Direct Azure Functions domain for API calls
 
-    // Show biometric button if supported and registered (simple check)
-    if ('credentials' in navigator) {
-      biometricBtn.style.display = 'block';
+    // Dark mode sync (matches admin.html)
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.body.classList.add('dark-mode');
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorMsg.textContent = '';
+    // Login handler
+    document.getElementById('login-form').addEventListener('submit', async (event) => {
+      event.preventDefault();  // Prevent default form submit
+
       const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+      const password = document.getElementById('password').value.trim();
+      const messageDiv = document.getElementById('message');
+
+      messageDiv.style.display = 'none';  // Hide previous messages
+
+      if (!username || !password) {
+        showMessage('Bitte Benutzername und Passwort ausfüllen!', false);
+        return;
+      }
 
       try {
-        const res = await fetch('/api/login', {
+        const res = await fetch(`${FUNCTION_URL}/api/login`, {  // Direct URL to avoid proxy issues
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
 
-        if (res.ok) {
-          const { token } = await res.json();
-          localStorage.setItem('jwt', token);
-          window.location.href = 'index.html';
-        } else {
+        if (!res.ok) {
           const text = await res.text();
-          errorMsg.textContent = text || 'Falsche Anmeldedaten';
+          showMessage('Fehler: ' + text, false);
+          return;
         }
-      } catch (err) {
-        errorMsg.textContent = 'Verbindungsfehler';
+
+        const data = await res.json();  // Assume { token, role }
+
+        // Store token (backend sets 4h expiry)
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role);  // For admin/user check
+
+        showMessage('Erfolgreich eingeloggt!', true);
+        setTimeout(() => {
+          window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';  // Redirect based on role
+        }, 1000);
+      } catch (e) {
+        showMessage('Verbindungsfehler: ' + e.message, false);
       }
     });
 
-    biometricBtn.addEventListener('click', async () => {
-      // Call your biometric login function here (from auth.js or inline)
-      // For now, placeholder alert
-      alert('Biometrie-Anmeldung (implementiere loginBiometric() aus auth.js)');
-    });
+    function showMessage(text, success) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = success ? 'success' : 'error';
+      msg.style.display = 'block';
+    }
   </script>
 </body>
 </html>

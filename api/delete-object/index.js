@@ -1,90 +1,65 @@
+const path = require('path');
+const { verifyToken } = require(path.join(__dirname, '../scripts/auth'));
+const { Octokit } = require('@octokit/rest');
+
 module.exports = async function (context, req) {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) {
-    context.res = { status: 500, body: "Server-Fehler: Kein Token" };
+  context.log.info(`Delete-object invoked for code: ${req.body?.code}`);
+
+  if (!verifyToken(req, context.res, 'admin')) {
+    context.res = { status: 401, body: 'Unauthorized or invalid token' };
     return;
   }
 
-  const { codes } = req.body || {};
-  if (!codes || !Array.isArray(codes) || codes.length === 0) {
-    context.res = { status: 400, body: "Fehler: Keine Codes zum Löschen angegeben" };
+  const { code } = req.body || {};
+  if (!code) {
+    context.res = { status: 400, body: 'Missing required field: code' };
     return;
   }
-
-  const owner = "jecastrom";
-  const repo = "hab";
-  const branch = "main";
 
   try {
-    const indexRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/index.html?ref=${branch}`, {
-      headers: { Authorization: `token ${token}`, 'User-Agent': 'admin' }
+    if (!process.env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN missing in env vars');
+
+    const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+
+    const { data: file } = await octokit.repos.getContent({
+      owner: 'jecastrom',
+      repo: 'hab',
+      path: 'index.html',
+      branch: 'main'
     });
-    if (!indexRes.ok) throw new Error("index.html nicht geladen");
 
-    const indexData = await indexRes.json();
-    let lines = Buffer.from(indexData.content, 'base64').toString('utf8').split('\n');
+    const content = Buffer.from(file.content, 'base64').toString();
+    let lines = content.split('\n');
 
-    // Remove from dropdown (flexible trim)
-    lines = lines.filter(line => !codes.some(code => line.trim().includes(`value="${code}"`)));
+    // Remove from dropdown
+    const optionIndex = lines.findIndex(line => line.includes(`value="${code}"`));
+    if (optionIndex === -1) throw new Error('Option not found');
+    lines.splice(optionIndex, 1);
 
-    // Remove from objectFiles (flexible, ignores spaces/comma)
-    lines = lines.filter(line => !codes.some(code => line.trim().replace(/,?$/, '').includes(`${code}: '${code}.json'`)));
+    // Remove from objectFiles
+    const entryIndex = lines.findIndex(line => line.trim().startsWith(`${code}:`));
+    if (entryIndex === -1) throw new Error('Entry not found');
+    lines.splice(entryIndex, 1);
 
-    // After removal, fix comma on new last entry in objectFiles
-    let objectFilesStart = lines.findIndex(line => line.trim().startsWith('const objectFiles = {'));
-    if (objectFilesStart !== -1) {
-      let objectFilesEnd = lines.slice(objectFilesStart).findIndex(line => line.trim() === '};') + objectFilesStart;
-      if (objectFilesEnd - objectFilesStart > 1) {
-        let lastEntryIndex = objectFilesEnd - 1;
-        while (lines[lastEntryIndex].trim() === '') lastEntryIndex--;
-        lines[lastEntryIndex] = lines[lastEntryIndex].replace(/,$/, '');  // Remove comma if present
-      }
-    }
+    const updatedContent = lines.join('\n');
 
-    const updatedHtml = lines.join('\n');
-    await commitFile(context, 'index.html', updatedHtml, indexData.sha, token, owner, repo, branch);
+    await octokit.repos.createOrUpdateFileContents({
+      owner: 'jecastrom',
+      repo: 'hab',
+      path: 'index.html',
+      message: `Delete object: ${code}`,
+      content: Buffer.from(updatedContent).toString('base64'),
+      sha: file.sha,
+      branch: 'main'
+    });
 
-    // Delete JSON files
-    for (const code of codes) {
-      try {
-        const fileRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${code}.json?ref=${branch}`, {
-          headers: { Authorization: `token ${token}`, 'User-Agent': 'admin' }
-        });
-        if (fileRes.ok) {
-          const fileData = await fileRes.json();
-          await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${code}.json`, {
-            method: 'DELETE',
-            headers: { Authorization: `token ${token}`, 'User-Agent': 'admin' },
-            body: JSON.stringify({ message: `Admin: Objekt ${code} löschen`, sha: fileData.sha, branch })
-          });
-        }
-      } catch (e) {
-        context.log(`JSON ${code}.json nicht gefunden oder bereits gelöscht`);
-      }
-    }
-
-    context.res = { status: 200, body: `Erfolg! ${codes.length} Objekt(e) gelöscht.` };
+    context.res = { status: 200, body: `Object ${code} deleted successfully` };
   } catch (e) {
-    context.res = { status: 500, body: `Fehler: ${e.message || 'Unbekannter Fehler'}` };
+    context.log.error(`Delete-object error: ${e.message} | Stack: ${e.stack}`);
+    const status = e.response ? e.response.status : 500;
+    const body = e.message.includes('GITHUB_TOKEN') ? 'Invalid or missing GitHub token' :
+                 e.response ? `GitHub API error: ${e.response.data.message}` :
+                 'Server error - check logs';
+    context.res = { status, body };
   }
 };
-
-async function commitFile(context, path, content, sha, token, owner, repo, branch) {
-  const body = {
-    message: `Admin: Änderung an ${path}`,
-    content: Buffer.from(content).toString('base64'),
-    branch,
-    sha
-  };
-
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
-    method: 'PUT',
-    headers: { Authorization: `token ${token}`, 'User-Agent': 'admin', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || 'Commit fehlgeschlagen');
-  }
-}

@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Suche nach Gruppe oder Ring</title>
   <style>
     :root {
@@ -108,14 +108,13 @@
     label { display: block; margin-top: 15px; font-weight: bold; }
     select, input, button {
       width: 100%;
-      padding: 8px;
-      margin: 5px 0;
+      padding: 10px;
+      margin: 10px 0;
       box-sizing: border-box;
       font-size: 1em;
       background: var(--bg);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 4px;
     }
 
     button {
@@ -151,9 +150,9 @@
 
     @media (min-width: 768px) {
       .controls { display: flex; gap: 10px; align-items: end; }
-      select, input { width: auto; flex: 1; padding: 10px; margin: 10px 0; }
+      select, input { width: auto; flex: 1; }
       .button-group { display: flex; gap: 10px; }
-      .button-group button { flex: 1; padding: 10px; }
+      .button-group button { flex: 1; }
       .results-cards { display: none !important; }
       .table-container { display: block; }
     }
@@ -161,10 +160,10 @@
     @media (max-width: 767px) {
       .table-container { display: none; }
       .results-cards { display: block; }
-      .button-group { display: flex; gap: 5px; }
-      .button-group button { flex: 1; padding: 8px; }
-      header { flex-direction: row; align-items: center; }
-      .theme-toggle { margin-top: 0; }
+      .button-group { display: flex; gap: 10px; }
+      .button-group button { flex: 1; }
+      header { flex-direction: column; align-items: flex-start; }
+      .theme-toggle { margin-top: 10px; align-self: flex-end; }
     }
   </style>
 </head>
@@ -188,42 +187,51 @@
             <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
           <svg class="moon" viewBox="0 0 24 24">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
           </svg>
         </span>
       </label>
     </div>
   </header>
+  <!--
+  HINWEIS FÜR NEUE OBJEKTE HINZUFÜGEN:
+  Um ein neues Objekt hinzuzufügen, trage hier eine neue Zeile ein:
+   
+  Beispiel für ein neues Objekt "MNO":
+  <option value="mno">MNO</option>
+ 
+  Der "value" muss klein geschrieben sein und genau dem Dateinamen (ohne .json) entsprechen.
+  Der Text zwischen > und < ist das, was der Benutzer im Dropdown sieht.
+  -->
   <div class="controls">
-    <div>
-      <label for="object">Objekt wählen:</label>
+    <div style="flex: 1;">
+      <label for="object">Objekt auswählen:</label>
       <select id="object">
-        <option value="hab">HAB</option>
+        <option value="hab">HaB</option>
         <option value="keh">KEH</option>
-        <!-- Add more as needed -->
-        <option value="test">Test Object</option>
-        <option value="test">Test Object</option>
       </select>
     </div>
-    <div>
-      <label for="type">Suchtyp:</label>
+    <div style="flex: 1;">
+      <label for="type">Typ auswählen:</label>
       <select id="type">
         <option value="Gruppe">Gruppe</option>
         <option value="Ring">Ring</option>
       </select>
     </div>
-    <div>
-      <label for="value">Wert:</label>
+    <div style="flex: 2;">
+      <label for="value">Nummer eingeben:</label>
       <input type="tel" id="value" placeholder="z. B. 101 oder 121" pattern="[0-9]*" inputmode="numeric">
     </div>
-    <div class="button-group">
-      <button onclick="search()">Suchen</button>
-      <button id="clearBtn" onclick="clearSearch()">Löschen</button>
+    <div>
+      <label>&nbsp;</label>
+      <div class="button-group">
+        <button onclick="search()">Suchen</button>
+        <button id="clearBtn" onclick="clearSearch()">Löschen</button>
+      </div>
     </div>
   </div>
   <div id="status">Daten werden geladen...</div>
   <div id="results"></div>
-
   <script>
     let data = [];
     const statusDiv = document.getElementById('status');
@@ -231,9 +239,7 @@
     // Map object keys to filenames
     const objectFiles = {
       hab: 'hab.json',
-      keh: 'keh.json',
-      test: 'test.json',
-      test: 'test.json'
+      keh: 'keh.json'
     };
     function loadData() {
       const object = document.getElementById('object').value;
@@ -343,4 +349,16 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
 

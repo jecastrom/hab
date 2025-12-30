@@ -1,0 +1,17 @@
+{
+  "name": "hab-api-functions",
+  "version": "1.0.0",
+  "description": "Backend APIs for Gruppen & Ringe Tool",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.1.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}

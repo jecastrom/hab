@@ -1,76 +1,50 @@
-const path = require('path');
-const { verifyToken } = require(path.join(__dirname, '../scripts/auth'));
-const { Octokit } = require('@octokit/rest');
+const fs = require('fs').promises;
 
 module.exports = async function (context, req) {
-  context.log.info(`Add-object invoked with body: ${JSON.stringify(req.body)}`);
+    const rawCode = req.body && req.body.code ? req.body.code : "";
+    
+    // Sanitize: remove non-alphanumeric and create keys
+    const displayCode = rawCode.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const idCode = displayCode.toLowerCase();
 
-  if (!verifyToken(req, context.res, 'admin')) {
-    context.res = { status: 401, body: 'Unauthorized or invalid token' };
-    return;
-  }
-
-  const { code, name } = req.body;
-  if (!code || !name) {
-    context.res = { status: 400, body: 'Missing required fields: code and name' };
-    return;
-  }
-
-  try {
-    if (!process.env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN missing in env vars');
-
-    const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-
-    const { data: file } = await octokit.repos.getContent({
-      owner: 'jecastrom',
-      repo: 'hab',
-      path: 'index.html',
-      branch: 'main'
-    });
-
-    const content = Buffer.from(file.content, 'base64').toString();
-    let lines = content.split('\n');
-
-   // Find dropdown start/end (simple string check, ignores formatting)
-   const dropdownStart = lines.findIndex(line => line.includes('id="object"') && line.includes('class="controls"'));
-   if (dropdownStart === -1) throw new Error('Dropdown not found');
-   const dropdownEnd = lines.findIndex((line, idx) => idx > dropdownStart && line.includes('</select>'));
-   if (dropdownEnd === -1) throw new Error('Closing </select> not found');
-
-    // Add to dropdown (robust search, ignores extra spaces/attributes)
-    lines.splice(dropdownEnd, 0, `  <option value="${code}">${name}</option>`);
-
-    // Find objectFiles start/end
-    const objectFilesStart = lines.findIndex(line => line.includes('const objectFiles = {'));
-    if (objectFilesStart === -1) throw new Error('objectFiles not found');
-    const objectFilesEnd = lines.findIndex((line, idx) => idx > objectFilesStart && line.includes('};'));
-    if (objectFilesEnd === -1) throw new Error('Closing }; not found');
-    if (objectFilesEnd - objectFilesStart > 1) {
-      let lastEntryIndex = objectFilesEnd - 1;
-      while (lines[lastEntryIndex].trim() === '') lastEntryIndex--;
-      if (!lines[lastEntryIndex].trim().endsWith(',')) lines[lastEntryIndex] = lines[lastEntryIndex].replace(/$/, ',');
+    if (!displayCode) {
+        context.res = {
+            status: 400,
+            body: "Invalid code. Please provide an alphanumeric value."
+        };
+        return;
     }
-    lines.splice(objectFilesEnd, 0, `  ${code}: '${code}.json'`);
 
-    const updatedContent = lines.join('\n');
+    const dataPath = 'C:/home/data/objects.json';
 
-    await octokit.repos.createOrUpdateFileContents({
-      owner: 'jecastrom',
-      repo: 'hab',
-      path: 'index.html',
-      message: `Add object: ${code}`,
-      content: Buffer.from(updatedContent).toString('base64'),
-      sha: file.sha,
-      branch: 'main'
-    });
+    try {
+        const data = await fs.readFile(dataPath, 'utf8');
+        let objects = JSON.parse(data);
 
-    context.res = { status: 200, body: 'Object added successfully' };
-  } catch (e) {
-    context.log.error(`Add-object error: ${e.message} | Stack: ${e.stack}`);
-    const status = e.response ? e.response.status : 500;
-    const body = e.message.includes('GITHUB_TOKEN') ? 'Invalid or missing GitHub token' :
-                 e.response ? `GitHub API error: ${e.response.data.message}` :
-                 'Server error - check logs';
-    context.res = { status, body };
-  }
+        // Check for duplicates
+        if (objects.some(obj => obj.id === idCode)) {
+            context.res = {
+                status: 409,
+                body: "Object already exists."
+            };
+            return;
+        }
+
+        // Add new entry
+        objects.push({ id: idCode, display: displayCode });
+
+        // Save file
+        await fs.writeFile(dataPath, JSON.stringify(objects, null, 2), 'utf8');
+
+        context.res = {
+            status: 200,
+            body: { message: "Object added successfully", id: idCode, display: displayCode }
+        };
+    } catch (error) {
+        context.log.error("Error updating objects.json:", error);
+        context.res = {
+            status: 500,
+            body: "Error writing to data file."
+        };
+    }
 };

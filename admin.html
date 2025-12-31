@@ -402,38 +402,37 @@
         document.getElementById('deleteBtn').disabled = true;
       }
     }
-    async function addObject() {
-      const code = document.getElementById('code').value.trim();
-      const name = document.getElementById('name').value.trim();
-      const messageDiv = document.getElementById('message');
-      if (!messageDiv) return;  // Guard against null
-      messageDiv.style.display = 'none';
-      if (!code || !name) {
-        showMessage('Bitte Code und Anzeigename ausfüllen!', false);
+    // Function to add a new object
+async function addObject() {
+    const codeInput = document.getElementById('new-object-code'); // Ensure this ID matches your input
+    const code = codeInput.value.trim();
+
+    if (!code) {
+        alert("Bitte einen Code eingeben.");
         return;
-      }
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          showMessage('Bitte einloggen!', false);
-          window.location.href = 'login.html';
-          return;
-        }
-        const res = await fetch(`${FUNCTION_URL}/api/add-object`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ code, name })
-        });
-        const text = await res.text();
-        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
-        if (res.ok) {
-          document.getElementById('code').value = '';
-          document.getElementById('name').value = '';
-        }
-      } catch (e) {
-        showMessage('Verbindungsfehler: ' + e.message, false);
-      }
     }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/add-object`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code })
+        });
+
+        if (response.ok) {
+            alert("Objekt erfolgreich hinzugefügt!");
+            codeInput.value = '';
+            // Optional: refresh a local list if you display one on the admin page
+        } else {
+            const error = await response.text();
+            alert("Fehler: " + error);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Netzwerkfehler beim Hinzufügen.");
+    }
+}
+
     async function uploadFileProcess() {
       const selectedCode = document.getElementById('linkedObjekte').value;
       const source = document.getElementById('source').value;
@@ -532,33 +531,39 @@
       }
       return JSON.stringify(data, null, 2);
     }
-    async function deleteSelected() {
-      const checked = document.querySelector('#objektList input:checked');
-      if (!checked) return;
-      const code = checked.value;
-      if (!confirm(`Wirklich Objekte "${code}" löschen?`)) return;
-      const messageDiv = document.getElementById('message');
-      if (!messageDiv) return;
-      messageDiv.style.display = 'none';
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          showMessage('Bitte einloggen!', false);
-          window.location.href = 'login.html';
-          return;
-        }
-        const res = await fetch(`${FUNCTION_URL}/api/delete-object`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ code })
-        });
-        const text = await res.text();
-        showMessage(res.ok ? text : 'Fehler: ' + text, res.ok);
-        if (res.ok) loadObjekte();
-      } catch (e) {
-        showMessage('Verbindungsfehler: ' + e.message, false);
-      }
+    // Function to delete an object
+async function deleteObject() {
+    const idInput = document.getElementById('delete-object-id'); // Ensure this ID matches your input or dropdown
+    const id = idInput.value.trim().toLowerCase();
+
+    if (!id) {
+        alert("Bitte eine ID zum Löschen auswählen/eingeben.");
+        return;
     }
+
+    if (!confirm(`Möchten Sie das Objekt '${id}' wirklich löschen?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/delete-object`, {
+            method: 'POST', // Using POST as allowed in your function.json for compatibility
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        });
+
+        if (response.ok) {
+            alert("Objekt erfolgreich gelöscht!");
+            idInput.value = '';
+        } else {
+            const error = await response.text();
+            alert("Fehler: " + error);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Netzwerkfehler beim Löschen.");
+    }
+}
     function showMessage(text, success) {
       const msg = document.getElementById('message');
       if (!msg) return;

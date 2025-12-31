@@ -1,63 +1,46 @@
-const path = require('path');
-const { verifyToken } = require(path.join(__dirname, '../scripts/auth'));
-const { Octokit } = require('@octokit/rest');
+const fs = require('fs').promises;
 
 module.exports = async function (context, req) {
-  context.log.info(`Delete-object invoked for code: ${req.body?.code}`);
+    const idToDelete = req.body && req.body.id ? req.body.id.toLowerCase() : "";
 
-  if (!verifyToken(req, context.res, 'admin')) {
-    context.res = { status: 401, body: 'Unauthorized or invalid token' };
-    return;
-  }
+    if (!idToDelete) {
+        context.res = {
+            status: 400,
+            body: "Please provide the 'id' of the object to delete."
+        };
+        return;
+    }
 
-  const { code } = req.body || {};
-  if (!code) {
-    context.res = { status: 400, body: 'Missing required field: code' };
-    return;
-  }
+    const dataPath = 'C:/home/data/objects.json';
 
-  try {
-    if (!process.env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN missing in env vars');
+    try {
+        const data = await fs.readFile(dataPath, 'utf8');
+        let objects = JSON.parse(data);
 
-    const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+        const originalLength = objects.length;
+        // Filter out the object with the matching id
+        objects = objects.filter(obj => obj.id !== idToDelete);
 
-    const { data: file } = await octokit.repos.getContent({
-      owner: 'jecastrom',
-      repo: 'hab',
-      path: 'index.html',
-      branch: 'main'
-    });
+        if (objects.length === originalLength) {
+            context.res = {
+                status: 404,
+                body: "Object not found."
+            };
+            return;
+        }
 
-    const content = Buffer.from(file.content, 'base64').toString();
-    let lines = content.split('\n');
+        // Save the updated list
+        await fs.writeFile(dataPath, JSON.stringify(objects, null, 2), 'utf8');
 
-    // Remove from dropdown
-    const optionIndex = lines.findIndex(line => line.includes(`value="${code}"`));
-    if (optionIndex === -1) throw new Error('Option not found');
-
-   // Remove from objectFiles
-    const entryIndex = lines.findIndex(line => line.includes(`${code}:`));
-    if (entryIndex === -1) throw new Error('Entry not found');
-
-    const updatedContent = lines.join('\n');
-
-    await octokit.repos.createOrUpdateFileContents({
-      owner: 'jecastrom',
-      repo: 'hab',
-      path: 'index.html',
-      message: `Delete object: ${code}`,
-      content: Buffer.from(updatedContent).toString('base64'),
-      sha: file.sha,
-      branch: 'main'
-    });
-
-    context.res = { status: 200, body: `Object ${code} deleted successfully` };
-  } catch (e) {
-    context.log.error(`Delete-object error: ${e.message} | Stack: ${e.stack}`);
-    const status = e.response ? e.response.status : 500;
-    const body = e.message.includes('GITHUB_TOKEN') ? 'Invalid or missing GitHub token' :
-                 e.response ? `GitHub API error: ${e.response.data.message}` :
-                 'Server error - check logs';
-    context.res = { status, body };
-  }
+        context.res = {
+            status: 200,
+            body: { message: `Object '${idToDelete}' deleted successfully.` }
+        };
+    } catch (error) {
+        context.log.error("Error updating objects.json:", error);
+        context.res = {
+            status: 500,
+            body: "Error writing to data file."
+        };
+    }
 };

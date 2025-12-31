@@ -31,17 +31,17 @@ module.exports = async function (context, req) {
     const content = Buffer.from(file.content, 'base64').toString();
     let lines = content.split('\n');
 
-    // Add to dropdown
-    const dropdownStart = lines.findIndex(line => line.includes('<select id="object" class="controls">'));
+    // Add to dropdown (robust search, ignores extra spaces/attributes)
+    const dropdownStart = lines.findIndex(line => line.trim().match(/<select\s+.*id\s*=\s*["']object["'].*class\s*=\s*["']controls["'].*>/i));
     if (dropdownStart === -1) throw new Error('Dropdown not found');
     const dropdownEnd = lines.findIndex((line, idx) => idx > dropdownStart && line.includes('</select>'));
     if (dropdownEnd === -1) throw new Error('Closing </select> not found');
     lines.splice(dropdownEnd, 0, `  <option value="${code}">${name}</option>`);
 
-    // Add to objectFiles
-    const objectFilesStart = lines.findIndex(line => line.trim().startsWith('const objectFiles = {'));
+    // Add to objectFiles (robust search, ignores spaces)
+    const objectFilesStart = lines.findIndex(line => line.includes('const objectFiles = {'));
     if (objectFilesStart === -1) throw new Error('objectFiles not found');
-    const objectFilesEnd = lines.findIndex((line, idx) => idx > objectFilesStart && line.trim() === '};');
+    const objectFilesEnd = lines.findIndex((line, idx) => idx > objectFilesStart && line.includes('};'));
     if (objectFilesEnd === -1) throw new Error('Closing }; not found');
     if (objectFilesEnd - objectFilesStart > 1) {
       let lastEntryIndex = objectFilesEnd - 1;

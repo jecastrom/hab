@@ -31,15 +31,13 @@ module.exports = async function (context, req) {
     const content = Buffer.from(file.content, 'base64').toString();
     let lines = content.split('\n');
 
-    // Remove from dropdown (robust search)
-    const optionIndex = lines.findIndex(line => line.trim().match(new RegExp(`value\\s*=\\s*["']${code}["']`, 'i')));
+    // Remove from dropdown
+    const optionIndex = lines.findIndex(line => line.includes(`value="${code}"`));
     if (optionIndex === -1) throw new Error('Option not found');
-    lines.splice(optionIndex, 1);
 
-    // Remove from objectFiles (robust search)
+   // Remove from objectFiles
     const entryIndex = lines.findIndex(line => line.includes(`${code}:`));
     if (entryIndex === -1) throw new Error('Entry not found');
-    lines.splice(entryIndex, 1);
 
     const updatedContent = lines.join('\n');
 

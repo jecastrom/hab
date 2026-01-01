@@ -31,112 +31,125 @@
             transition: background-color 0.3s, color 0.3s;
         }
         .container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar Styles */
         .sidebar {
             width: 250px;
             background: var(--card-bg);
             padding: 20px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
+            transition: transform 0.3s ease;
             border-right: 1px solid var(--border);
+            z-index: 1000;
         }
-        .sidebar-header h1 { font-size: 1.8em; margin: 0; }
-        .sidebar-header h2 { font-size: 1.2em; margin: 10px 0 30px; color: var(--help); }
-        .sidebar ul { list-style: none; padding: 0; }
-        .sidebar li { margin-bottom: 40px; border-left: 4px solid transparent; padding-left: 10px; }
-        .sidebar li:nth-child(1) { border-left-color: #dc3545; }
-        .sidebar li:nth-child(3) { border-left-color: #0d6efd; }
-        .sidebar a { display: block; text-decoration: none; color: var(--text); transition: color 0.2s; }
+        .sidebar-header h1 { font-size: 1.6em; margin: 0; color: var(--primary); }
+        .sidebar ul { list-style: none; padding: 0; margin-top: 30px; }
+        .sidebar li { margin-bottom: 25px; border-left: 4px solid transparent; padding-left: 10px; }
+        .sidebar a { display: block; text-decoration: none; color: var(--text); font-weight: bold; }
         .sidebar a:hover, .sidebar a.active { color: var(--primary); }
-        .main { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; }
-        .section { display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 30px; }
+        
+        /* Main Content */
+        .main { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; position: relative; }
+        .section { display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 25px; margin-bottom: 30px; }
         .section.active { display: block; }
-        h1, h2 { color: var(--primary); text-align: center; }
-        label { display: block; margin: 15px 0 5px; font-weight: bold; }
-        input[type="text"], input[type="file"], select { width: 100%; padding: 10px; box-sizing: border-box; background: var(--card-bg); color: var(--text); border: 1px solid var(--border); border-radius: 5px; }
         
-        button { 
-            width: 100%; 
-            padding: 12px; 
-            margin-top: 15px; 
-            border: none; 
-            border-radius: 5px; 
-            font-size: 1.1em; 
-            cursor: pointer; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 10px;
-            transition: opacity 0.2s;
+        /* Header Actions (Theme Toggle) */
+        .header-actions { display: flex; justify-content: flex-end; padding: 10px; }
+        .icon-btn { background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--text); }
+
+        /* Form Elements */
+        label { display: block; margin: 15px 0 5px; font-weight: bold; font-size: 0.9em; }
+        input[type="text"], select, input[type="file"] { 
+            width: 100%; padding: 12px; box-sizing: border-box; 
+            background: var(--card-bg); color: var(--text); 
+            border: 1px solid var(--border); border-radius: 8px; 
+            text-transform: uppercase; /* Visual uppercase */
         }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
         
+        /* Buttons */
+        button { 
+            width: 100%; padding: 14px; margin-top: 20px; border: none; border-radius: 8px; 
+            font-size: 1em; font-weight: bold; cursor: pointer; 
+            display: flex; justify-content: center; align-items: center; gap: 10px; 
+        }
         .btn-add { background: var(--success); color: white; }
         .btn-upload { background: var(--primary); color: white; }
         .btn-delete { background: var(--danger); color: white; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            display: none;
+        /* Hamburger Menu */
+        .hamburger {
+            display: none; position: fixed; top: 15px; left: 15px; 
+            z-index: 1100; cursor: pointer; width: 30px; height: 25px;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .hamburger span { display: block; width: 100%; height: 4px; background: var(--text); margin-bottom: 5px; transition: 0.3s; }
 
-        .help { font-size: 0.9em; color: var(--help); margin-top: 10px; }
-        #message { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; text-align: center; display: none; z-index: 1000; }
+        /* Utilities */
+        #message { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; text-align: center; display: none; z-index: 2000; font-weight: bold; }
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
-        
-        .objekt-item { display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
-        .objekt-item input[type="checkbox"] { margin-right: 15px; transform: scale(1.3); }
-        
-        a.back { display: block; text-align: center; margin-top: 30px; color: var(--primary); text-decoration: none; font-size: 1.1em; }
+        .objekt-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); }
+        .objekt-item input { margin-right: 15px; width: 20px; height: 20px; }
+        .spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s infinite linear; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         @media (max-width: 767px) {
-            .sidebar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; transform: translateX(100%); z-index: 9; }
+            .hamburger { display: block; }
+            .sidebar { position: fixed; left: 0; top: 0; height: 100%; transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); }
-            .container { flex-direction: column; }
+            .main { padding-top: 60px; }
         }
     </style>
 </head>
 <body>
     <div id="message"></div>
+    
+    <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+    </div>
+
     <div class="container">
-        <nav class="sidebar">
-            <div class="sidebar-header"><h1>Gruppen & Ringe</h1></div>
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header"><h1>Admin</h1></div>
             <ul>
-                <li><a href="index.html">Suchseite</a></li>
-                <li><a href="#create" class="active" onclick="showSection('create')">Neues Objekt</a></li>
-                <li><a href="#upload" onclick="showSection('upload')">Daten hochladen</a></li>
-                <li><a href="#delete" onclick="showSection('delete')">Objekte löschen</a></li>
+                <li><a href="index.html">🔍 Suche</a></li>
+                <li><a href="#create" class="active" onclick="showSection('create')">➕ Neues Objekt</a></li>
+                <li><a href="#upload" onclick="showSection('upload')">📤 Daten Upload</a></li>
+                <li><a href="#delete" onclick="showSection('delete')">🗑️ Löschen</a></li>
             </ul>
         </nav>
+
         <main class="main">
+            <div class="header-actions">
+                <button id="theme-toggle" class="icon-btn">🌙</button>
+            </div>
+
+            <!-- SECTION: CREATE -->
             <section id="create" class="section active">
                 <h2>Neues Objekt hinzufügen</h2>
-                <input type="text" id="code" placeholder="Objekt-Code (z.B. ABC123)">
+                <label>Objekt-Code:</label>
+                <input type="text" id="code" placeholder="NUR BUCHSTABEN & ZAHLEN" autocomplete="off" spellcheck="false">
                 <button class="btn-add" onclick="addObject()">Objekt speichern</button>
             </section>
 
+            <!-- SECTION: UPLOAD -->
             <section id="upload" class="section">
                 <h2>Datendatei hochladen</h2>
                 <label>Objekt wählen:</label>
                 <select id="linkedObjekte"></select>
-                <label>Esser CSV Datei:</label>
-                <input type="file" id="uploadFile" accept=".csv">
+                <label>Esser CSV Datei wählen:</label>
+                <input type="file" id="uploadFile" accept=".csv" autocomplete="off">
                 <button class="btn-upload" id="uploadBtn" onclick="uploadFileProcess()">
-                    <span class="spinner" id="uploadSpinner"></span>
-                    <span>Hochladen & Verarbeiten</span>
+                    <div class="spinner" id="uploadSpinner"></div>
+                    <span>Hochladen</span>
                 </button>
             </section>
 
+            <!-- SECTION: DELETE -->
             <section id="delete" class="section">
-                <h2>Objekte löschen</h2>
-                <ul id="objektList" style="list-style:none; padding:0;"></ul>
-                <button class="btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Löschen</button>
+                <h2>Objekt löschen</h2>
+                <ul id="objektList"></ul>
+                <button class="btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Markiertes Objekt löschen</button>
             </section>
         </main>
     </div>
@@ -144,10 +157,37 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
+        // Dark Mode Logic
+        const themeToggle = document.getElementById('theme-toggle');
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        });
+
+        // Strict Input Enforcement
+        const codeInput = document.getElementById('code');
+        codeInput.addEventListener('input', (e) => {
+            // Remove non-alphanumeric and force uppercase
+            e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        });
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
         function showSection(id) {
-            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if (id === 'upload' || id === 'delete') loadObjekte();
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            document.querySelector(`a[href="#${id}"]`).classList.add('active');
+            if(window.innerWidth < 768) toggleSidebar();
+            if(id !== 'create') loadObjekte();
         }
 
         async function loadObjekte() {
@@ -164,7 +204,7 @@
                     select.appendChild(opt);
                     const li = document.createElement('li');
                     li.className = 'objekt-item';
-                    li.innerHTML = `<input type="checkbox" name="del" value="${obj.id}" onchange="toggleDelBtn()"> ${obj.display}`;
+                    li.innerHTML = `<input type="checkbox" name="del" value="${obj.id}" onchange="toggleDelBtn()"> <strong>${obj.display}</strong>`;
                     list.appendChild(li);
                 });
             } catch (e) { showMessage('Fehler beim Laden', false); }
@@ -173,6 +213,22 @@
         function toggleDelBtn() {
             const checked = document.querySelectorAll('input[name="del"]:checked');
             document.getElementById('deleteBtn').disabled = checked.length === 0;
+            // Force single selection
+            if(checked.length > 1) checked[0].checked = false;
+        }
+
+        async function addObject() {
+            const code = codeInput.value.trim();
+            if(!code) return showMessage('Code erforderlich', false);
+            try {
+                const res = await fetch(`${API_BASE}/add-object`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ code })
+                });
+                if(res.ok) { showMessage('Erfolgreich gespeichert', true); codeInput.value = ''; }
+                else showMessage(await res.text(), false);
+            } catch (e) { showMessage('Fehler', false); }
         }
 
         async function uploadFileProcess() {
@@ -181,7 +237,7 @@
             const btn = document.getElementById('uploadBtn');
             const spinner = document.getElementById('uploadSpinner');
 
-            if (!id || fileInput.files.length === 0) return showMessage('Bitte alles ausfüllen', false);
+            if (!id || fileInput.files.length === 0) return showMessage('Daten unvollständig', false);
 
             btn.disabled = true;
             spinner.style.display = 'block';
@@ -189,108 +245,77 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const processedData = csvToJSON(e.target.result);
-                    await performUpload(id, processedData, false);
-                } catch (err) { 
-                    showMessage(err.message, false); 
-                    btn.disabled = false;
-                    spinner.style.display = 'none';
-                }
+                    const data = csvToJSON(e.target.result);
+                    await performUpload(id, data, false);
+                } catch (err) { showMessage(err.message, false); resetBtn(); }
             };
             reader.readAsText(fileInput.files[0], 'ISO-8859-1');
         }
 
         async function performUpload(id, data, override) {
-            const btn = document.getElementById('uploadBtn');
-            const spinner = document.getElementById('uploadSpinner');
-
             try {
                 const res = await fetch(`${API_BASE}/upload-data`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ id, data, override })
                 });
-
                 if (res.status === 409) {
-                    if (confirm(`Überschreiben?`)) await performUpload(id, data, true);
-                    else { btn.disabled = false; spinner.style.display = 'none'; }
+                    if (confirm('Datei existiert. Überschreiben?')) await performUpload(id, data, true);
+                    else resetBtn();
                 } else {
-                    showMessage(res.ok ? 'Erfolgreich!' : 'Fehler', res.ok);
-                    btn.disabled = false;
-                    spinner.style.display = 'none';
+                    showMessage(res.ok ? 'Datei hochgeladen!' : 'Fehler', res.ok);
+                    resetBtn();
                     if(res.ok) document.getElementById('uploadFile').value = '';
                 }
-            } catch (e) { 
-                showMessage('Upload-Fehler', false); 
-                btn.disabled = false;
-                spinner.style.display = 'none';
-            }
+            } catch (e) { showMessage('Upload fehlgeschlagen', false); resetBtn(); }
+        }
+
+        function resetBtn() {
+            document.getElementById('uploadBtn').disabled = false;
+            document.getElementById('uploadSpinner').style.display = 'none';
         }
 
         function csvToJSON(csvText) {
             const lines = csvText.split(/\r?\n/);
             if (lines.length < 4) return [];
             const delimiter = lines[2].includes(';') ? ';' : ',';
-            
-            // Cleanup headers (line 3)
             const headers = lines[2].split(delimiter).map(h => {
-                let key = h.replace(/["\r]/g, '').replace(/\./g, '').trim();
-                if (key === "Nr") key = "Gruppe";
-                else if (key === "Zusatztext") key = "Installationsort";
-                else if (key === "Installationsort") key = "Ring";
-                return key;
+                let k = h.replace(/["\r]/g, '').replace(/\./g, '').trim();
+                if(k === "Nr") return "Gruppe";
+                if(k === "Zusatztext") return "Installationsort";
+                if(k === "Installationsort") return "Ring";
+                return k;
             });
-            
-            // Process data (line 4 onwards)
-            return lines.slice(3).filter(line => line.trim()).map(line => {
-                const values = line.split(delimiter);
-                const obj = {};
-                headers.forEach((key, i) => {
-                    let val = values[i] ? values[i] : "";
-                    
-                    // Advanced cleaning logic
-                    val = val.replace(/["\r´°%()]/g, ''); // Remove specific characters
-                    val = val.replace(/[@\/.]/g, ' ');    // Replace separators (@, /, .) with space
-                    val = val.replace(/\s+/g, ' ');       // Collapse multiple spaces into one
-                    val = val.trim();                     // Remove leading/trailing space
-
-                    obj[key] = val;
+            return lines.slice(3).filter(l => l.trim()).map(l => {
+                const v = l.split(delimiter);
+                const o = {};
+                headers.forEach((k, i) => {
+                    let val = v[i] ? v[i].replace(/["\r´°%()]/g, '').replace(/[@\/.]/g, ' ').replace(/\s+/g, ' ').trim() : "";
+                    o[k] = val;
                 });
-                return obj;
+                return o;
             });
-        }
-
-        async function addObject() {
-            const code = document.getElementById('code').value.trim();
-            try {
-                const res = await fetch(`${API_BASE}/add-object`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code })
-                });
-                if (res.ok) { showMessage('Objekt hinzugefügt', true); loadObjekte(); }
-            } catch (e) { showMessage('Fehler', false); }
         }
 
         async function deleteObject() {
-            const id = document.querySelector('input[name="del"]:checked').value;
-            if(!confirm('Löschen?')) return;
+            const sel = document.querySelector('input[name="del"]:checked');
+            if(!sel || !confirm('Endgültig löschen?')) return;
             try {
-                await fetch(`${API_BASE}/delete-object`, {
+                const res = await fetch(`${API_BASE}/delete-object`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id: sel.value })
                 });
-                loadObjekte();
+                if(res.ok) { showMessage('Gelöscht', true); loadObjekte(); }
             } catch (e) { showMessage('Fehler', false); }
         }
 
-        function showMessage(text, success) {
-            const msg = document.getElementById('message');
-            msg.textContent = text;
-            msg.className = success ? 'success' : 'error';
-            msg.style.display = 'block';
-            setTimeout(() => msg.style.display = 'none', 3000);
+        function showMessage(t, s) {
+            const m = document.getElementById('message');
+            m.textContent = t;
+            m.className = s ? 'success' : 'error';
+            m.style.display = 'block';
+            setTimeout(() => m.style.display = 'none', 3000);
         }
 
         window.onload = loadObjekte;

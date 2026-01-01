@@ -12,6 +12,8 @@
             --border-color: #dee2e6;
             --primary-color: #0d6efd;
             --secondary-text: #6c757d;
+            --success: #198754;
+            --danger: #dc3545;
         }
 
         body.dark-mode {
@@ -67,6 +69,23 @@
             box-sizing: border-box;
         }
 
+        .button-group { display: flex; gap: 10px; margin-top: 10px; }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            color: white;
+            font-size: 1rem;
+        }
+        .btn-search { background-color: var(--primary-color); }
+        .btn-clear { background-color: var(--help, #6c757d); }
+        .btn:hover { opacity: 0.9; }
+
         #status { text-align: center; margin: 15px 0; color: var(--secondary-text); font-style: italic; }
 
         .hidden { display: none !important; }
@@ -77,19 +96,18 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; }
 
-        /* Mobile Card Styles */
-        #mobile-cards { margin-top: 20px; width: 100%; }
-        .result-item {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border-color);
+        /* Details Button Styling */
+        .btn-details { 
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-block;
         }
-        .card-row { display: flex; justify-content: space-between; margin-bottom: 5px; gap: 10px; }
-        .card-label { font-weight: bold; color: var(--secondary-text); font-size: 0.85rem; }
 
-        /* Details Expansion */
         .details-content { 
             display: none; 
             padding: 15px; 
@@ -97,28 +115,12 @@
             font-size: 0.9rem; 
             border-radius: 6px;
             margin-top: 10px;
-            border: 1px dashed var(--border-color);
-            color: var(--text-color);
+            border: 1px solid var(--border-color);
         }
-        .btn-details { 
-            background: none; 
-            border: 1px solid var(--primary-color); 
-            color: var(--primary-color); 
-            padding: 6px 12px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 0.85rem;
-            transition: all 0.2s;
-            display: inline-block;
-        }
-        .btn-details:hover { background: var(--primary-color); color: white; }
 
-        @media (min-width: 768px) {
-            #mobile-cards { display: none; }
-        }
-        @media (max-width: 767px) {
-            .table-wrapper { display: none; }
-        }
+        /* Responsive Visibility */
+        @media (min-width: 768px) { #mobile-cards { display: none; } }
+        @media (max-width: 767px) { .table-wrapper { display: none; } }
 
         .header-actions {
             width: 100%;
@@ -127,7 +129,6 @@
             justify-content: space-between;
             margin-bottom: 15px;
         }
-
         .icon-btn { background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--text-color); }
         .admin-link { text-decoration: none; color: var(--secondary-text); font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
     </style>
@@ -160,14 +161,18 @@
 
             <div>
                 <label id="searchLabel" for="search">Gruppe eingeben:</label>
-                <input type="text" id="search" placeholder="z.B. 101" oninput="filterResults()">
+                <input type="text" id="search" placeholder="z.B. 101">
+                <div class="button-group">
+                    <button class="btn btn-search" onclick="filterResults()">Suchen</button>
+                    <button class="btn btn-clear" onclick="clearSearch()">Neu</button>
+                </div>
             </div>
         </div>
 
         <div id="status">Warte auf Auswahl...</div>
 
         <!-- Desktop Table -->
-        <div class="table-wrapper hidden">
+        <div id="table-wrapper" class="table-wrapper hidden">
             <table>
                 <thead>
                     <tr>
@@ -191,6 +196,7 @@
         let data = [];
         let objectFiles = {};
 
+        // Theme Toggle
         const themeToggle = document.getElementById('theme-toggle');
         if (localStorage.getItem('darkMode') === 'enabled') {
             document.body.classList.add('dark-mode');
@@ -203,6 +209,7 @@
             localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         });
 
+        // Initialize App
         async function initialize() {
             try {
                 const res = await fetch(`${API_BASE}/get-objects`);
@@ -210,7 +217,133 @@
                 const select = document.getElementById('object');
                 select.innerHTML = ''; 
                 objects.forEach(obj => {
+                    const opt = document.createElement('option');
+                    opt.value = obj.id;
+                    opt.textContent = obj.display;
+                    select.appendChild(opt);
+                    objectFiles[obj.id] = `${obj.id}.json`;
+                });
+                if (objects.length > 0) loadData();
+            } catch (err) {
+                document.getElementById('status').textContent = 'Fehler beim Laden der Objektliste.';
+            }
+        }
 
+        async function loadData() {
+            const objectKey = document.getElementById('object').value;
+            const statusDiv = document.getElementById('status');
+            if (!objectKey) return;
+            statusDiv.textContent = 'Daten werden geladen...';
+            try {
+                const response = await fetch(objectFiles[objectKey]);
+                if (!response.ok) throw new Error();
+                data = await response.json();
+                statusDiv.textContent = `${data.length} Einträge geladen.`;
+                clearSearch();
+            } catch (e) {
+                statusDiv.textContent = 'Keine Daten für dieses Objekt gefunden.';
+                data = [];
+                clearSearch();
+            }
+        }
+
+        // Enter key listener
+        document.getElementById('search').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') filterResults();
+        });
+
+        function updateSearchUI() {
+            const type = document.getElementById('searchType').value;
+            document.getElementById('searchLabel').textContent = type === 'gruppe' ? 'Gruppe eingeben:' : 'Ring eingeben:';
+            document.getElementById('search').placeholder = type === 'gruppe' ? 'z.B. 101' : 'z.B. 121';
+            clearSearch();
+        }
+
+        function clearSearch() {
+            document.getElementById('search').value = '';
+            document.getElementById('mobile-cards').classList.add('hidden');
+            document.getElementById('table-wrapper').classList.add('hidden');
+            document.getElementById('table-body').innerHTML = '';
+            document.getElementById('mobile-cards').innerHTML = '';
+        }
+
+        function filterResults() {
+            const query = document.getElementById('search').value.trim();
+            const type = document.getElementById('searchType').value;
+            const mobileContainer = document.getElementById('mobile-cards');
+            const tableWrapper = document.getElementById('table-wrapper');
+            const tableBody = document.getElementById('table-body');
+            const statusDiv = document.getElementById('status');
+            
+            mobileContainer.innerHTML = '';
+            tableBody.innerHTML = '';
+
+            if (!query) return;
+
+            const filtered = data.filter(item => {
+                const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || '');
+                return val === query;
+            });
+
+            if (filtered.length === 0) {
+                tableWrapper.classList.add('hidden');
+                mobileContainer.classList.remove('hidden');
+                mobileContainer.innerHTML = '<div class="status">Keine Treffer gefunden.</div>';
+                statusDiv.textContent = '';
+            } else {
+                tableWrapper.classList.remove('hidden');
+                mobileContainer.classList.remove('hidden');
+                statusDiv.textContent = `${filtered.length} Treffer gefunden.`;
+                filtered.forEach((item, index) => {
+                    renderTableRow(item, index);
+                    renderMobileCard(item, index);
+                });
+            }
+        }
+
+        function renderTableRow(item, index) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${item.Gruppe || '-'}</strong></td>
+                <td>${item.Installationsort || '-'}</td>
+                <td>${item.Ring || '-'}</td>
+                <td>${item.Anz.Melder || '-'}</td>
+                <td>
+                    <button class="btn-details" onclick="toggleDetails('dt-${index}')">Details</button>
+                    <div id="dt-${index}" class="details-content">${formatDetails(item)}</div>
+                </td>
+            `;
+            document.getElementById('table-body').appendChild(tr);
+        }
+
+        function renderMobileCard(item, index) {
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            div.innerHTML = `
+                <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
+                <div class="card-row"><span class="card-label">Ort:</span> <span>${item.Installationsort || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Ring / Melder:</span> <span>${item.Ring || '-'} / ${item.Anz.Melder || '-'}</span></div>
+                <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}')">Details anzeigen</button>
+                <div id="dm-${index}" class="details-content">${formatDetails(item)}</div>
+            `;
+            document.getElementById('mobile-cards').appendChild(div);
+        }
+
+        function formatDetails(item) {
+            return Object.entries(item)
+                .map(([key, value]) => `<div style="margin-bottom:8px"><strong>${key}:</strong> ${value || '-'}</div>`)
+                .join('');
+        }
+
+        function toggleDetails(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        window.onload = initialize;
+    </script>
+</body>
+</html>
 
 
 

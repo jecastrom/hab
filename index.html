@@ -97,11 +97,11 @@
             background-color: #6c757d;
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.8rem;
-            white-space: nowrap;
+            font-size: 0.85rem;
+            display: inline-block;
         }
         .btn-details:hover { background-color: var(--primary-color); }
 
@@ -114,6 +114,7 @@
             margin-top: 10px;
             border: 1px solid var(--border-color);
             line-height: 1.6;
+            color: var(--text-color);
         }
 
         /* Responsive UI */
@@ -190,7 +191,6 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
         let data = [];
-        let objectFiles = {};
 
         // Theme Toggle
         const themeToggle = document.getElementById('theme-toggle');
@@ -216,7 +216,6 @@
                     opt.value = obj.id;
                     opt.textContent = obj.display;
                     select.appendChild(opt);
-                    objectFiles[obj.id] = `${obj.id}.json`;
                 });
                 if (objects.length > 0) loadData();
             } catch (err) {
@@ -230,7 +229,8 @@
             if (!objectKey) return;
             statusDiv.textContent = 'Daten werden geladen...';
             try {
-                const response = await fetch(objectFiles[objectKey]);
+                // Pointing to the new get-data API
+                const response = await fetch(`${API_BASE}/get-data?id=${objectKey}`);
                 if (!response.ok) throw new Error();
                 data = await response.json();
                 statusDiv.textContent = `${data.length} Einträge geladen.`;
@@ -301,7 +301,7 @@
                 <td><strong>${item.Gruppe || '-'}</strong></td>
                 <td>${item.Installationsort || '-'}</td>
                 <td>${item.Ring || '-'}</td>
-                <td>${item["Anz.Melder"] || '-'}</td>
+                <td>${item.AnzMelder || '-'}</td>
                 <td>
                     <button class="btn-details" onclick="toggleDetails('dt-${index}')">Details</button>
                     <div id="dt-${index}" class="details-pane">${formatAllDetails(item)}</div>
@@ -317,7 +317,7 @@
                 <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
                 <div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div>
                 <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
-                <div class="card-row"><span class="card-label">Anz.Melder:</span> <span>${item["Anz.Melder"] || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Anz.Melder:</span> <span>${item.AnzMelder || '-'}</span></div>
                 <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}')">Details anzeigen</button>
                 <div id="dm-${index}" class="details-pane">${formatAllDetails(item)}</div>
             `;
@@ -326,7 +326,7 @@
 
         function formatAllDetails(item) {
             return Object.entries(item)
-                .map(([key, value]) => `<div><strong>${key}:</strong> ${value || '-'}</div>`)
+                .map(([key, value]) => `<div style="margin-bottom:8px"><strong>${key}:</strong> ${value || '-'}</div>`)
                 .join('');
         }
 
@@ -339,7 +339,6 @@
     </script>
 </body>
 </html>
-
 
 
 

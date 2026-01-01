@@ -45,20 +45,33 @@
             border: 1px solid var(--border-color);
         }
 
-        h1 { font-size: 1.8rem; margin-bottom: 25px; text-align: center; color: var(--primary-color); }
+        h1 { font-size: 1.8rem; margin-bottom: 30px; text-align: center; color: var(--primary-color); }
 
-        /* Symmetric Desktop Layout */
-        .controls { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 20px; 
-            margin-bottom: 25px; 
+        /* Optimized Grid Layout */
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
         @media (min-width: 768px) {
-            .controls { 
-                grid-template-columns: repeat(3, 1fr); 
-                align-items: end;
+            .controls-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .button-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .button-row {
+                max-width: 400px;
+                margin: 10px auto 0; /* Centered under the inputs */
             }
         }
 
@@ -73,13 +86,10 @@
             color: var(--text-color);
             font-size: 1rem;
             box-sizing: border-box;
-            height: 48px; /* Consistent height */
+            height: 48px;
         }
 
-        .button-group { display: flex; gap: 10px; margin-top: 10px; }
-        
         .btn {
-            flex: 1;
             height: 48px;
             border: none;
             border-radius: 8px;
@@ -87,15 +97,13 @@
             font-weight: 600;
             color: white;
             font-size: 1rem;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            transition: opacity 0.2s;
         }
         .btn-search { background-color: var(--primary-color); }
         .btn-clear { background-color: #6c757d; }
         .btn:hover { opacity: 0.9; }
 
-        #status { text-align: center; margin: 15px 0; color: var(--secondary-text); font-style: italic; min-height: 1.2em; }
+        #status { text-align: center; margin: 20px 0; color: var(--secondary-text); font-style: italic; min-height: 1.2em; }
 
         .hidden { display: none !important; }
 
@@ -103,16 +111,16 @@
         .table-wrapper { margin-top: 20px; overflow-x: auto; width: 100%; }
         table { width: 100%; border-collapse: collapse; background: var(--card-bg); }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; }
+        th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; white-space: nowrap; }
 
         .btn-details { 
             background-color: #6c757d;
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
         }
 
         .details-pane { 
@@ -120,7 +128,7 @@
             padding: 15px; 
             background: var(--bg-color); 
             font-size: 0.9rem; 
-            border-radius: 6px;
+            border-radius: 8px;
             margin-top: 10px;
             border: 1px solid var(--border-color);
             line-height: 1.6;
@@ -152,32 +160,33 @@
         <h1>Meldergruppen & Ringe</h1>
 
         <div class="controls">
-            <div>
-                <label for="object">Objekt:</label>
-                <select id="object" onchange="loadData()">
-                    <option value="">Laden...</option>
-                </select>
-            </div>
+            <div class="controls-grid">
+                <div>
+                    <label for="object">Objekt:</label>
+                    <select id="object" onchange="loadData()">
+                        <option value="">Laden...</option>
+                    </select>
+                </div>
 
-            <div>
-                <label for="searchType">Suchen nach:</label>
-                <select id="searchType" onchange="updateSearchUI()">
-                    <option value="gruppe">Meldergruppe</option>
-                    <option value="ring">Ring</option>
-                </select>
-            </div>
+                <div>
+                    <label for="searchType">Suchen nach:</label>
+                    <select id="searchType" onchange="updateSearchUI()">
+                        <option value="gruppe">Meldergruppe</option>
+                        <option value="ring">Ring</option>
+                    </select>
+                </div>
 
-            <div>
-                <label id="searchLabel" for="search">Gruppe eingeben:</label>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div>
+                    <label id="searchLabel" for="search">Gruppe eingeben:</label>
                     <input type="text" id="search" placeholder="z.B. 101" 
                            inputmode="numeric" pattern="[0-9]*" 
                            autocomplete="off" spellcheck="false">
-                    <div class="button-group">
-                        <button class="btn btn-search" onclick="filterResults()">Suchen</button>
-                        <button class="btn btn-clear" onclick="clearSearch()">Neu</button>
-                    </div>
                 </div>
+            </div>
+
+            <div class="button-row">
+                <button class="btn btn-search" onclick="filterResults()">Suchen</button>
+                <button class="btn btn-clear" onclick="clearSearch()">Neu</button>
             </div>
         </div>
 
@@ -271,7 +280,6 @@
             document.getElementById('table-wrapper').classList.add('hidden');
             document.getElementById('table-body').innerHTML = '';
             document.getElementById('mobile-cards').innerHTML = '';
-            // Reset status message to data load count if data exists
             document.getElementById('status').textContent = data.length ? `${data.length} Einträge geladen.` : 'Warte auf Auswahl...';
         }
 
@@ -317,7 +325,7 @@
                 <td>${item.Ring || '-'}</td>
                 <td>${item.AnzMelder || '-'}</td>
                 <td>
-                    <button class="btn-details" onclick="toggleDetails('dt-${index}')">Details</button>
+                    <button class="btn-details" onclick="toggleDetails('dt-${index}', this)">Details</button>
                     <div id="dt-${index}" class="details-pane">${formatAllDetails(item)}</div>
                 </td>
             `;
@@ -329,10 +337,10 @@
             div.className = 'result-item';
             div.innerHTML = `
                 <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
-                <div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Ort:</span> <span>${item.Installationsort || '-'}</span></div>
                 <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
-                <div class="card-row"><span class="card-label">Anz.Melder:</span> <span>${item.AnzMelder || '-'}</span></div>
-                <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}')">Details anzeigen</button>
+                <div class="card-row"><span class="card-label">Melder:</span> <span>${item.AnzMelder || '-'}</span></div>
+                <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button>
                 <div id="dm-${index}" class="details-pane">${formatAllDetails(item)}</div>
             `;
             document.getElementById('mobile-cards').appendChild(div);
@@ -344,9 +352,18 @@
                 .join('');
         }
 
-        function toggleDetails(id) {
+        function toggleDetails(id, btn) {
             const el = document.getElementById(id);
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+            const isVisible = el.style.display === 'block';
+            el.style.display = isVisible ? 'none' : 'block';
+            
+            // Check if we are on mobile or desktop to choose the right text
+            const isMobile = window.innerWidth < 768;
+            if (isVisible) {
+                btn.textContent = isMobile ? "Details anzeigen" : "Details";
+            } else {
+                btn.textContent = isMobile ? "Details schließen" : "Schließen";
+            }
         }
 
         window.onload = initialize;

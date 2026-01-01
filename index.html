@@ -47,7 +47,6 @@
 
         h1 { font-size: 1.8rem; margin-bottom: 30px; text-align: center; color: var(--primary-color); }
 
-        /* Optimized Grid Layout */
         .controls-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -71,7 +70,7 @@
         @media (min-width: 768px) {
             .button-row {
                 max-width: 400px;
-                margin: 10px auto 0; /* Centered under the inputs */
+                margin: 10px auto 0;
             }
         }
 
@@ -199,7 +198,7 @@
                         <th>Gruppe</th>
                         <th>Installationsort</th>
                         <th>Ring</th>
-                        <th>Anz.Melder</th>
+                        <th>AnzMelder</th>
                         <th>Details</th>
                     </tr>
                 </thead>
@@ -326,7 +325,7 @@
                 <td>${item.AnzMelder || '-'}</td>
                 <td>
                     <button class="btn-details" onclick="toggleDetails('dt-${index}', this)">Details</button>
-                    <div id="dt-${index}" class="details-pane">${formatAllDetails(item)}</div>
+                    <div id="dt-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
                 </td>
             `;
             document.getElementById('table-body').appendChild(tr);
@@ -337,18 +336,20 @@
             div.className = 'result-item';
             div.innerHTML = `
                 <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
-                <div class="card-row"><span class="card-label">Ort:</span> <span>${item.Installationsort || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div>
                 <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
-                <div class="card-row"><span class="card-label">Melder:</span> <span>${item.AnzMelder || '-'}</span></div>
+                <div class="card-row"><span class="card-label">AnzMelder:</span> <span>${item.AnzMelder || '-'}</span></div>
                 <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button>
-                <div id="dm-${index}" class="details-pane">${formatAllDetails(item)}</div>
+                <div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
             `;
             document.getElementById('mobile-cards').appendChild(div);
         }
 
-        function formatAllDetails(item) {
-            return Object.entries(item)
-                .map(([key, value]) => `<div><strong>${key}:</strong> ${value || '-'}</div>`)
+        function formatTechnicalDetails(item) {
+            // Only show these specific technical keys in the details pane
+            const technicalKeys = ["Gruppentyp", "Betriebsart", "Meldertechnik", "Alarmreaktion"];
+            return technicalKeys
+                .map(key => `<div><strong>${key}:</strong> ${item[key] || '-'}</div>`)
                 .join('');
         }
 
@@ -357,7 +358,6 @@
             const isVisible = el.style.display === 'block';
             el.style.display = isVisible ? 'none' : 'block';
             
-            // Check if we are on mobile or desktop to choose the right text
             const isMobile = window.innerWidth < 768;
             if (isVisible) {
                 btn.textContent = isMobile ? "Details anzeigen" : "Details";

@@ -37,7 +37,7 @@
 
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 900px;
             background: var(--card-bg);
             padding: 25px;
             border-radius: 12px;
@@ -49,7 +49,12 @@
 
         .controls { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
 
-        label { font-weight: 600; margin-bottom: 5px; display: block; }
+        @media (min-width: 768px) {
+            .controls { flex-direction: row; align-items: flex-end; }
+            .controls > div { flex: 1; }
+        }
+
+        label { font-weight: 600; margin-bottom: 5px; display: block; font-size: 0.9rem; }
 
         select, input {
             width: 100%;
@@ -62,215 +67,260 @@
             box-sizing: border-box;
         }
 
-        .search-container { position: relative; }
+        #status { text-align: center; margin: 15px 0; color: var(--secondary-text); font-style: italic; }
 
-        #results { margin-top: 20px; }
+        /* Desktop Table Styles */
+        .table-wrapper { display: none; margin-top: 20px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: var(--card-bg); min-width: 600px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; }
 
+        /* Mobile Card Styles */
+        #mobile-cards { display: block; margin-top: 20px; width: 100%; }
         .result-item {
-            background: var(--bg-color);
+            background: var(--card-bg);
             padding: 15px;
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border: 1px solid var(--border-color);
         }
+        .card-row { display: flex; justify-content: space-between; margin-bottom: 5px; gap: 10px; }
+        .card-label { font-weight: bold; color: var(--secondary-text); font-size: 0.85rem; }
 
-        .result-header { font-weight: bold; color: var(--primary-color); margin-bottom: 5px; font-size: 1.1rem; }
+        /* Details Expansion */
+        .details-content { 
+            display: none; 
+            padding: 15px; 
+            background: var(--bg-color); 
+            font-size: 0.9rem; 
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px dashed var(--border-color);
+        }
+        .btn-details { 
+            background: none; 
+            border: 1px solid var(--primary-color); 
+            color: var(--primary-color); 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-details:hover { background: var(--primary-color); color: white; }
 
-        .status { text-align: center; margin: 15px 0; color: var(--secondary-text); font-style: italic; }
+        /* Responsive Visibility */
+        @media (min-width: 768px) {
+            .table-wrapper { display: block; }
+            #mobile-cards { display: none; }
+        }
 
         .header-actions {
             width: 100%;
-            max-width: 600px;
+            max-width: 900px;
             display: flex;
             justify-content: space-between;
             margin-bottom: 15px;
         }
 
-        .icon-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.5rem;
-            color: var(--text-color);
-            padding: 5px;
-            display: flex;
-            align-items: center;
-        }
-
-        .admin-link {
-            text-decoration: none;
-            color: var(--secondary-text);
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .icon-btn { background: none; border: none; cursor: pointer; font-size: 1.5rem; color: var(--text-color); }
+        .admin-link { text-decoration: none; color: var(--secondary-text); font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="controls">
-    <div>
-        <label for="object">Objekt auswählen:</label>
-        <select id="object" onchange="loadData()">
-            <option value="">Laden...</option>
-        </select>
+    <div class="header-actions">
+        <a href="admin.html" class="admin-link">⚙️ Admin Bereich</a>
+        <button id="theme-toggle" class="icon-btn">🌙</button>
     </div>
 
-    <div>
-        <label for="searchType">Suchen nach:</label>
-        <select id="searchType" onchange="filterResults()">
-            <option value="gruppe">Meldergruppe (Einzeln)</option>
-            <option value="ring">Ring (Alle Gruppen im Ring)</option>
-        </select>
+    <div class="container">
+        <h1>Gruppen & Ringe</h1>
+
+        <div class="controls">
+            <div>
+                <label for="object">Objekt:</label>
+                <select id="object" onchange="loadData()">
+                    <option value="">Laden...</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="searchType">Suchen nach:</label>
+                <select id="searchType" onchange="updateSearchUI()">
+                    <option value="gruppe">Meldergruppe</option>
+                    <option value="ring">Ring</option>
+                </select>
+            </div>
+
+            <div>
+                <label id="searchLabel" for="search">Gruppe eingeben:</label>
+                <input type="text" id="search" placeholder="z.B. 101" oninput="filterResults()">
+            </div>
+        </div>
+
+        <div id="status">Warte auf Auswahl...</div>
+
+        <!-- Desktop Table -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Gruppe</th>
+                        <th>Ort</th>
+                        <th>Ring</th>
+                        <th>Melder</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div id="mobile-cards"></div>
     </div>
-
-    <div class="search-container">
-        <label id="searchLabel" for="search">Gruppe eingeben:</label>
-        <input type="text" id="search" placeholder="z.B. 101" oninput="filterResults()">
-    </div>
-</div>
-
-<div id="status" class="status">Warte auf Auswahl...</div>
-
-<!-- Desktop Table View -->
-<div class="table-wrapper">
-    <table id="desktop-table">
-        <thead>
-            <tr>
-                <th>Gruppe</th>
-                <th>Ort</th>
-                <th>Ring</th>
-                <th>Melder</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-    </table>
-</div>
-
-<!-- Mobile Card View -->
-<div id="mobile-cards"></div>
 
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
         let data = [];
         let objectFiles = {};
 
-        // Theme Toggle
+        // Theme Toggle Logic
         const themeToggle = document.getElementById('theme-toggle');
-        const body = document.body;
-
         if (localStorage.getItem('darkMode') === 'enabled') {
-            body.classList.add('dark-mode');
+            document.body.classList.add('dark-mode');
             themeToggle.textContent = '☀️';
         }
-
         themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            const isDark = body.classList.contains('dark-mode');
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
             themeToggle.textContent = isDark ? '☀️' : '🌙';
             localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         });
 
-        // Load Objects on Start
+        // Initialize App
         async function initialize() {
             try {
                 const res = await fetch(`${API_BASE}/get-objects`);
                 const objects = await res.json();
                 
                 const select = document.getElementById('object');
-                select.innerHTML = ''; // Clear loading message
+                select.innerHTML = ''; 
 
                 objects.forEach(obj => {
                     const opt = document.createElement('option');
                     opt.value = obj.id;
                     opt.textContent = obj.display;
                     select.appendChild(opt);
-
-                    // Build the mapping for filenames
                     objectFiles[obj.id] = `${obj.id}.json`;
                 });
 
-                // Load initial data for the first object
                 if (objects.length > 0) loadData();
-
             } catch (err) {
                 document.getElementById('status').textContent = 'Fehler beim Laden der Objektliste.';
-                console.error(err);
             }
         }
 
         async function loadData() {
             const objectKey = document.getElementById('object').value;
             const statusDiv = document.getElementById('status');
-            const resultsDiv = document.getElementById('results');
-
             if (!objectKey) return;
 
             statusDiv.textContent = 'Daten werden geladen...';
-            resultsDiv.innerHTML = '';
-
             try {
-                // Assuming data files are also served via an API or public folder
-                // For now, fetching from the current SWA root or redirected data path
-                const filename = objectFiles[objectKey];
-                const response = await fetch(filename);
-                
-                if (!response.ok) throw new Error('Datei nicht gefunden');
-                
+                const response = await fetch(objectFiles[objectKey]);
+                if (!response.ok) throw new Error();
                 data = await response.json();
                 statusDiv.textContent = `${data.length} Einträge geladen.`;
                 filterResults();
-            } catch (error) {
-                statusDiv.textContent = 'Keine Daten für dieses Objekt verfügbar.';
-                console.error(error);
+            } catch (e) {
+                statusDiv.textContent = 'Keine Daten für dieses Objekt gefunden.';
+                data = [];
+                filterResults();
             }
+        }
+
+        function updateSearchUI() {
+            const type = document.getElementById('searchType').value;
+            const label = document.getElementById('searchLabel');
+            const input = document.getElementById('search');
+            label.textContent = type === 'gruppe' ? 'Gruppe eingeben:' : 'Ring eingeben:';
+            input.placeholder = type === 'gruppe' ? 'z.B. 101' : 'z.B. 121';
+            filterResults();
         }
 
         function filterResults() {
-            const query = document.getElementById('search').value.toLowerCase().trim();
-            const resultsDiv = document.getElementById('results');
+            const query = document.getElementById('search').value.trim();
+            const type = document.getElementById('searchType').value;
+            const resultsDiv = document.getElementById('mobile-cards');
+            const tableBody = document.getElementById('table-body');
+            
             resultsDiv.innerHTML = '';
+            tableBody.innerHTML = '';
 
-            if (!query) {
-                data.slice(0, 20).forEach(renderItem); // Show first 20 as preview
-                return;
-            }
+            if (!query) return;
 
             const filtered = data.filter(item => {
-                const group = String(item.gruppe || '').toLowerCase();
-                const element = String(item.element || '').toLowerCase();
-                const combined = `${group}/${element}`;
-                return group === query || combined.startsWith(query);
+                const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || '');
+                return val === query;
             });
 
             if (filtered.length === 0) {
-                resultsDiv.innerHTML = '<div class="status">Keine Treffer gefunden.</div>';
+                const noData = '<tr><td colspan="5" style="text-align:center">Keine Treffer gefunden.</td></tr>';
+                tableBody.innerHTML = noData;
+                resultsDiv.innerHTML = '<div id="status">Keine Treffer gefunden.</div>';
             } else {
-                filtered.forEach(renderItem);
+                filtered.forEach((item, index) => {
+                    renderTableRow(item, index);
+                    renderMobileCard(item, index);
+                });
             }
         }
 
-        function renderItem(item) {
-            const resultsDiv = document.getElementById('results');
+        function renderTableRow(item, index) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${item.Gruppe || '-'}</strong></td>
+                <td>${item.Installationsort || '-'}</td>
+                <td>${item.Ring || '-'}</td>
+                <td>${item.Anz.Melder || '-'}</td>
+                <td>
+                    <button class="btn-details" onclick="toggleDetails('dt-${index}')">Details</button>
+                    <div id="dt-${index}" class="details-content">${formatDetails(item)}</div>
+                </td>
+            `;
+            document.getElementById('table-body').appendChild(tr);
+        }
+
+        function renderMobileCard(item, index) {
             const div = document.createElement('div');
             div.className = 'result-item';
             div.innerHTML = `
-                <div class="result-header">Gruppe: ${item.gruppe} / Element: ${item.element}</div>
-                <div><strong>Zusatztext:</strong> ${item.zusatztext || '-'}</div>
-                <div style="font-size: 0.85rem; color: var(--secondary-text); margin-top:5px;">
-                    Typ: ${item.typ || 'Unbekannt'}
-                </div>
+                <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
+                <div class="card-row"><span class="card-label">Ort:</span> <span>${item.Installationsort || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Ring / Melder:</span> <span>${item.Ring || '-'} / ${item.Anz.Melder || '-'}</span></div>
+                <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}')">Alle Details anzeigen</button>
+                <div id="dm-${index}" class="details-content">${formatDetails(item)}</div>
             `;
-            resultsDiv.appendChild(div);
+            document.getElementById('mobile-cards').appendChild(div);
+        }
+
+        function formatDetails(item) {
+            return Object.entries(item)
+                .map(([key, value]) => `<div style="margin-bottom:4px"><strong>${key}:</strong> ${value || '-'}</div>`)
+                .join('');
+        }
+
+        function toggleDetails(id) {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
         }
 
         window.onload = initialize;
     </script>
 </body>
 </html>
-
 
 
 

@@ -261,20 +261,76 @@
         }
 
         async function uploadFileProcess() {
-            const selectedCode = document.getElementById('linkedObjekte').value;
-            const fileInput = document.getElementById('uploadFile');
-            if (!selectedCode || fileInput.files.length === 0) return showMessage('Daten unvollständig', false);
+    const selectedId = document.getElementById('linkedObjekte').value;
+    const fileInput = document.getElementById('uploadFile');
+    
+    if (!selectedId || fileInput.files.length === 0) {
+        return showMessage('Bitte Objekt wählen und Datei auswählen.', false);
+    }
 
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-            reader.onload = async () => {
-                try {
-                    // Logic for processing goes here, then call API
-                    showMessage('Upload-Verarbeitung wird gestartet...', true);
-                } catch (e) { showMessage('Fehler: ' + e.message, false); }
-            };
-            reader.readAsText(file);
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        const text = e.target.result;
+        try {
+            // 1. Convert CSV to JSON
+            const processedData = csvToJSON(text);
+            
+            if (processedData.length === 0) {
+                throw new Error("Die Datei scheint leer zu sein oder das Format ist ungültig.");
+            }
+
+            // 2. Log result for verification (Check your browser console)
+            console.log("Verarbeitete Daten:", processedData);
+            
+            // 3. For now, just show a success message that processing finished
+            showMessage(`Verarbeitung abgeschlossen: ${processedData.length} Zeilen erkannt.`, true);
+            
+            // Note: We will add the Backend Upload & Override logic in the next step.
+            
+        } catch (err) {
+            console.error(err);
+            showMessage("Fehler bei der Verarbeitung: " + err.message, false);
         }
+    };
+
+    reader.readAsText(file, 'ISO-8859-1'); // Esser files often use Western encoding
+}
+
+function csvToJSON(csvText) {
+    const lines = csvText.split(/\r?\n/);
+    if (lines.length < 4) return [];
+
+    // Esser Format: Line 3 is headers (Index 2), Data starts Line 4 (Index 3)
+    const delimiter = lines[2].includes(';') ? ';' : ',';
+    const headers = lines[2].split(delimiter).map(h => h.trim());
+
+    const result = [];
+    for (let i = 3; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+
+        const obj = {};
+        const currentline = lines[i].split(delimiter);
+
+        headers.forEach((header, index) => {
+            let value = currentline[index] ? currentline[index].trim() : "";
+            
+            // Clean Header/Key names (Remove dots and extra spaces)
+            let key = header.replace(/\./g, '').trim();
+
+            // Apply Mapping
+            if (key === "Nr") key = "Gruppe";
+            else if (key === "Zusatztext") key = "Installationsort";
+            else if (key === "Installationsort") key = "Ring";
+            
+            // Add to object
+            obj[key] = value;
+        });
+        result.push(obj);
+    }
+    return result;
+}
 
         window.onload = () => { loadObjekte(); showSection('create'); };
     </script>

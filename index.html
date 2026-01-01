@@ -12,8 +12,6 @@
             --border-color: #dee2e6;
             --primary-color: #0d6efd;
             --secondary-text: #6c757d;
-            --success: #198754;
-            --danger: #dc3545;
         }
 
         body.dark-mode {
@@ -39,7 +37,7 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             background: var(--card-bg);
             padding: 25px;
             border-radius: 12px;
@@ -78,37 +76,36 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            transition: opacity 0.2s;
             color: white;
             font-size: 1rem;
         }
         .btn-search { background-color: var(--primary-color); }
-        .btn-clear { background-color: var(--help, #6c757d); }
-        .btn:hover { opacity: 0.9; }
+        .btn-clear { background-color: #6c757d; }
 
         #status { text-align: center; margin: 15px 0; color: var(--secondary-text); font-style: italic; }
 
         .hidden { display: none !important; }
 
-        /* Desktop Table Styles */
-        .table-wrapper { margin-top: 20px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: var(--card-bg); min-width: 600px; }
+        /* Desktop Table */
+        .table-wrapper { margin-top: 20px; overflow-x: auto; width: 100%; }
+        table { width: 100%; border-collapse: collapse; background: var(--card-bg); }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; }
+        th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; white-space: nowrap; }
 
-        /* Details Button Styling */
+        /* Details Button */
         .btn-details { 
-            background-color: var(--primary-color);
+            background-color: #6c757d;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.85rem;
-            display: inline-block;
+            font-size: 0.8rem;
+            white-space: nowrap;
         }
+        .btn-details:hover { background-color: var(--primary-color); }
 
-        .details-content { 
+        .details-pane { 
             display: none; 
             padding: 15px; 
             background: var(--bg-color); 
@@ -116,15 +113,16 @@
             border-radius: 6px;
             margin-top: 10px;
             border: 1px solid var(--border-color);
+            line-height: 1.6;
         }
 
-        /* Responsive Visibility */
+        /* Responsive UI */
         @media (min-width: 768px) { #mobile-cards { display: none; } }
         @media (max-width: 767px) { .table-wrapper { display: none; } }
 
         .header-actions {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             display: flex;
             justify-content: space-between;
             margin-bottom: 15px;
@@ -171,23 +169,21 @@
 
         <div id="status">Warte auf Auswahl...</div>
 
-        <!-- Desktop Table -->
         <div id="table-wrapper" class="table-wrapper hidden">
             <table>
                 <thead>
                     <tr>
                         <th>Gruppe</th>
-                        <th>Ort</th>
+                        <th>Installationsort</th>
                         <th>Ring</th>
-                        <th>Melder</th>
-                        <th>Aktion</th>
+                        <th>Anz.Melder</th>
+                        <th>Details</th>
                     </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
             </table>
         </div>
 
-        <!-- Mobile Cards -->
         <div id="mobile-cards" class="hidden"></div>
     </div>
 
@@ -209,7 +205,6 @@
             localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         });
 
-        // Initialize App
         async function initialize() {
             try {
                 const res = await fetch(`${API_BASE}/get-objects`);
@@ -247,8 +242,7 @@
             }
         }
 
-        // Enter key listener
-        document.getElementById('search').addEventListener('keypress', function (e) {
+        document.getElementById('search').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') filterResults();
         });
 
@@ -275,8 +269,8 @@
             const tableBody = document.getElementById('table-body');
             const statusDiv = document.getElementById('status');
             
-            mobileContainer.innerHTML = '';
             tableBody.innerHTML = '';
+            mobileContainer.innerHTML = '';
 
             if (!query) return;
 
@@ -307,10 +301,10 @@
                 <td><strong>${item.Gruppe || '-'}</strong></td>
                 <td>${item.Installationsort || '-'}</td>
                 <td>${item.Ring || '-'}</td>
-                <td>${item.Anz.Melder || '-'}</td>
+                <td>${item["Anz.Melder"] || '-'}</td>
                 <td>
                     <button class="btn-details" onclick="toggleDetails('dt-${index}')">Details</button>
-                    <div id="dt-${index}" class="details-content">${formatDetails(item)}</div>
+                    <div id="dt-${index}" class="details-pane">${formatAllDetails(item)}</div>
                 </td>
             `;
             document.getElementById('table-body').appendChild(tr);
@@ -321,17 +315,18 @@
             div.className = 'result-item';
             div.innerHTML = `
                 <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
-                <div class="card-row"><span class="card-label">Ort:</span> <span>${item.Installationsort || '-'}</span></div>
-                <div class="card-row"><span class="card-label">Ring / Melder:</span> <span>${item.Ring || '-'} / ${item.Anz.Melder || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Anz.Melder:</span> <span>${item["Anz.Melder"] || '-'}</span></div>
                 <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}')">Details anzeigen</button>
-                <div id="dm-${index}" class="details-content">${formatDetails(item)}</div>
+                <div id="dm-${index}" class="details-pane">${formatAllDetails(item)}</div>
             `;
             document.getElementById('mobile-cards').appendChild(div);
         }
 
-        function formatDetails(item) {
+        function formatAllDetails(item) {
             return Object.entries(item)
-                .map(([key, value]) => `<div style="margin-bottom:8px"><strong>${key}:</strong> ${value || '-'}</div>`)
+                .map(([key, value]) => `<div><strong>${key}:</strong> ${value || '-'}</div>`)
                 .join('');
         }
 

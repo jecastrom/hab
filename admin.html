@@ -30,10 +30,7 @@
             min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
         }
-        .container {
-            display: flex;
-            min-height: 100vh;
-        }
+        .container { display: flex; min-height: 100vh; }
         .sidebar {
             width: 250px;
             background: var(--card-bg);
@@ -84,7 +81,6 @@
             .hamburger { display: block; }
             .container { flex-direction: column; }
             .main { padding: 10px; }
-            button { width: 100%; }
         }
     </style>
 </head>
@@ -118,20 +114,19 @@
             <section id="upload" class="section">
                 <h2>Datendatei hochladen</h2>
                 <label for="linkedObjekte">Objekt auswählen:</label>
-                <select id="linkedObjekte"><!-- Populated dynamically --></select>
+                <select id="linkedObjekte"></select>
                 <label for="source">Datenquelle:</label>
                 <select id="source">
                     <option value="esser">Esser Tools 8000 (CSV)</option>
-                    <option value="hekatron">Hekatron</option>
                 </select>
                 <label for="uploadFile">Datei auswählen:</label>
-                <input type="file" id="uploadFile" accept=".csv,.json" required>
+                <input type="file" id="uploadFile" accept=".csv" required>
                 <button class="btn-upload" onclick="uploadFileProcess()">Hochladen</button>
             </section>
 
             <section id="delete" class="section">
                 <h2>Objekte löschen</h2>
-                <ul class="objekt-list" id="objektList"><!-- Populated dynamically --></ul>
+                <ul class="objekt-list" id="objektList"></ul>
                 <button class="btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Ausgewähltes löschen</button>
             </section>
 
@@ -142,7 +137,6 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // Dark mode sync
         if (localStorage.getItem('darkMode') === 'enabled') document.body.classList.add('dark-mode');
 
         function toggleSidebar() {
@@ -154,8 +148,12 @@
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-            document.querySelector(`.sidebar a[href="#${id}"]`).classList.add('active');
-            if (window.innerWidth < 768) toggleSidebar();
+            const link = document.querySelector(`.sidebar a[href="#${id}"]`);
+            if(link) link.classList.add('active');
+            if (window.innerWidth < 768) {
+                document.querySelector('.sidebar').classList.remove('open');
+                document.querySelector('.hamburger').classList.remove('active');
+            }
             if (id === 'upload' || id === 'delete') loadObjekte();
         }
 
@@ -163,25 +161,19 @@
             try {
                 const res = await fetch(`${API_BASE}/get-objects`);
                 const objects = await res.json();
-                
                 const list = document.getElementById('objektList');
                 const select = document.getElementById('linkedObjekte');
                 list.innerHTML = '';
                 select.innerHTML = '';
-
                 if (objects.length === 0) {
                     list.innerHTML = '<li>Keine Objekte vorhanden</li>';
                     return;
                 }
-
                 objects.forEach(obj => {
-                    // For upload select
                     const opt = document.createElement('option');
                     opt.value = obj.id;
                     opt.textContent = `${obj.display} (${obj.id})`;
                     select.appendChild(opt);
-
-                    // For delete list
                     const li = document.createElement('li');
                     li.className = 'objekt-item';
                     li.innerHTML = `
@@ -192,10 +184,7 @@
                     list.appendChild(li);
                 });
                 document.getElementById('deleteBtn').disabled = true;
-            } catch (e) {
-                console.error(e);
-                showMessage('Fehler beim Laden der Objekte', false);
-            }
+            } catch (e) { showMessage('Fehler beim Laden', false); }
         }
 
         function handleCheckboxChange(checkbox) {
@@ -213,7 +202,6 @@
             const input = document.getElementById('code');
             const code = input.value.trim();
             if (!code) return showMessage('Bitte Code eingeben', false);
-
             try {
                 const res = await fetch(`${API_BASE}/add-object`, {
                     method: 'POST',
@@ -224,19 +212,15 @@
                     showMessage('Objekt hinzugefügt', true);
                     input.value = '';
                     loadObjekte();
-                } else {
-                    showMessage(await res.text(), false);
-                }
-            } catch (e) { showMessage('Netzwerkfehler', false); }
+                } else { showMessage(await res.text(), false); }
+            } catch (e) { showMessage('Fehler', false); }
         }
 
         async function deleteObject() {
             const selected = document.querySelector('input[name="delete-check"]:checked');
             if (!selected) return;
             const id = selected.value;
-
-            if (!confirm(`Objekt '${id}' und zugehörige Daten wirklich löschen?`)) return;
-
+            if (!confirm(`Objekt '${id}' wirklich löschen?`)) return;
             try {
                 const res = await fetch(`${API_BASE}/delete-object`, {
                     method: 'POST',
@@ -246,10 +230,70 @@
                 if (res.ok) {
                     showMessage('Objekt gelöscht', true);
                     loadObjekte();
+                } else { showMessage(await res.text(), false); }
+            } catch (e) { showMessage('Fehler', false); }
+        }
+
+        async function uploadFileProcess() {
+            const selectedId = document.getElementById('linkedObjekte').value;
+            const fileInput = document.getElementById('uploadFile');
+            if (!selectedId || fileInput.files.length === 0) return showMessage('Bitte Daten vervollständigen', false);
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const text = e.target.result;
+                try {
+                    const processedData = csvToJSON(text);
+                    if (processedData.length === 0) throw new Error("Format ungültig.");
+                    
+                    await performUpload(selectedId, processedData, false);
+                } catch (err) { showMessage(err.message, false); }
+            };
+            reader.readAsText(file, 'ISO-8859-1');
+        }
+
+        async function performUpload(id, data, override) {
+            try {
+                const res = await fetch(`${API_BASE}/upload-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, data, override })
+                });
+
+                if (res.status === 409) {
+                    if (confirm(`Für '${id}' existiert bereits eine Datei. Überschreiben?`)) {
+                        await performUpload(id, data, true);
+                    }
+                } else if (res.ok) {
+                    showMessage(`Erfolgreich hochgeladen: ${data.length} Zeilen.`, true);
+                    document.getElementById('uploadFile').value = '';
                 } else {
                     showMessage(await res.text(), false);
                 }
-            } catch (e) { showMessage('Fehler beim Löschen', false); }
+            } catch (e) { showMessage('Upload-Fehler', false); }
+        }
+
+        function csvToJSON(csvText) {
+            const lines = csvText.split(/\r?\n/);
+            if (lines.length < 4) return [];
+            const delimiter = lines[2].includes(';') ? ';' : ',';
+            const headers = lines[2].split(delimiter).map(h => h.trim());
+            const result = [];
+            for (let i = 3; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const obj = {};
+                const currentline = lines[i].split(delimiter);
+                headers.forEach((header, index) => {
+                    let key = header.replace(/\./g, '').trim();
+                    if (key === "Nr") key = "Gruppe";
+                    else if (key === "Zusatztext") key = "Installationsort";
+                    else if (key === "Installationsort") key = "Ring";
+                    obj[key] = currentline[index] ? currentline[index].trim() : "";
+                });
+                result.push(obj);
+            }
+            return result;
         }
 
         function showMessage(text, success) {
@@ -259,78 +303,6 @@
             msg.style.display = 'block';
             setTimeout(() => msg.style.display = 'none', 4000);
         }
-
-        async function uploadFileProcess() {
-    const selectedId = document.getElementById('linkedObjekte').value;
-    const fileInput = document.getElementById('uploadFile');
-    
-    if (!selectedId || fileInput.files.length === 0) {
-        return showMessage('Bitte Objekt wählen und Datei auswählen.', false);
-    }
-
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-        const text = e.target.result;
-        try {
-            // 1. Convert CSV to JSON
-            const processedData = csvToJSON(text);
-            
-            if (processedData.length === 0) {
-                throw new Error("Die Datei scheint leer zu sein oder das Format ist ungültig.");
-            }
-
-            // 2. Log result for verification (Check your browser console)
-            console.log("Verarbeitete Daten:", processedData);
-            
-            // 3. For now, just show a success message that processing finished
-            showMessage(`Verarbeitung abgeschlossen: ${processedData.length} Zeilen erkannt.`, true);
-            
-            // Note: We will add the Backend Upload & Override logic in the next step.
-            
-        } catch (err) {
-            console.error(err);
-            showMessage("Fehler bei der Verarbeitung: " + err.message, false);
-        }
-    };
-
-    reader.readAsText(file, 'ISO-8859-1'); // Esser files often use Western encoding
-}
-
-function csvToJSON(csvText) {
-    const lines = csvText.split(/\r?\n/);
-    if (lines.length < 4) return [];
-
-    // Esser Format: Line 3 is headers (Index 2), Data starts Line 4 (Index 3)
-    const delimiter = lines[2].includes(';') ? ';' : ',';
-    const headers = lines[2].split(delimiter).map(h => h.trim());
-
-    const result = [];
-    for (let i = 3; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-
-        const obj = {};
-        const currentline = lines[i].split(delimiter);
-
-        headers.forEach((header, index) => {
-            let value = currentline[index] ? currentline[index].trim() : "";
-            
-            // Clean Header/Key names (Remove dots and extra spaces)
-            let key = header.replace(/\./g, '').trim();
-
-            // Apply Mapping
-            if (key === "Nr") key = "Gruppe";
-            else if (key === "Zusatztext") key = "Installationsort";
-            else if (key === "Installationsort") key = "Ring";
-            
-            // Add to object
-            obj[key] = value;
-        });
-        result.push(obj);
-    }
-    return result;
-}
 
         window.onload = () => { loadObjekte(); showSection('create'); };
     </script>

@@ -1,352 +1,256 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Suche nach Gruppe oder Ring</title>
-  <style>
-    :root {
-      --bg: #ffffff;
-      --text: #000000;
-      --card-bg: #f9f9f9;
-      --border: #ccc;
-      --header-bg: #f0f0f0;
-      --button-bg: #007bff;
-      --button-hover: #0056b3;
-      --clear-bg: #6c757d;
-      --clear-hover: #545b62;
-      --th-bg: #f0f0f0;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Suche - Gruppen & Ringe</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #212529;
+            --card-bg: #ffffff;
+            --border-color: #dee2e6;
+            --primary-color: #0d6efd;
+            --secondary-text: #6c757d;
+        }
 
-    body.dark-mode {
-      --bg: #121212;
-      --text: #e0e0e0;
-      --card-bg: #1e1e1e;
-      --border: #444;
-      --header-bg: #1f1f1f;
-      --button-bg: #0d6efd;
-      --button-hover: #0b5ed7;
-      --clear-bg: #495057;
-      --clear-hover: #343a40;
-      --th-bg: #2c2c2c;
-    }
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e9ecef;
+            --card-bg: #1e1e1e;
+            --border-color: #495057;
+            --secondary-text: #adb5bd;
+        }
 
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 10px;
-      background: var(--bg);
-      color: var(--text);
-      transition: background 0.3s, color 0.3s;
-    }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-    }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
 
-    h1 {
-      font-size: 1.8em;
-      margin: 0;
-      text-align: left;
-    }
+        h1 { font-size: 1.8rem; margin-bottom: 20px; text-align: center; color: var(--primary-color); }
 
-    /* Toggle Switch */
-    .theme-toggle {
-      position: relative;
-      display: inline-block;
-      width: 60px;
-      height: 34px;
-    }
+        .controls { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
 
-    .theme-toggle input { opacity: 0; width: 0; height: 0; }
+        label { font-weight: 600; margin-bottom: 5px; display: block; }
 
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
-    }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
 
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 26px;
-      width: 26px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
+        .search-container { position: relative; }
 
-    input:checked + .slider { background-color: #2196F3; }
-    input:checked + .slider:before { transform: translateX(26px); }
+        #results { margin-top: 20px; }
 
-    .slider svg {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 20px;
-      height: 20px;
-      transition: opacity 0.3s;
-    }
+        .result-item {
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+        }
 
-    .sun { left: 8px; fill: #ffd43b; opacity: 1; }
-    .moon { right: 8px; fill: #f1c40f; opacity: 0; }
-    body.dark-mode .sun { opacity: 0; }
-    body.dark-mode .moon { opacity: 1; }
+        .result-header { font-weight: bold; color: var(--primary-color); margin-bottom: 5px; font-size: 1.1rem; }
 
-    label { display: block; margin-top: 15px; font-weight: bold; }
-    select, input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      box-sizing: border-box;
-      font-size: 1em;
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
+        .status { text-align: center; margin: 15px 0; color: var(--secondary-text); font-style: italic; }
 
-    button {
-      background: var(--button-bg);
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
+        .header-actions {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
 
-    button:hover { background: var(--button-hover); }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            padding: 5px;
+            display: flex;
+            align-items: center;
+        }
 
-    #clearBtn { background: var(--clear-bg); }
-    #clearBtn:hover { background: var(--clear-hover); }
-
-    #status { text-align: center; margin-top: 20px; min-height: 24px; }
-
-    .table-container { overflow-x: auto; margin-top: 20px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
-    th { background: var(--th-bg); }
-
-    .results-cards { display: none; margin-top: 20px; }
-    .card {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
-      background: var(--card-bg);
-    }
-
-    .card div { margin-bottom: 8px; }
-    .card strong { display: inline-block; width: 140px; }
-
-    @media (min-width: 768px) {
-      .controls { display: flex; gap: 10px; align-items: end; }
-      select, input { width: auto; flex: 1; }
-      .button-group { display: flex; gap: 10px; }
-      .button-group button { flex: 1; }
-      .results-cards { display: none !important; }
-      .table-container { display: block; }
-    }
-
-    @media (max-width: 767px) {
-      .table-container { display: none; }
-      .results-cards { display: block; }
-      .button-group { display: flex; gap: 10px; }
-      .button-group button { flex: 1; }
-      header { flex-direction: column; align-items: flex-start; }
-      .theme-toggle { margin-top: 10px; align-self: flex-end; }
-    }
-  </style>
+        .admin-link {
+            text-decoration: none;
+            color: var(--secondary-text);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Suche nach Gruppe oder Ring</h1>
-    <div style="display: flex; align-items: center; gap: 20px;">
-      <a href="admin.html" style="font-size: 0.9em; color: #007bff; text-decoration: none;">Admin</a>
-      <label class="theme-toggle">
-        <input type="checkbox" id="darkModeToggle">
-        <span class="slider">
-          <svg class="sun" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="5" />
-            <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <svg class="moon" viewBox="0 0 24 24">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-          </svg>
-        </span>
-      </label>
+
+    <div class="header-actions">
+        <a href="admin.html" class="admin-link">⚙️ Admin</a>
+        <button id="theme-toggle" class="icon-btn" aria-label="Farbschema umschalten">🌙</button>
     </div>
-  </header>
-  <!--
-  HINWEIS FÜR NEUE OBJEKTE HINZUFÜGEN:
-  Um ein neues Objekt hinzuzufügen, trage hier eine neue Zeile ein:
-   
-  Beispiel für ein neues Objekt "MNO":
-  <option value="mno">MNO</option>
- 
-  Der "value" muss klein geschrieben sein und genau dem Dateinamen (ohne .json) entsprechen.
-  Der Text zwischen > und < ist das, was der Benutzer im Dropdown sieht.
-  -->
-  <div class="controls">
-    <div style="flex: 1;">
-      <label for="object">Objekt auswählen:</label>
-      <select id="object">
-        <option value="hab">HAB</option>
-        <option value="keh">KEH</option>
-      </select>
+
+    <div class="container">
+        <h1>Gruppen & Ringe</h1>
+
+        <div class="controls">
+            <div>
+                <label for="object">Objekt auswählen:</label>
+                <select id="object" onchange="loadData()">
+                    <option value="">Laden...</option>
+                </select>
+            </div>
+
+            <div class="search-container">
+                <label for="search">Suchen (Meldergruppe oder Ring):</label>
+                <input type="text" id="search" placeholder="z.B. 10 oder 10/1" oninput="filterResults()">
+            </div>
+        </div>
+
+        <div id="status" class="status">Warte auf Auswahl...</div>
+        <div id="results"></div>
     </div>
-    <div style="flex: 1;">
-      <label for="type">Typ auswählen:</label>
-      <select id="type">
-        <option value="Gruppe">Gruppe</option>
-        <option value="Ring">Ring</option>
-      </select>
-    </div>
-    <div style="flex: 2;">
-      <label for="value">Nummer eingeben:</label>
-      <input type="tel" id="value" placeholder="z. B. 101 oder 121" pattern="[0-9]*" inputmode="numeric">
-    </div>
-    <div>
-      <label>&nbsp;</label>
-      <div class="button-group">
-        <button onclick="search()">Suchen</button>
-        <button id="clearBtn" onclick="clearSearch()">Löschen</button>
-      </div>
-    </div>
-  </div>
-  <div id="status">Daten werden geladen...</div>
-  <div id="results"></div>
-  <script>
-    let data = [];
-    const statusDiv = document.getElementById('status');
-    const resultsDiv = document.getElementById('results');
-    // Map object keys to filenames
-    const objectFiles = {
-      hab: 'hab.json',
-      keh: 'keh.json'
-    };
-    function loadData() {
-      const object = document.getElementById('object').value;
-      const filename = objectFiles[object];
-      statusDiv.textContent = 'Daten werden geladen...';
-      resultsDiv.innerHTML = '';
-      data = [];
-      fetch(filename)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Datei nicht gefunden');
-          }
-          return response.json();
-        })
-        .then(json => {
-          data = json;
-          statusDiv.textContent = `Daten geladen: ${data.length} Einträge (${object.toUpperCase()})`;
-        })
-        .catch(err => {
-          data = [];
-          statusDiv.innerHTML = '<p style="color:red;">Keine Daten verfügbar. Bitte die JSON-Datei hinzufügen.</p>';
+
+    <script>
+        const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
+        let data = [];
+        let objectFiles = {};
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            body.classList.add('dark-mode');
+            themeToggle.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         });
-    }
-    // Load data when object changes
-    document.getElementById('object').addEventListener('change', loadData);
-    // Initial load (HaB)
-    loadData();
-    // Dark mode
-    const toggle = document.getElementById('darkModeToggle');
-    const body = document.body;
-    if (localStorage.getItem('darkMode') === 'enabled') {
-      body.classList.add('dark-mode');
-      toggle.checked = true;
-    }
-    toggle.addEventListener('change', () => {
-      if (toggle.checked) {
-        body.classList.add('dark-mode');
-        localStorage.setItem('darkMode', 'enabled');
-      } else {
-        body.classList.remove('dark-mode');
-        localStorage.setItem('darkMode', 'disabled');
-      }
-    });
-    // Enter key search
-    document.getElementById('value').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        search();
-      }
-    });
-    function search() {
-      const type = document.getElementById('type').value;
-      const value = document.getElementById('value').value.trim();
-      resultsDiv.innerHTML = '';
-      if (!value) {
-        resultsDiv.innerHTML = '<p>Bitte eine Nummer eingeben.</p>';
-        return;
-      }
-      if (data.length === 0) {
-        resultsDiv.innerHTML = '<p>Keine Daten geladen. Bitte ein Objekt mit verfügbaren Daten auswählen.</p>';
-        return;
-      }
-      const matches = data.filter(row => row[type] === value);
-      if (matches.length === 0) {
-        resultsDiv.innerHTML = '<p>Keine Ergebnisse gefunden.</p>';
-        return;
-      }
-      let tableHTML = '<div class="table-container"><table><thead><tr>';
-      if (type === 'Ring') {
-        tableHTML += '<th>Ring</th><th>Installationsort</th><th>Gruppe</th><th>Anz. Melder</th>';
-      } else {
-        tableHTML += '<th>Gruppe</th><th>Installationsort</th><th>Ring</th><th>Anz. Melder</th>';
-      }
-      tableHTML += '</tr></thead><tbody>';
-      let cardsHTML = '<div class="results-cards">';
-      matches.forEach(row => {
-        tableHTML += '<tr>';
-        if (type === 'Ring') {
-          tableHTML += `<td>${row.Ring || ''}</td><td>${row.Installationsort || ''}</td><td>${row.Gruppe || ''}</td><td>${row["Anz.Melder"] || ''}</td>`;
-        } else {
-          tableHTML += `<td>${row.Gruppe || ''}</td><td>${row.Installationsort || ''}</td><td>${row.Ring || ''}</td><td>${row["Anz.Melder"] || ''}</td>`;
+
+        // Load Objects on Start
+        async function initialize() {
+            try {
+                const res = await fetch(`${API_BASE}/get-objects`);
+                const objects = await res.json();
+                
+                const select = document.getElementById('object');
+                select.innerHTML = ''; // Clear loading message
+
+                objects.forEach(obj => {
+                    const opt = document.createElement('option');
+                    opt.value = obj.id;
+                    opt.textContent = obj.display;
+                    select.appendChild(opt);
+
+                    // Build the mapping for filenames
+                    objectFiles[obj.id] = `${obj.id}.json`;
+                });
+
+                // Load initial data for the first object
+                if (objects.length > 0) loadData();
+
+            } catch (err) {
+                document.getElementById('status').textContent = 'Fehler beim Laden der Objektliste.';
+                console.error(err);
+            }
         }
-        tableHTML += '</tr>';
-        cardsHTML += '<div class="card">';
-        if (type === 'Ring') {
-          cardsHTML += `<div><strong>Ring:</strong> ${row.Ring || ''}</div>`;
-          cardsHTML += `<div><strong>Installationsort:</strong> ${row.Installationsort || ''}</div>`;
-          cardsHTML += `<div><strong>Gruppe:</strong> ${row.Gruppe || ''}</div>`;
-          cardsHTML += `<div><strong>Anz. Melder:</strong> ${row["Anz.Melder"] || ''}</div>`;
-        } else {
-          cardsHTML += `<div><strong>Gruppe:</strong> ${row.Gruppe || ''}</div>`;
-          cardsHTML += `<div><strong>Installationsort:</strong> ${row.Installationsort || ''}</div>`;
-          cardsHTML += `<div><strong>Ring:</strong> ${row.Ring || ''}</div>`;
-          cardsHTML += `<div><strong>Anz. Melder:</strong> ${row["Anz.Melder"] || ''}</div>`;
+
+        async function loadData() {
+            const objectKey = document.getElementById('object').value;
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+
+            if (!objectKey) return;
+
+            statusDiv.textContent = 'Daten werden geladen...';
+            resultsDiv.innerHTML = '';
+
+            try {
+                // Assuming data files are also served via an API or public folder
+                // For now, fetching from the current SWA root or redirected data path
+                const filename = objectFiles[objectKey];
+                const response = await fetch(filename);
+                
+                if (!response.ok) throw new Error('Datei nicht gefunden');
+                
+                data = await response.json();
+                statusDiv.textContent = `${data.length} Einträge geladen.`;
+                filterResults();
+            } catch (error) {
+                statusDiv.textContent = 'Keine Daten für dieses Objekt verfügbar.';
+                console.error(error);
+            }
         }
-        cardsHTML += '</div>';
-      });
-      tableHTML += '</tbody></table></div>';
-      cardsHTML += '</div>';
-      resultsDiv.innerHTML = tableHTML + cardsHTML;
-    }
-    function clearSearch() {
-      document.getElementById('type').value = 'Gruppe';
-      document.getElementById('value').value = '';
-      resultsDiv.innerHTML = '';
-      document.getElementById('value').focus();
-    }
-  </script>
+
+        function filterResults() {
+            const query = document.getElementById('search').value.toLowerCase().trim();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            if (!query) {
+                data.slice(0, 20).forEach(renderItem); // Show first 20 as preview
+                return;
+            }
+
+            const filtered = data.filter(item => {
+                const group = String(item.gruppe || '').toLowerCase();
+                const element = String(item.element || '').toLowerCase();
+                const combined = `${group}/${element}`;
+                return group === query || combined.startsWith(query);
+            });
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<div class="status">Keine Treffer gefunden.</div>';
+            } else {
+                filtered.forEach(renderItem);
+            }
+        }
+
+        function renderItem(item) {
+            const resultsDiv = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            div.innerHTML = `
+                <div class="result-header">Gruppe: ${item.gruppe} / Element: ${item.element}</div>
+                <div><strong>Zusatztext:</strong> ${item.zusatztext || '-'}</div>
+                <div style="font-size: 0.85rem; color: var(--secondary-text); margin-top:5px;">
+                    Typ: ${item.typ || 'Unbekannt'}
+                </div>
+            `;
+            resultsDiv.appendChild(div);
+        }
+
+        window.onload = initialize;
+    </script>
 </body>
 </html>
 

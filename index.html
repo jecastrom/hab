@@ -109,31 +109,48 @@
 </head>
 <body>
 
-    <div class="header-actions">
-        <a href="admin.html" class="admin-link">⚙️ Admin</a>
-        <button id="theme-toggle" class="icon-btn" aria-label="Farbschema umschalten">🌙</button>
+    <div class="controls">
+    <div>
+        <label for="object">Objekt auswählen:</label>
+        <select id="object" onchange="loadData()">
+            <option value="">Laden...</option>
+        </select>
     </div>
 
-    <div class="container">
-        <h1>Gruppen & Ringe</h1>
-
-        <div class="controls">
-            <div>
-                <label for="object">Objekt auswählen:</label>
-                <select id="object" onchange="loadData()">
-                    <option value="">Laden...</option>
-                </select>
-            </div>
-
-            <div class="search-container">
-                <label for="search">Suchen (Meldergruppe oder Ring):</label>
-                <input type="text" id="search" placeholder="z.B. 10 oder 10/1" oninput="filterResults()">
-            </div>
-        </div>
-
-        <div id="status" class="status">Warte auf Auswahl...</div>
-        <div id="results"></div>
+    <div>
+        <label for="searchType">Suchen nach:</label>
+        <select id="searchType" onchange="filterResults()">
+            <option value="gruppe">Meldergruppe (Einzeln)</option>
+            <option value="ring">Ring (Alle Gruppen im Ring)</option>
+        </select>
     </div>
+
+    <div class="search-container">
+        <label id="searchLabel" for="search">Gruppe eingeben:</label>
+        <input type="text" id="search" placeholder="z.B. 101" oninput="filterResults()">
+    </div>
+</div>
+
+<div id="status" class="status">Warte auf Auswahl...</div>
+
+<!-- Desktop Table View -->
+<div class="table-wrapper">
+    <table id="desktop-table">
+        <thead>
+            <tr>
+                <th>Gruppe</th>
+                <th>Ort</th>
+                <th>Ring</th>
+                <th>Melder</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+    </table>
+</div>
+
+<!-- Mobile Card View -->
+<div id="mobile-cards"></div>
 
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';

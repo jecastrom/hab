@@ -219,52 +219,70 @@
         }
 
         async function handleBioToggle(checkbox) {
-            const icon = document.getElementById('bio-icon');
-            if (checkbox.checked) {
-                try {
-                    const options = {
-                        publicKey: {
-                            challenge: new Uint8Array([1, 2, 3, 4]),
-                            rp: { name: "Melder Suche" },
-                            user: {
-                                id: new TextEncoder().encode(localStorage.getItem('username') || 'admin'),
-                                name: localStorage.getItem('username') || 'admin',
-                                displayName: localStorage.getItem('username') || 'admin'
-                            },
-                            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-                            authenticatorSelection: { userVerification: "required" },
-                            timeout: 60000
-                        }
-                    };
+    const icon = document.getElementById('bio-icon');
+    const username = localStorage.getItem('username');
 
-                    const credential = await window.webauthnJson.create(options);
-                    
-                    const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        },
-                        body: JSON.stringify({ credential })
-                    });
+    if (!username) {
+        checkbox.checked = false;
+        return showMessage("Bitte loggen Sie sich erneut ein (Username fehlt).", false);
+    }
 
-                    if (res.ok) {
-                        icon.textContent = '🔒';
-                        // Flag for login.html
-                        localStorage.setItem('bio_registered_user', localStorage.getItem('username')); 
-                        showMessage("Biometrie aktiviert!", true);
-                    } else { 
-                        throw new Error("Server-Registrierung fehlgeschlagen"); 
-                    }
-                } catch (err) {
-                    checkbox.checked = false;
-                    showMessage("Biometrie-Registrierung fehlgeschlagen", false);
+    if (checkbox.checked) {
+        try {
+            // 1. Prepare secure WebAuthn options
+            const options = {
+                publicKey: {
+                    // Challenge must be at least 16 bytes for mobile security
+                    challenge: new Uint8Array([12, 45, 78, 23, 56, 89, 12, 45, 78, 23, 56, 89, 12, 45, 78, 23]),
+                    rp: { 
+                        name: "Melder Suche",
+                        id: window.location.hostname // Automatically uses your .azurestaticapps.net domain
+                    },
+                    user: {
+                        id: new TextEncoder().encode(username),
+                        name: username,
+                        displayName: username
+                    },
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+                    authenticatorSelection: { 
+                        userVerification: "required",
+                        residentKey: "preferred"
+                    },
+                    timeout: 60000
                 }
+            };
+
+            // 2. Trigger the iPhone/Android biometric prompt
+            const credential = await window.webauthnJson.create(options);
+            
+            // 3. Send the result to the backend
+            const res = await fetch(`${API_BASE}/register-biometric`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ credential })
+            });
+
+            if (res.ok) {
+                icon.textContent = '🔒';
+                localStorage.setItem('bio_registered_user', username); 
+                showMessage("Biometrie aktiviert!", true);
             } else {
-                icon.textContent = '🔓';
-                localStorage.removeItem('bio_registered_user');
+                const errorText = await res.text();
+                throw new Error("Server: " + errorText);
             }
+        } catch (err) {
+            checkbox.checked = false;
+            console.error("Biometric Error:", err);
+            showMessage("Fehler: " + err.message, false);
         }
+    } else {
+        icon.textContent = '🔓';
+        localStorage.removeItem('bio_registered_user');
+    }
+}
 
         async function addObject() {
             const code = document.getElementById('code').value.trim();

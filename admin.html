@@ -4,9 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin – Objekte verwalten</title>
     
-    <script src="auth-guard.js"></script>
-    <!-- Pointing to Local File -->
-    <script src="webauthn-json.js"></script>
+    <script src="/auth-guard.js"></script>
+    <!-- Use absolute path to ensure it finds the root file -->
+    <script src="/webauthn-json.js"></script>
     
     <style>
         :root {
@@ -96,7 +96,7 @@
             <div class="sidebar-footer">
                 <div class="bio-settings">
                     <label><span id="bio-icon">🔓</span><span>Biometrie</span><input type="checkbox" id="bio-toggle" style="width: auto;" onchange="handleBioToggle(this)"></label>
-                    <span id="bio-status">Prüfe Modul...</span>
+                    <span id="bio-status">Suche Modul...</span>
                 </div>
                 <button class="btn-logout" onclick="logout()"><span>🚪</span> Abmelden</button>
             </div>
@@ -128,10 +128,11 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // Heartbeat check for Local Library
         function runBioCheck() {
             const statusEl = document.getElementById('bio-status');
             const toggle = document.getElementById('bio-toggle');
+            
+            // Check for the library in the global window object
             if (window.webauthnJson) {
                 statusEl.textContent = "Bereit"; statusEl.style.color = "var(--success)";
                 if (localStorage.getItem('bio_registered_user')) {
@@ -139,11 +140,12 @@
                     toggle.checked = true;
                 }
             } else {
-                statusEl.textContent = "Modul fehlt (Lade...)"; statusEl.style.color = "var(--danger)";
-                setTimeout(runBioCheck, 1500);
+                statusEl.textContent = "Nicht geladen (Bitte Refresh)"; statusEl.style.color = "var(--danger)";
+                // Try again in case of slow network/SW
+                setTimeout(runBioCheck, 3000);
             }
         }
-        window.addEventListener('load', runBioCheck);
+        window.addEventListener('DOMContentLoaded', runBioCheck);
 
         // Dark Mode
         if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); }
@@ -210,7 +212,7 @@
                         localStorage.setItem('bio_registered_user', username);
                         showMessage("Aktiviert!", true);
                     }
-                } catch (err) { checkbox.checked = false; }
+                } catch (err) { checkbox.checked = false; showMessage("Fehler: " + err.message, false); }
             } else {
                 document.getElementById('bio-icon').textContent = '🔓';
                 localStorage.removeItem('bio_registered_user');

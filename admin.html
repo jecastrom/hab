@@ -4,15 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin – Objekte verwalten</title>
     
-    <!-- AUTH GUARD FIRST -->
     <script src="auth-guard.js"></script>
-    
-    <!-- ROBUST LIBRARY LOADING -->
-    <script 
-        src="https://cdn.jsdelivr.net/npm/@github/webauthn-json@2.1.1/dist/browser-global.js" 
-        onload="updateBioStatus('bereit')" 
-        onerror="updateBioStatus('fehler')">
-    </script>
+    <!-- Library -->
+    <script src="https://unpkg.com/@github/webauthn-json@2.1.1/dist/browser-global.js"></script>
     
     <style>
         :root {
@@ -181,17 +175,26 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // Update UI when library finishes loading
-        function updateBioStatus(state) {
+        // --- IMPROVED LIBRARY CHECK ---
+        function runBioCheck() {
             const statusEl = document.getElementById('bio-status');
-            if (state === 'bereit') {
+            const toggle = document.getElementById('bio-toggle');
+            
+            if (window.webauthnJson) {
                 statusEl.textContent = "Bereit";
                 statusEl.style.color = "var(--success)";
+                // Pre-check toggle if previously enabled
+                if (localStorage.getItem('bio_registered_user')) {
+                    document.getElementById('bio-icon').textContent = '🔒';
+                    toggle.checked = true;
+                }
             } else {
                 statusEl.textContent = "Ladefehler (Refresh nötig)";
                 statusEl.style.color = "var(--danger)";
+                setTimeout(runBioCheck, 2000); // Try again in 2s
             }
         }
+        setTimeout(runBioCheck, 1000);
 
         // Dark Mode
         if (localStorage.getItem('darkMode') === 'enabled') {
@@ -210,7 +213,7 @@
         });
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
-        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
+        function logout() { localStorage.clear(); window.location.href = 'login.html'; }
 
         function showSection(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));

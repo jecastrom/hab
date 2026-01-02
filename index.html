@@ -221,25 +221,16 @@
         <div id="mobile-cards" class="hidden"></div>
     </div>
 
-    <script>
-        const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
-        let data = [];
+    <script>const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
+let data = [];
 
-        // PWA Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {});
-            });
-        }
-
-        // Register Service Worker and handle updates
+// PWA Registration & Auto-Refresh
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').then(reg => {
         reg.onupdatefound = () => {
             const installingWorker = reg.installing;
             installingWorker.onstatechange = () => {
                 if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // New version found! Reload to apply.
                     window.location.reload();
                 }
             };
@@ -247,166 +238,185 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-        // Offline Status Detection
-        function updateOnlineStatus() {
-            document.body.classList.toggle('is-offline', !navigator.onLine);
-        }
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus();
+function updateOnlineStatus() {
+    document.body.classList.toggle('is-offline', !navigator.onLine);
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
 
-        // Theme Toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        if (localStorage.getItem('darkMode') === 'enabled') {
-            document.body.classList.add('dark-mode');
-            themeToggle.textContent = '☀️';
-        }
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            themeToggle.textContent = isDark ? '☀️' : '🌙';
-            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+// Theme Toggle
+const themeToggle = document.getElementById('theme-toggle');
+if (localStorage.getItem('darkMode') === 'enabled') {
+    document.body.classList.add('dark-mode');
+    themeToggle.textContent = '☀️';
+}
+themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    themeToggle.textContent = isDark ? '☀️' : '🌙';
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+});
+
+// Initialize App
+async function initialize() {
+    try {
+        const res = await fetch(`${API_BASE}/get-objects`);
+        const objects = await res.json();
+        const select = document.getElementById('object');
+        select.innerHTML = ''; 
+
+        objects.forEach(obj => {
+            const opt = document.createElement('option');
+            opt.value = obj.id;
+            opt.textContent = obj.display;
+            select.appendChild(opt);
         });
 
-        async function initialize() {
-            try {
-                const res = await fetch(`${API_BASE}/get-objects`);
-                const objects = await res.json();
-                const select = document.getElementById('object');
-                select.innerHTML = ''; 
-                objects.forEach(obj => {
-                    const opt = document.createElement('option');
-                    opt.value = obj.id;
-                    opt.textContent = obj.display;
-                    select.appendChild(opt);
-                });
-                if (objects.length > 0) loadData();
-            } catch (err) {
-                document.getElementById('status').textContent = 'Fehler beim Laden der Objektliste.';
-            }
+        if (objects.length > 0) {
+            await loadData(); // Load first object for immediate use
+            precacheAllObjects(objects); // Download everything else in background
         }
+    } catch (err) {
+        document.getElementById('status').textContent = 'Fehler beim Laden der Objektliste.';
+    }
+}
 
-        async function loadData() {
-            const objectKey = document.getElementById('object').value;
-            const statusDiv = document.getElementById('status');
-            if (!objectKey) return;
-            statusDiv.textContent = 'Daten werden geladen...';
-            try {
-                const response = await fetch(`${API_BASE}/get-data?id=${objectKey}`);
-                if (!response.ok) throw new Error();
-                data = await response.json();
-                statusDiv.textContent = `${data.length} Einträge geladen.`;
-                clearSearch();
-            } catch (e) {
-                statusDiv.textContent = 'Keine Daten für dieses Objekt gefunden.';
-                data = [];
-                clearSearch();
-            }
+// Background Task: Download everything for offline use
+async function precacheAllObjects(objects) {
+    console.log("Starte Hintergrund-Download für Offline-Modus...");
+    for (const obj of objects) {
+        try {
+            // This fetch is intercepted by sw.js and saved to cache
+            await fetch(`${API_BASE}/get-data?id=${obj.id}`);
+        } catch (e) {
+            console.warn(`Precache fehlgeschlagen für: ${obj.id}`);
         }
+    }
+    console.log("Alle Objekte sind nun offline verfügbar.");
+}
 
-        document.getElementById('search').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') filterResults();
+async function loadData() {
+    const objectKey = document.getElementById('object').value;
+    const statusDiv = document.getElementById('status');
+    if (!objectKey) return;
+    statusDiv.textContent = 'Daten werden geladen...';
+    try {
+        const response = await fetch(`${API_BASE}/get-data?id=${objectKey}`);
+        if (!response.ok) throw new Error();
+        data = await response.json();
+        statusDiv.textContent = `${data.length} Einträge geladen.`;
+        clearSearch();
+    } catch (e) {
+        statusDiv.textContent = 'Keine Daten gefunden.';
+        data = [];
+        clearSearch();
+    }
+}
+
+document.getElementById('search').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') filterResults();
+});
+
+function updateSearchUI() {
+    const type = document.getElementById('searchType').value;
+    document.getElementById('searchLabel').textContent = type === 'gruppe' ? 'Gruppe eingeben:' : 'Ring eingeben:';
+    document.getElementById('search').placeholder = type === 'gruppe' ? 'z.B. 101' : 'z.B. 121';
+    clearSearch();
+}
+
+function clearSearch() {
+    document.getElementById('search').value = '';
+    document.getElementById('mobile-cards').classList.add('hidden');
+    document.getElementById('table-wrapper').classList.add('hidden');
+    document.getElementById('table-body').innerHTML = '';
+    document.getElementById('mobile-cards').innerHTML = '';
+    document.getElementById('status').textContent = data.length ? `${data.length} Einträge geladen.` : 'Warte auf Auswahl...';
+}
+
+function filterResults() {
+    const query = document.getElementById('search').value.trim();
+    const type = document.getElementById('searchType').value;
+    const mobileContainer = document.getElementById('mobile-cards');
+    const tableWrapper = document.getElementById('table-wrapper');
+    const tableBody = document.getElementById('table-body');
+    const statusDiv = document.getElementById('status');
+    
+    tableBody.innerHTML = '';
+    mobileContainer.innerHTML = '';
+
+    if (!query) return;
+
+    const filtered = data.filter(item => {
+        const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || '');
+        return val === query;
+    });
+
+    if (filtered.length === 0) {
+        tableWrapper.classList.add('hidden');
+        mobileContainer.classList.remove('hidden');
+        mobileContainer.innerHTML = '<div class="status">Keine Treffer gefunden.</div>';
+        statusDiv.textContent = '';
+    } else {
+        tableWrapper.classList.remove('hidden');
+        mobileContainer.classList.remove('hidden');
+        statusDiv.textContent = `${filtered.length} Treffer gefunden.`;
+        filtered.forEach((item, index) => {
+            renderTableRow(item, index);
+            renderMobileCard(item, index);
         });
+    }
+}
 
-        function updateSearchUI() {
-            const type = document.getElementById('searchType').value;
-            document.getElementById('searchLabel').textContent = type === 'gruppe' ? 'Gruppe eingeben:' : 'Ring eingeben:';
-            document.getElementById('search').placeholder = type === 'gruppe' ? 'z.B. 101' : 'z.B. 121';
-            clearSearch();
-        }
+function renderTableRow(item, index) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><strong>${item.Gruppe || '-'}</strong></td>
+        <td>${item.Installationsort || '-'}</td>
+        <td>${item.Ring || '-'}</td>
+        <td>${item.AnzMelder || '-'}</td>
+        <td>
+            <button class="btn-details" onclick="toggleDetails('dt-${index}', this)">Details</button>
+            <div id="dt-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
+        </td>
+    `;
+    document.getElementById('table-body').appendChild(tr);
+}
 
-        function clearSearch() {
-            document.getElementById('search').value = '';
-            document.getElementById('mobile-cards').classList.add('hidden');
-            document.getElementById('table-wrapper').classList.add('hidden');
-            document.getElementById('table-body').innerHTML = '';
-            document.getElementById('mobile-cards').innerHTML = '';
-            document.getElementById('status').textContent = data.length ? `${data.length} Einträge geladen.` : 'Warte auf Auswahl...';
-        }
+function renderMobileCard(item, index) {
+    const div = document.createElement('div');
+    div.className = 'result-item';
+    div.innerHTML = `
+        <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
+        <div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div>
+        <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
+        <div class="card-row"><span class="card-label">AnzMelder:</span> <span>${item.AnzMelder || '-'}</span></div>
+        <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button>
+        <div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
+    `;
+    document.getElementById('mobile-cards').appendChild(div);
+}
 
-        function filterResults() {
-            const query = document.getElementById('search').value.trim();
-            const type = document.getElementById('searchType').value;
-            const mobileContainer = document.getElementById('mobile-cards');
-            const tableWrapper = document.getElementById('table-wrapper');
-            const tableBody = document.getElementById('table-body');
-            const statusDiv = document.getElementById('status');
-            
-            tableBody.innerHTML = '';
-            mobileContainer.innerHTML = '';
+function formatTechnicalDetails(item) {
+    const technicalKeys = ["Gruppentyp", "Betriebsart", "Meldertechnik", "Alarmreaktion"];
+    return technicalKeys
+        .map(key => `<div><strong>${key}:</strong> ${item[key] || '-'}</div>`)
+        .join('');
+}
 
-            if (!query) return;
+function toggleDetails(id, btn) {
+    const el = document.getElementById(id);
+    const isVisible = el.style.display === 'block';
+    el.style.display = isVisible ? 'none' : 'block';
+    const isMobile = window.innerWidth < 768;
+    if (isVisible) {
+        btn.textContent = isMobile ? "Details anzeigen" : "Details";
+    } else {
+        btn.textContent = isMobile ? "Details schließen" : "Schließen";
+    }
+}
 
-            const filtered = data.filter(item => {
-                const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || '');
-                return val === query;
-            });
-
-            if (filtered.length === 0) {
-                tableWrapper.classList.add('hidden');
-                mobileContainer.classList.remove('hidden');
-                mobileContainer.innerHTML = '<div class="status">Keine Treffer gefunden.</div>';
-                statusDiv.textContent = '';
-            } else {
-                tableWrapper.classList.remove('hidden');
-                mobileContainer.classList.remove('hidden');
-                statusDiv.textContent = `${filtered.length} Treffer gefunden.`;
-                filtered.forEach((item, index) => {
-                    renderTableRow(item, index);
-                    renderMobileCard(item, index);
-                });
-            }
-        }
-
-        function renderTableRow(item, index) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${item.Gruppe || '-'}</strong></td>
-                <td>${item.Installationsort || '-'}</td>
-                <td>${item.Ring || '-'}</td>
-                <td>${item.AnzMelder || '-'}</td>
-                <td>
-                    <button class="btn-details" onclick="toggleDetails('dt-${index}', this)">Details</button>
-                    <div id="dt-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
-                </td>
-            `;
-            document.getElementById('table-body').appendChild(tr);
-        }
-
-        function renderMobileCard(item, index) {
-            const div = document.createElement('div');
-            div.className = 'result-item';
-            div.innerHTML = `
-                <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
-                <div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div>
-                <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
-                <div class="card-row"><span class="card-label">AnzMelder:</span> <span>${item.AnzMelder || '-'}</span></div>
-                <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button>
-                <div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
-            `;
-            document.getElementById('mobile-cards').appendChild(div);
-        }
-
-        function formatTechnicalDetails(item) {
-            const technicalKeys = ["Gruppentyp", "Betriebsart", "Meldertechnik", "Alarmreaktion"];
-            return technicalKeys
-                .map(key => `<div><strong>${key}:</strong> ${item[key] || '-'}</div>`)
-                .join('');
-        }
-
-        function toggleDetails(id, btn) {
-            const el = document.getElementById(id);
-            const isVisible = el.style.display === 'block';
-            el.style.display = isVisible ? 'none' : 'block';
-            const isMobile = window.innerWidth < 768;
-            if (isVisible) {
-                btn.textContent = isMobile ? "Details anzeigen" : "Details";
-            } else {
-                btn.textContent = isMobile ? "Details schließen" : "Schließen";
-            }
-        }
-
-        window.onload = initialize;
+window.onload = initialize;
     </script>
 </body>
 </html>

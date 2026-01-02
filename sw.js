@@ -1,4 +1,4 @@
-const CACHE_NAME = 'melder-cache-v3';
+const CACHE_NAME = 'melder-cache-v4';
 
 // Files to cache for offline use
 const urlsToCache = [
@@ -15,7 +15,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
-      keys.map((key) => caches.delete(key)) // Clear old caches on version change
+      keys.map((key) => caches.delete(key))
     ))
   );
   self.clients.claim();
@@ -25,7 +25,6 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // If network is successful, update the cache
         if (response.status === 200) {
           const resClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -35,7 +34,6 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // If network fails (offline), return from cache
         return caches.match(event.request);
       })
   );

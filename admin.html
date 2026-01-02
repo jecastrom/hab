@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin – Objekte verwalten</title>
     <!-- Dependencies -->
-    <script src="https://unpkg.com/@github/webauthn-json@2.1.1/dist/browser-ponyfill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@github/webauthn-json@2.1.1/dist/browser/webauthn-json.browser-ponyfill.js"></script>
     <script src="auth-guard.js"></script>
     <style>
         :root {
@@ -36,7 +36,6 @@
         }
         .container { display: flex; min-height: 100vh; }
         
-        /* Sidebar Styles */
         .sidebar {
             width: 250px;
             background: var(--card-bg);
@@ -58,11 +57,9 @@
         
         .sidebar-close { display: none; position: absolute; top: 15px; right: 15px; font-size: 2rem; color: var(--danger); cursor: pointer; line-height: 1; }
 
-        /* Biometric Toggle Area */
         .bio-settings { padding: 15px; border-top: 1px solid var(--border); margin-top: auto; }
         .bio-settings label { display: flex; align-items: center; cursor: pointer; gap: 10px; font-weight: normal; margin: 0; }
 
-        /* Main Content */
         .main { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; position: relative; }
         .section { display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 25px; margin-bottom: 30px; }
         .section.active { display: block; }
@@ -119,7 +116,6 @@
                 <li><a href="#delete" onclick="showSection('delete')">🗑️ Löschen</a></li>
             </ul>
 
-            <!-- Biometric Opt-in -->
             <div class="bio-settings">
                 <label>
                     <span id="bio-icon">🔓</span>
@@ -187,7 +183,8 @@
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-            document.querySelector(`a[href="#${id}"]`).classList.add('active');
+            const activeLink = document.querySelector(`a[href="#${id}"]`);
+            if(activeLink) activeLink.classList.add('active');
             if(window.innerWidth < 768) toggleSidebar();
             if(id !== 'create') loadObjekte();
         }
@@ -218,72 +215,70 @@
             document.getElementById('deleteBtn').disabled = !checkbox.checked;
         }
 
+        // --- FIXED BIOMETRIC LOGIC ---
         async function handleBioToggle(checkbox) {
-    const icon = document.getElementById('bio-icon');
-    const username = localStorage.getItem('username');
+            const icon = document.getElementById('bio-icon');
+            const username = localStorage.getItem('username');
 
-    if (!username) {
-        checkbox.checked = false;
-        return showMessage("Bitte loggen Sie sich erneut ein (Username fehlt).", false);
-    }
-
-    if (checkbox.checked) {
-        try {
-            // 1. Prepare secure WebAuthn options
-            const options = {
-                publicKey: {
-                    // Challenge must be at least 16 bytes for mobile security
-                    challenge: new Uint8Array([12, 45, 78, 23, 56, 89, 12, 45, 78, 23, 56, 89, 12, 45, 78, 23]),
-                    rp: { 
-                        name: "Melder Suche",
-                        id: window.location.hostname // Automatically uses your .azurestaticapps.net domain
-                    },
-                    user: {
-                        id: new TextEncoder().encode(username),
-                        name: username,
-                        displayName: username
-                    },
-                    pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-                    authenticatorSelection: { 
-                        userVerification: "required",
-                        residentKey: "preferred"
-                    },
-                    timeout: 60000
-                }
-            };
-
-            // 2. Trigger the iPhone/Android biometric prompt
-            const credential = await window.webauthnJson.create(options);
-            
-            // 3. Send the result to the backend
-            const res = await fetch(`${API_BASE}/register-biometric`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify({ credential })
-            });
-
-            if (res.ok) {
-                icon.textContent = '🔒';
-                localStorage.setItem('bio_registered_user', username); 
-                showMessage("Biometrie aktiviert!", true);
-            } else {
-                const errorText = await res.text();
-                throw new Error("Server: " + errorText);
+            if (!username) {
+                checkbox.checked = false;
+                return showMessage("Sitzungsfehler: Bitte loggen Sie sich neu ein.", false);
             }
-        } catch (err) {
-            checkbox.checked = false;
-            console.error("Biometric Error:", err);
-            showMessage("Fehler: " + err.message, false);
-        }
-    } else {
-        icon.textContent = '🔓';
-        localStorage.removeItem('bio_registered_user');
-    }
-}
 
+            // Verify library is loaded
+            if (typeof webauthnJson === 'undefined') {
+                checkbox.checked = false;
+                return showMessage("Sicherheitsmodul lädt noch... Bitte kurz warten.", false);
+            }
+
+            if (checkbox.checked) {
+                try {
+                    const options = {
+                        publicKey: {
+                            challenge: new Uint8Array([12, 45, 78, 23, 56, 89, 12, 45, 78, 23, 56, 89, 12, 45, 78, 23]),
+                            rp: { name: "Melder Suche", id: window.location.hostname },
+                            user: {
+                                id: new TextEncoder().encode(username),
+                                name: username,
+                                displayName: username
+                            },
+                            pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+                            authenticatorSelection: { userVerification: "required" },
+                            timeout: 60000
+                        }
+                    };
+
+                    const credential = await webauthnJson.create(options);
+                    
+                    const res = await fetch(`${API_BASE}/register-biometric`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({ credential })
+                    });
+
+                    if (res.ok) {
+                        icon.textContent = '🔒';
+                        localStorage.setItem('bio_registered_user', username); 
+                        showMessage("Biometrie aktiviert!", true);
+                    } else {
+                        const errText = await res.text();
+                        throw new Error(errText);
+                    }
+                } catch (err) {
+                    checkbox.checked = false;
+                    console.error("Bio Error:", err);
+                    showMessage("Registrierung fehlgeschlagen: " + err.message, false);
+                }
+            } else {
+                icon.textContent = '🔓';
+                localStorage.removeItem('bio_registered_user');
+            }
+        }
+
+        // --- Core Functions ---
         async function addObject() {
             const code = document.getElementById('code').value.trim();
             if(!code) return showMessage('Code erforderlich', false);
@@ -294,6 +289,7 @@
                     body: JSON.stringify({ code })
                 });
                 if(res.ok) { showMessage('Erfolgreich gespeichert', true); document.getElementById('code').value = ''; }
+                else { showMessage(await res.text(), false); }
             } catch (e) { showMessage('Fehler', false); }
         }
 
@@ -340,6 +336,7 @@
                 } else {
                     showMessage(res.ok ? 'Datei hochgeladen!' : 'Fehler', res.ok);
                     resetBtn();
+                    if(res.ok) document.getElementById('uploadFile').value = '';
                 }
             } catch (e) { showMessage('Upload fehlgeschlagen', false); resetBtn(); }
         }

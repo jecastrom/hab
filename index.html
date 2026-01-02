@@ -1,24 +1,11 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Suche - Meldergruppen & Ringe</title>
+    <link rel="manifest" href="manifest.json">
     <style>
-        #offline-badge {
-    display: none;
-    background: var(--danger);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    margin-left: 10px;
-}
-body.is-offline #offline-badge {
-    display: inline-block;
-}
         :root {
             --bg-color: #f8f9fa;
             --text-color: #212529;
@@ -26,6 +13,7 @@ body.is-offline #offline-badge {
             --border-color: #dee2e6;
             --primary-color: #0d6efd;
             --secondary-text: #6c757d;
+            --danger: #dc3545;
         }
 
         body.dark-mode {
@@ -61,6 +49,21 @@ body.is-offline #offline-badge {
 
         h1 { font-size: 1.8rem; margin-bottom: 30px; text-align: center; color: var(--primary-color); }
 
+        /* Offline Badge */
+        #offline-badge {
+            display: none;
+            background: var(--danger);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        body.is-offline #offline-badge { display: inline-block; }
+
+        /* Grid Layout */
         .controls-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -69,9 +72,7 @@ body.is-offline #offline-badge {
         }
 
         @media (min-width: 768px) {
-            .controls-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
+            .controls-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
         .button-row {
@@ -82,10 +83,7 @@ body.is-offline #offline-badge {
         }
 
         @media (min-width: 768px) {
-            .button-row {
-                max-width: 400px;
-                margin: 10px auto 0;
-            }
+            .button-row { max-width: 400px; margin: 10px auto 0; }
         }
 
         label { font-weight: 600; margin-bottom: 8px; display: block; font-size: 0.9rem; }
@@ -120,11 +118,11 @@ body.is-offline #offline-badge {
 
         .hidden { display: none !important; }
 
-        /* Table & Cards */
+        /* Desktop Table */
         .table-wrapper { margin-top: 20px; overflow-x: auto; width: 100%; }
         table { width: 100%; border-collapse: collapse; background: var(--card-bg); }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; white-space: nowrap; }
+        th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; }
 
         .btn-details { 
             background-color: #6c757d;
@@ -170,7 +168,7 @@ body.is-offline #offline-badge {
     </div>
 
     <div class="container">
-        <h1>Meldergruppen & Ringe <span id="offline-badge">OFFLINE MODE</span></h1>
+        <h1>Meldergruppen & Ringe <span id="offline-badge">OFFLINE</span></h1>
 
         <div class="controls">
             <div class="controls-grid">
@@ -224,27 +222,23 @@ body.is-offline #offline-badge {
     </div>
 
     <script>
-        if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service Worker registered'))
-            .catch(err => console.log('Service Worker failed', err));
-    });
-    function updateOnlineStatus() {
-    if (navigator.onLine) {
-        document.body.classList.remove('is-offline');
-    } else {
-        document.body.classList.add('is-offline');
-    }
-}
-
-window.addEventListener('online', updateOnlineStatus);
-window.addEventListener('offline', updateOnlineStatus);
-// Call once on load
-updateOnlineStatus();
-}
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
         let data = [];
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+
+        // Offline Status Detection
+        function updateOnlineStatus() {
+            document.body.classList.toggle('is-offline', !navigator.onLine);
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
 
         // Theme Toggle
         const themeToggle = document.getElementById('theme-toggle');
@@ -379,7 +373,6 @@ updateOnlineStatus();
         }
 
         function formatTechnicalDetails(item) {
-            // Only show these specific technical keys in the details pane
             const technicalKeys = ["Gruppentyp", "Betriebsart", "Meldertechnik", "Alarmreaktion"];
             return technicalKeys
                 .map(key => `<div><strong>${key}:</strong> ${item[key] || '-'}</div>`)
@@ -390,7 +383,6 @@ updateOnlineStatus();
             const el = document.getElementById(id);
             const isVisible = el.style.display === 'block';
             el.style.display = isVisible ? 'none' : 'block';
-            
             const isMobile = window.innerWidth < 768;
             if (isVisible) {
                 btn.textContent = isMobile ? "Details anzeigen" : "Details";
@@ -403,7 +395,6 @@ updateOnlineStatus();
     </script>
 </body>
 </html>
-
 
 
 

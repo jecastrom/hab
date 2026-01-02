@@ -1,4 +1,4 @@
-const CACHE_NAME = 'melder-cache-v7';
+const CACHE_NAME = 'melder-cache-v8';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

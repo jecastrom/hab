@@ -1,59 +1,61 @@
-/** @github/webauthn-json v2.1.1 (Global Version) */
-(function(exports) {
+/** Fixed WebAuthn-JSON Wrapper */
+(function(window) {
     'use strict';
-    function base64urlToBuffer(baseurl64String) {
-        const base64 = baseurl64String.replace(/-/g, '+').replace(/_/g, '/');
-        const padLength = (4 - (base64.length % 4)) % 4;
-        const padded = base64.padEnd(base64.length + padLength, '=');
-        const binary = atob(padded);
-        const buffer = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) { buffer[i] = binary.charCodeAt(i); }
-        return buffer.buffer;
+
+    function base64ToBuffer(base64) {
+        const bin = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
+        const buf = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+        return buf.buffer;
     }
-    function bufferToBase64url(buffer) {
-        const bytes = new Uint8Array(buffer);
-        let str = '';
-        for (const charCode of bytes) { str += String.fromCharCode(charCode); }
-        const base64 = btoa(str);
-        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+    function bufferToBase64(buf) {
+        const bin = String.fromCharCode.apply(null, new Uint8Array(buf));
+        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     }
-    function recursive(obj, callback) {
-        if (obj instanceof ArrayBuffer) { return callback(obj); }
-        if (Array.isArray(obj)) { return obj.map(item => recursive(item, callback)); }
-        if (obj !== null && typeof obj === 'object') {
-            const newObj = {};
-            for (const key in obj) { newObj[key] = recursive(obj[key], callback); }
-            return newObj;
+
+    window.webauthnJson = {
+        create: async (options) => {
+            const pk = options.publicKey;
+            // Convert strings to buffers for the browser
+            pk.challenge = base64ToBuffer(pk.challenge);
+            pk.user.id = base64ToBuffer(pk.user.id);
+            if (pk.excludeCredentials) {
+                pk.excludeCredentials.forEach(c => c.id = base64ToBuffer(c.id));
+            }
+
+            const cred = await navigator.credentials.create({ publicKey: pk });
+            
+            return {
+                id: cred.id,
+                rawId: bufferToBase64(cred.rawId),
+                type: cred.type,
+                response: {
+                    attestationObject: bufferToBase64(cred.response.attestationObject),
+                    clientDataJSON: bufferToBase64(cred.response.clientDataJSON)
+                }
+            };
+        },
+        get: async (options) => {
+            const pk = options.publicKey;
+            pk.challenge = base64ToBuffer(pk.challenge);
+            if (pk.allowCredentials) {
+                pk.allowCredentials.forEach(c => c.id = base64ToBuffer(c.id));
+            }
+
+            const assertion = await navigator.credentials.get({ publicKey: pk });
+
+            return {
+                id: assertion.id,
+                rawId: bufferToBase64(assertion.rawId),
+                type: assertion.type,
+                response: {
+                    authenticatorData: bufferToBase64(assertion.response.authenticatorData),
+                    clientDataJSON: bufferToBase64(assertion.response.clientDataJSON),
+                    signature: bufferToBase64(assertion.response.signature),
+                    userHandle: assertion.response.userHandle ? bufferToBase64(assertion.response.userHandle) : null
+                }
+            };
         }
-        return obj;
-    }
-    exports.create = async function(options) {
-        const credentialOptions = recursive(options.publicKey, base64urlToBuffer);
-        const credential = await navigator.credentials.create({ publicKey: credentialOptions });
-        return {
-            id: credential.id,
-            rawId: bufferToBase64url(credential.rawId),
-            type: credential.type,
-            response: {
-                attestationObject: bufferToBase64url(credential.response.attestationObject),
-                clientDataJSON: bufferToBase64url(credential.response.clientDataJSON)
-            }
-        };
     };
-    exports.get = async function(options) {
-        const credentialOptions = recursive(options.publicKey, base64urlToBuffer);
-        const assertion = await navigator.credentials.get({ publicKey: credentialOptions });
-        return {
-            id: assertion.id,
-            rawId: bufferToBase64url(assertion.rawId),
-            type: assertion.type,
-            response: {
-                authenticatorData: bufferToBase64url(assertion.response.authenticatorData),
-                clientDataJSON: bufferToBase64url(assertion.response.clientDataJSON),
-                signature: bufferToBase64url(assertion.response.signature),
-                userHandle: assertion.response.userHandle ? bufferToBase64url(assertion.response.userHandle) : null
-            }
-        };
-    };
-    window.webauthnJson = exports;
-})({});
+})(window);

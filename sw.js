@@ -1,20 +1,23 @@
-const CACHE_NAME = 'melder-cache-v9';
-const LIB_URL = 'https://unpkg.com/@github/webauthn-json@2.1.1/dist/browser-global.js';
+const CACHE_NAME = 'melder-cache-v10';
+
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/admin.html',
+  '/login.html',
+  '/manifest.json',
+  '/auth-guard.js',
+  '/webauthn-json.js' // Local file
+];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(['/', '/index.html', '/admin.html', '/login.html', '/manifest.json', '/auth-guard.js', LIB_URL]);
-    })
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urlsToCache)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys.map((key) => { if (key !== CACHE_NAME) return caches.delete(key); })
-    ))
+    caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k))))
   );
   self.clients.claim();
 });
@@ -22,12 +25,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
-      .then((response) => {
-        if (response.status === 200) {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+      .then(res => {
+        if (res.status === 200) {
+          const cln = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, cln));
         }
-        return response;
+        return res;
       })
       .catch(() => caches.match(event.request))
   );

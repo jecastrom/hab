@@ -47,7 +47,7 @@
             z-index: 1000;
             position: relative;
             display: flex;
-            flex-direction: column; /* Allows toggle to sit at bottom */
+            flex-direction: column;
         }
         .sidebar-header { padding-top: 40px; }
         .sidebar-header h1 { font-size: 1.6em; margin: 0; color: var(--primary); }
@@ -224,7 +224,7 @@
                 try {
                     const options = {
                         publicKey: {
-                            challenge: new Uint8Array([1, 2, 3, 4]), // Simple static challenge for now
+                            challenge: new Uint8Array([1, 2, 3, 4]),
                             rp: { name: "Melder Suche" },
                             user: {
                                 id: new TextEncoder().encode(localStorage.getItem('username') || 'admin'),
@@ -250,20 +250,22 @@
 
                     if (res.ok) {
                         icon.textContent = '🔒';
-                        localStorage.setItem('bio_enabled', 'true');
+                        // Flag for login.html
+                        localStorage.setItem('bio_registered_user', localStorage.getItem('username')); 
                         showMessage("Biometrie aktiviert!", true);
-                    } else { throw new Error(); }
+                    } else { 
+                        throw new Error("Server-Registrierung fehlgeschlagen"); 
+                    }
                 } catch (err) {
                     checkbox.checked = false;
                     showMessage("Biometrie-Registrierung fehlgeschlagen", false);
                 }
             } else {
                 icon.textContent = '🔓';
-                localStorage.removeItem('bio_enabled');
+                localStorage.removeItem('bio_registered_user');
             }
         }
 
-        // --- Reuse previous logic for addObject, deleteObject, uploadFileProcess ---
         async function addObject() {
             const code = document.getElementById('code').value.trim();
             if(!code) return showMessage('Code erforderlich', false);

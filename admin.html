@@ -1,5 +1,6 @@
 <html lang="de">
 <head>
+    <script src="https://unpkg.com/@github/webauthn-json@2.1.1/dist/browser-ponyfill.js"></script>
     <script src="auth-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -119,6 +120,13 @@
     </style>
 </head>
 <body>
+    <div style="padding: 10px; border-top: 1px solid var(--border); margin-top: auto;">
+    <label style="display: flex; align-items: center; cursor: pointer; gap: 10px;">
+        <span id="bio-icon" style="font-size: 1.2rem;">🔓</span>
+        <span style="font-size: 0.8rem;">Biometrie</span>
+        <input type="checkbox" id="bio-toggle" style="width: auto; margin: 0;" onchange="handleBioToggle(this)">
+    </label>
+</div>
     <div id="message"></div>
     
     <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
@@ -347,6 +355,50 @@
         }
 
         window.onload = loadObjekte;
+        async function handleBioToggle(checkbox) {
+    const icon = document.getElementById('bio-icon');
+    if (checkbox.checked) {
+        try {
+            // WebAuthn Registration Options
+            const options = {
+                publicKey: {
+                    challenge: btoa(Math.random().toString()), // Simplified challenge
+                    rp: { name: "Melder Suche" },
+                    user: {
+                        id: btoa(localStorage.getItem('username') || 'user'),
+                        name: localStorage.getItem('username') || 'user',
+                        displayName: localStorage.getItem('username') || 'user'
+                    },
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                    authenticatorSelection: { userVerification: "required" },
+                    timeout: 60000
+                }
+            };
+
+            const credential = await window.webauthnJson.create(options);
+            
+            const res = await fetch(`${API_BASE}/register-biometric`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ credential })
+            });
+
+            if (res.ok) {
+                icon.textContent = '🔒';
+                alert("Biometrie aktiviert!");
+            }
+        } catch (err) {
+            checkbox.checked = false;
+            console.error(err);
+        }
+    } else {
+        // Logic to remove biometric can be added here
+        icon.textContent = '🔓';
+    }
+}
     </script>
 </body>
 </html>

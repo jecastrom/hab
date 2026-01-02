@@ -1,5 +1,6 @@
 <html lang="de">
 <head>
+  <script src="https://unpkg.com/@github/webauthn-json@2.1.1/dist/browser-ponyfill.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Login – Gruppen & Ringe Admin</title>
@@ -103,6 +104,12 @@
 
       <button type="submit">Einloggen</button>
     </form>
+    <div id="bio-login-container" style="display: none; text-align: center; margin-top: 20px;">
+    <p style="font-size: 0.8rem; color: var(--help);">Oder mit Biometrie anmelden:</p>
+    <button type="button" onclick="loginWithBiometrics()" style="background: var(--help); width: 60px; height: 60px; border-radius: 50%; padding: 0;">
+        ☝️
+    </button>
+</div>
     <div id="message" role="alert" aria-live="polite"></div>
   </div>
   <script>
@@ -162,6 +169,44 @@
       msg.className = success ? 'success' : 'error';
       msg.style.display = 'block';
     }
+    // Show bio button if previously registered on this browser
+if (localStorage.getItem('registered_user')) {
+    document.getElementById('bio-login-container').style.display = 'block';
+}
+
+async function loginWithBiometrics() {
+    const username = localStorage.getItem('registered_user');
+    try {
+        const options = {
+            publicKey: {
+                challenge: btoa(Math.random().toString()),
+                allowCredentials: [],
+                userVerification: "required",
+                timeout: 60000
+            }
+        };
+
+        const assertion = await window.webauthnJson.get(options);
+        
+        const res = await fetch(`${FUNCTION_URL}/api/login-biometric`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, assertion })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('role', data.role);
+            window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
+        }
+    } catch (err) {
+        alert("Biometrie fehlgeschlagen.");
+    }
+}
+
+// In your standard login function, add this after success:
+// localStorage.setItem('registered_user', username);
   </script>
 </body>
 </html>

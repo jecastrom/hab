@@ -1,42 +1,32 @@
-const { create } = require('@github/webauthn-json');
 const fs = require('fs').promises;
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+const USERS_PATH = 'C:/home/data/users.json';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 module.exports = async function (context, req) {
-  const token = req.headers.authorization?.split(' ')[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    if (req.method === 'GET') {
-      // Generate challenge for client
-      const challenge = crypto.randomBytes(32).toString('base64');
-      context.res = { body: { challenge } };
-    } else if (req.method === 'POST') {
-      const { publicKeyCredential } = req.body; // From client create()
-      const options = {
-        publicKey: publicKeyCredential,
-        // Validate origin, challenge, etc. (add your app's RP ID)
-        rpName: 'YourApp',
-        userVerification: 'preferred'
-      };
-      const verified = await create(options);
-      if (verified) {
-        const users = JSON.parse(await fs.readFile('users.json', 'utf8'));
-        const user = users.find(u => u.username === decoded.username);
-        if (user) {
-          user.publicKey = verified; // Store the full verified credential (public key + metadata)
-          await fs.writeFile('users.json', JSON.stringify(users));
-          context.res = { body: 'Biometric registered successfully' };
-        } else {
-          context.res = { status: 404, body: 'User not found' };
+    const authHeader = req.headers.authorization;
+    if (!authHeader) { context.res = { status: 401, body: "Kein Token" }; return; }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        if (req.method === 'POST') {
+            const { credential } = req.body;
+            const usersData = await fs.readFile(USERS_PATH, 'utf8');
+            const users = JSON.parse(usersData);
+            const userIndex = users.findIndex(u => u.username === decoded.username);
+
+            if (userIndex !== -1) {
+                // Save the biometric credential to the user object
+                users[userIndex].biometric = credential;
+                await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
+                context.res = { status: 200, body: "Biometrie registriert" };
+            } else {
+                context.res = { status: 404, body: "Benutzer nicht gefunden" };
+            }
         }
-      } else {
-        context.res = { status: 400, body: 'Registration failed' };
-      }
-    } else {
-      context.res = { status: 405, body: 'Method not allowed' };
+    } catch (e) {
+        context.res = { status: 401, body: "Fehler: " + e.message };
     }
-  } catch (e) {
-    context.res = { status: 401, body: 'Unauthorized or error: ' + e.message };
-  }
 };

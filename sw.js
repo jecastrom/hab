@@ -1,4 +1,4 @@
-const CACHE_NAME = 'melder-cache-v10';
+const CACHE_NAME = 'melder-cache-v13';
 
 const urlsToCache = [
   '/',

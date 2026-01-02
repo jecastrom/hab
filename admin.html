@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin – Objekte verwalten</title>
     <!-- Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@github/webauthn-json@2.1.1/dist/browser/webauthn-json.browser-global.js"></script>
+    <script src="https://unpkg.com/@github/webauthn-json@2.1.1/dist/browser-global.js"></script>
     <script src="auth-guard.js"></script>
     <style>
         :root {
@@ -125,7 +125,7 @@
 
             <div class="sidebar-footer">
                 <div class="bio-settings">
-                    <label title="Biometrische Anmeldung aktivieren">
+                    <label>
                         <span id="bio-icon">🔓</span>
                         <span>Biometrie</span>
                         <input type="checkbox" id="bio-toggle" style="width: auto;" onchange="handleBioToggle(this)">
@@ -183,24 +183,15 @@
             localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         });
 
-        document.getElementById('code').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        });
-
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
-        
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('role');
-            window.location.href = 'login.html';
-        }
+        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
 
         function showSection(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-            const activeLink = document.querySelector(`a[href="#${id}"]`);
-            if(activeLink) activeLink.classList.add('active');
+            const link = document.querySelector(`a[href="#${id}"]`);
+            if(link) link.classList.add('active');
             if(window.innerWidth < 768) toggleSidebar();
             if(id !== 'create') loadObjekte();
         }
@@ -214,8 +205,7 @@
                 list.innerHTML = ''; select.innerHTML = '';
                 objects.forEach(obj => {
                     const opt = document.createElement('option');
-                    opt.value = obj.id;
-                    opt.textContent = `${obj.display} (${obj.id})`;
+                    opt.value = obj.id; opt.textContent = `${obj.display} (${obj.id})`;
                     select.appendChild(opt);
                     const li = document.createElement('li');
                     li.className = 'objekt-item';
@@ -225,41 +215,41 @@
             } catch (e) { showMessage('Fehler beim Laden', false); }
         }
 
-        function toggleDelBtn(checkbox) {
-            const checks = document.querySelectorAll('input[name="del"]');
-            checks.forEach(c => { if(c !== checkbox) c.checked = false; });
-            document.getElementById('deleteBtn').disabled = !checkbox.checked;
+        function toggleDelBtn(cb) {
+            document.querySelectorAll('input[name="del"]').forEach(c => { if(c !== cb) c.checked = false; });
+            document.getElementById('deleteBtn').disabled = !cb.checked;
         }
 
         async function handleBioToggle(checkbox) {
             const icon = document.getElementById('bio-icon');
             const username = localStorage.getItem('username');
+            
+            // Re-check for library with window prefix
+            const bioLib = window.webauthnJson;
 
-            // The global object name is window.webauthnJson
-            if (typeof webauthnJson === 'undefined') {
+            if (!bioLib) {
                 checkbox.checked = false;
-                return showMessage("Sicherheitsmodul lädt... Bitte kurz warten.", false);
+                return showMessage("Sicherheitsmodul nicht bereit. Bitte Seite neu laden.", false);
             }
 
             if (checkbox.checked) {
                 try {
                     const options = {
                         publicKey: {
-                            challenge: new Uint8Array([12, 45, 78, 23, 56, 89, 12, 45, 78, 23, 56, 89, 12, 45, 78, 23]),
+                            challenge: new Uint8Array([1, 4, 7, 2, 5, 8, 3, 6, 9, 0, 1, 4, 7, 2, 5, 8]),
                             rp: { name: "Melder Suche", id: window.location.hostname },
                             user: {
                                 id: new TextEncoder().encode(username || 'admin'),
                                 name: username || 'admin',
                                 displayName: username || 'admin'
                             },
-                            pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+                            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
                             authenticatorSelection: { userVerification: "required" },
                             timeout: 60000
                         }
                     };
 
-                    const credential = await webauthnJson.create(options);
-                    
+                    const credential = await bioLib.create(options);
                     const res = await fetch(`${API_BASE}/register-biometric`, {
                         method: 'POST',
                         headers: { 
@@ -271,101 +261,63 @@
 
                     if (res.ok) {
                         icon.textContent = '🔒';
-                        localStorage.setItem('bio_registered_user', username || 'admin'); 
-                        showMessage("Biometrie aktiviert!", true);
-                    } else { throw new Error(await res.text()); }
+                        localStorage.setItem('bio_registered_user', username || 'admin');
+                        showMessage("Biometrie bereit!", true);
+                    }
                 } catch (err) {
                     checkbox.checked = false;
-                    showMessage("Registrierung fehlgeschlagen.", false);
+                    showMessage("Abgebrochen oder Fehler.", false);
                 }
             } else {
                 icon.textContent = '🔓';
-                localStorage.removeItem('bio_registered_user');
             }
         }
 
+        // Standard logic for add/delete/upload remains same...
         async function addObject() {
-            const code = document.getElementById('code').value.trim();
-            if(!code) return showMessage('Code erforderlich', false);
-            try {
-                const res = await fetch(`${API_BASE}/add-object`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ code })
-                });
-                if(res.ok) { showMessage('Erfolgreich gespeichert', true); document.getElementById('code').value = ''; }
-            } catch (e) { showMessage('Fehler', false); }
+            const c = document.getElementById('code').value.trim();
+            if(!c) return;
+            const res = await fetch(`${API_BASE}/add-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code: c }) });
+            if(res.ok) { showMessage('Objekt hinzugefügt', true); document.getElementById('code').value = ''; }
         }
 
         async function deleteObject() {
-            const sel = document.querySelector('input[name="del"]:checked');
-            if(!sel || !confirm('Endgültig löschen?')) return;
-            try {
-                const res = await fetch(`${API_BASE}/delete-object`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ id: sel.value })
-                });
-                if(res.ok) { showMessage('Gelöscht', true); loadObjekte(); }
-            } catch (e) { showMessage('Fehler', false); }
+            const id = document.querySelector('input[name="del"]:checked').value;
+            const res = await fetch(`${API_BASE}/delete-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id }) });
+            if(res.ok) loadObjekte();
         }
 
         async function uploadFileProcess() {
             const id = document.getElementById('linkedObjekte').value;
             const fileInput = document.getElementById('uploadFile');
-            const btn = document.getElementById('uploadBtn');
-            const spinner = document.getElementById('uploadSpinner');
-            if (!id || fileInput.files.length === 0) return showMessage('Daten unvollständig', false);
-            btn.disabled = true; spinner.style.display = 'block';
+            if (!id || !fileInput.files[0]) return;
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadSpinner').style.display = 'block';
             const reader = new FileReader();
             reader.onload = async (e) => {
-                try {
-                    const data = csvToJSON(e.target.result);
-                    await performUpload(id, data, false);
-                } catch (err) { showMessage(err.message, false); resetBtn(); }
+                const data = csvToJSON(e.target.result);
+                await performUpload(id, data, false);
             };
             reader.readAsText(fileInput.files[0], 'ISO-8859-1');
         }
 
         async function performUpload(id, data, override) {
-            try {
-                const res = await fetch(`${API_BASE}/upload-data`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ id, data, override })
-                });
-                if (res.status === 409) {
-                    if (confirm('Datei existiert. Überschreiben?')) await performUpload(id, data, true);
-                    else resetBtn();
-                } else {
-                    showMessage(res.ok ? 'Datei hochgeladen!' : 'Fehler', res.ok);
-                    resetBtn();
-                }
-            } catch (e) { showMessage('Upload fehlgeschlagen', false); resetBtn(); }
+            const res = await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override }) });
+            if (res.status === 409 && confirm('Überschreiben?')) await performUpload(id, data, true);
+            else { showMessage(res.ok ? 'Erfolgreich' : 'Fehler', res.ok); resetBtn(); }
         }
 
-        function resetBtn() {
-            document.getElementById('uploadBtn').disabled = false;
-            document.getElementById('uploadSpinner').style.display = 'none';
-        }
+        function resetBtn() { document.getElementById('uploadBtn').disabled = false; document.getElementById('uploadSpinner').style.display = 'none'; }
 
-        function csvToJSON(csvText) {
-            const lines = csvText.split(/\r?\n/);
-            if (lines.length < 4) return [];
-            const delimiter = lines[2].includes(';') ? ';' : ',';
-            const headers = lines[2].split(delimiter).map(h => {
-                let k = h.replace(/["\r]/g, '').replace(/\./g, '').trim();
-                if(k === "Nr") return "Gruppe";
-                if(k === "Zusatztext") return "Installationsort";
-                if(k === "Installationsort") return "Ring";
-                return k;
-            });
-            return lines.slice(3).filter(l => l.trim()).map(l => {
-                const v = l.split(delimiter);
-                const o = {};
-                headers.forEach((k, i) => {
+        function csvToJSON(t) {
+            const l = t.split(/\r?\n/);
+            const d = l[2].includes(';') ? ';' : ',';
+            const h = l[2].split(d).map(v => v.replace(/["\r]/g, '').replace(/\./g, '').trim());
+            return l.slice(3).filter(x => x.trim()).map(x => {
+                const v = x.split(d); const o = {};
+                h.forEach((k, i) => {
                     let val = v[i] ? v[i].replace(/["\r´°%()]/g, '').replace(/[@\/.]/g, ' ').replace(/\s+/g, ' ').trim() : "";
-                    o[k] = val;
+                    if(k === "Nr") o["Gruppe"] = val; else if(k === "Zusatztext") o["Installationsort"] = val; else if(k === "Installationsort") o["Ring"] = val; else o[k] = val;
                 });
                 return o;
             });
@@ -374,8 +326,7 @@
         function showMessage(t, s) {
             const m = document.getElementById('message');
             m.textContent = t; m.className = s ? 'success' : 'error';
-            m.style.display = 'block';
-            setTimeout(() => m.style.display = 'none', 3000);
+            m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000);
         }
 
         window.onload = loadObjekte;

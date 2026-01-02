@@ -1,14 +1,19 @@
-const CACHE_NAME = 'melder-cache-v4';
+const CACHE_NAME = 'melder-cache-v5';
 
-// Files to cache for offline use
 const urlsToCache = [
   '/',
   '/index.html',
   '/admin.html',
-  '/manifest.json'
+  '/login.html',
+  '/manifest.json',
+  '/auth-guard.js',
+  'https://cdn.jsdelivr.net/npm/@github/webauthn-json@2.1.1/dist/browser/webauthn-json.browser-global.js'
 ];
 
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+  );
   self.skipWaiting();
 });
 

@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin – Objekte verwalten</title>
     <!-- Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/@github/webauthn-json@2.1.1/dist/browser/webauthn-json.browser-ponyfill.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@github/webauthn-json@2.1.1/dist/browser/webauthn-json.browser-global.js"></script>
     <script src="auth-guard.js"></script>
     <style>
         :root {
@@ -57,8 +57,15 @@
         
         .sidebar-close { display: none; position: absolute; top: 15px; right: 15px; font-size: 2rem; color: var(--danger); cursor: pointer; line-height: 1; }
 
-        .bio-settings { padding: 15px; border-top: 1px solid var(--border); margin-top: auto; }
-        .bio-settings label { display: flex; align-items: center; cursor: pointer; gap: 10px; font-weight: normal; margin: 0; }
+        .sidebar-footer { padding: 15px; border-top: 1px solid var(--border); margin-top: auto; }
+        .bio-settings { margin-bottom: 15px; }
+        .bio-settings label { display: flex; align-items: center; cursor: pointer; gap: 10px; font-weight: normal; margin: 0; font-size: 0.85rem; }
+        
+        .btn-logout { 
+            width: 100%; background: var(--danger); color: white; border: none; 
+            padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
 
         .main { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; position: relative; }
         .section { display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 25px; margin-bottom: 30px; }
@@ -74,7 +81,7 @@
             text-transform: uppercase;
         }
         
-        button { width: 100%; padding: 14px; margin-top: 20px; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        button.action-btn { width: 100%; padding: 14px; margin-top: 20px; border: none; border-radius: 8px; font-size: 1em; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
         .btn-add { background: var(--success); color: white; }
         .btn-upload { background: var(--primary); color: white; }
         .btn-delete { background: var(--danger); color: white; }
@@ -116,12 +123,17 @@
                 <li><a href="#delete" onclick="showSection('delete')">🗑️ Löschen</a></li>
             </ul>
 
-            <div class="bio-settings">
-                <label>
-                    <span id="bio-icon">🔓</span>
-                    <span style="font-size: 0.85rem;">Biometrie</span>
-                    <input type="checkbox" id="bio-toggle" style="width: auto;" onchange="handleBioToggle(this)">
-                </label>
+            <div class="sidebar-footer">
+                <div class="bio-settings">
+                    <label title="Biometrische Anmeldung aktivieren">
+                        <span id="bio-icon">🔓</span>
+                        <span>Biometrie</span>
+                        <input type="checkbox" id="bio-toggle" style="width: auto;" onchange="handleBioToggle(this)">
+                    </label>
+                </div>
+                <button class="btn-logout" onclick="logout()">
+                    <span>🚪</span> Abmelden
+                </button>
             </div>
         </nav>
 
@@ -134,7 +146,7 @@
                 <h2>Neues Objekt hinzufügen</h2>
                 <label>Objekt-Code:</label>
                 <input type="text" id="code" placeholder="NUR BUCHSTABEN & ZAHLEN" autocomplete="off">
-                <button class="btn-add" onclick="addObject()">Objekt speichern</button>
+                <button class="action-btn btn-add" onclick="addObject()">Objekt speichern</button>
             </section>
 
             <section id="upload" class="section">
@@ -143,7 +155,7 @@
                 <select id="linkedObjekte"></select>
                 <label>Esser CSV Datei wählen:</label>
                 <input type="file" id="uploadFile" accept=".csv">
-                <button class="btn-upload" id="uploadBtn" onclick="uploadFileProcess()">
+                <button class="action-btn btn-upload" id="uploadBtn" onclick="uploadFileProcess()">
                     <div class="spinner" id="uploadSpinner"></div>
                     <span>Hochladen</span>
                 </button>
@@ -152,7 +164,7 @@
             <section id="delete" class="section">
                 <h2>Objekt löschen</h2>
                 <ul id="objektList" style="list-style:none; padding:0;"></ul>
-                <button class="btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Markiertes Objekt löschen</button>
+                <button class="action-btn btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Markiertes Objekt löschen</button>
             </section>
         </main>
     </div>
@@ -160,7 +172,6 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // Dark Mode Logic
         if (localStorage.getItem('darkMode') === 'enabled') {
             document.body.classList.add('dark-mode');
             document.getElementById('theme-toggle').textContent = '☀️';
@@ -172,12 +183,17 @@
             localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         });
 
-        // Input Filtering
         document.getElementById('code').addEventListener('input', (e) => {
             e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
         });
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            window.location.href = 'login.html';
+        }
 
         function showSection(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -215,20 +231,14 @@
             document.getElementById('deleteBtn').disabled = !checkbox.checked;
         }
 
-        // --- FIXED BIOMETRIC LOGIC ---
         async function handleBioToggle(checkbox) {
             const icon = document.getElementById('bio-icon');
             const username = localStorage.getItem('username');
 
-            if (!username) {
-                checkbox.checked = false;
-                return showMessage("Sitzungsfehler: Bitte loggen Sie sich neu ein.", false);
-            }
-
-            // Verify library is loaded
+            // The global object name is window.webauthnJson
             if (typeof webauthnJson === 'undefined') {
                 checkbox.checked = false;
-                return showMessage("Sicherheitsmodul lädt noch... Bitte kurz warten.", false);
+                return showMessage("Sicherheitsmodul lädt... Bitte kurz warten.", false);
             }
 
             if (checkbox.checked) {
@@ -238,9 +248,9 @@
                             challenge: new Uint8Array([12, 45, 78, 23, 56, 89, 12, 45, 78, 23, 56, 89, 12, 45, 78, 23]),
                             rp: { name: "Melder Suche", id: window.location.hostname },
                             user: {
-                                id: new TextEncoder().encode(username),
-                                name: username,
-                                displayName: username
+                                id: new TextEncoder().encode(username || 'admin'),
+                                name: username || 'admin',
+                                displayName: username || 'admin'
                             },
                             pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
                             authenticatorSelection: { userVerification: "required" },
@@ -261,16 +271,12 @@
 
                     if (res.ok) {
                         icon.textContent = '🔒';
-                        localStorage.setItem('bio_registered_user', username); 
+                        localStorage.setItem('bio_registered_user', username || 'admin'); 
                         showMessage("Biometrie aktiviert!", true);
-                    } else {
-                        const errText = await res.text();
-                        throw new Error(errText);
-                    }
+                    } else { throw new Error(await res.text()); }
                 } catch (err) {
                     checkbox.checked = false;
-                    console.error("Bio Error:", err);
-                    showMessage("Registrierung fehlgeschlagen: " + err.message, false);
+                    showMessage("Registrierung fehlgeschlagen.", false);
                 }
             } else {
                 icon.textContent = '🔓';
@@ -278,7 +284,6 @@
             }
         }
 
-        // --- Core Functions ---
         async function addObject() {
             const code = document.getElementById('code').value.trim();
             if(!code) return showMessage('Code erforderlich', false);
@@ -289,7 +294,6 @@
                     body: JSON.stringify({ code })
                 });
                 if(res.ok) { showMessage('Erfolgreich gespeichert', true); document.getElementById('code').value = ''; }
-                else { showMessage(await res.text(), false); }
             } catch (e) { showMessage('Fehler', false); }
         }
 
@@ -336,7 +340,6 @@
                 } else {
                     showMessage(res.ok ? 'Datei hochgeladen!' : 'Fehler', res.ok);
                     resetBtn();
-                    if(res.ok) document.getElementById('uploadFile').value = '';
                 }
             } catch (e) { showMessage('Upload fehlgeschlagen', false); resetBtn(); }
         }

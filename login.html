@@ -2,83 +2,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Login – Meldergruppen & Ringe</title>
-  <!-- WebAuthn Helper -->
-  <script src="https://unpkg.com/@github/webauthn-json@2.1.1/dist/browser-ponyfill.js"></script>
+  <title>Login – Melder Suche</title>
+  <script src="webauthn-json.js"></script>
   <style>
     :root {
-      --bg: #f8f9fa;
-      --text: #212529;
-      --card-bg: #ffffff;
-      --border: #dee2e6;
-      --primary: #0d6efd;
-      --help: #6c757d;
+      --bg: #f8f9fa; --text: #212529; --card-bg: #ffffff; --border: #dee2e6;
+      --primary: #0d6efd; --help: #6c757d;
     }
     body.dark-mode {
-      --bg: #121212;
-      --text: #e9ecef;
-      --card-bg: #1e1e1e;
-      --border: #495057;
-      --help: #adb5bd;
+      --bg: #121212; --text: #e9ecef; --card-bg: #1e1e1e; --border: #495057; --help: #adb5bd;
     }
     body {
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      transition: background-color 0.3s;
+      font-family: Arial, sans-serif; background: var(--bg); color: var(--text);
+      margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; transition: background-color 0.3s;
     }
     .login-container {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 30px;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+      padding: 30px; max-width: 400px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     h1 { text-align: center; color: var(--primary); margin-bottom: 25px; font-size: 1.5rem; }
     label { display: block; margin: 15px 0 5px; font-weight: bold; font-size: 0.9rem; }
     input {
-      width: 100%; padding: 12px; box-sizing: border-box;
-      background: var(--card-bg); color: var(--text);
-      border: 1px solid var(--border); border-radius: 8px;
+      width: 100%; padding: 12px; box-sizing: border-box; background: var(--card-bg);
+      color: var(--text); border: 1px solid var(--border); border-radius: 8px;
     }
     .btn-login {
-      width: 100%; padding: 14px; margin-top: 25px;
-      background: var(--primary); color: white;
-      border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer;
+      width: 100%; padding: 14px; margin-top: 25px; background: var(--primary);
+      color: white; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer;
     }
-    
-    /* Biometric Section */
     #bio-login-container {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      display: none; /* Shown via JS */
+      margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);
+      text-align: center; display: none;
     }
     .btn-bio {
-      background: var(--help);
-      color: white;
-      border: none;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      font-size: 1.8rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform 0.2s;
+      background: var(--help); color: white; border: none; width: 60px; height: 60px;
+      border-radius: 50%; font-size: 1.8rem; cursor: pointer;
     }
-    .btn-bio:active { transform: scale(0.9); }
-
     #message { margin-top: 20px; text-align: center; padding: 12px; border-radius: 8px; display: none; font-size: 0.9rem; }
     .success { background: #d1e7dd; color: #0f5132; }
     .error { background: #f8d7da; color: #842029; }
@@ -87,103 +47,68 @@
 <body>
   <div class="login-container">
     <h1>Melder Suche Login</h1>
-    
     <form id="login-form">
       <label>Benutzername</label>
       <input type="text" id="username" required autocomplete="username">
-
       <label>Passwort</label>
       <input type="password" id="password" required autocomplete="current-password">
-
       <button type="submit" class="btn-login">Einloggen</button>
     </form>
-
     <div id="bio-login-container">
-      <p style="font-size: 0.8rem; color: var(--help); margin-bottom: 15px;">Schnellanmeldung mit Biometrie:</p>
+      <p style="font-size: 0.8rem; color: var(--help); margin-bottom: 15px;">Biometrie-Login:</p>
       <button type="button" class="btn-bio" onclick="loginWithBiometrics()">☝️</button>
     </div>
-
     <div id="message"></div>
   </div>
-
   <script>
     const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
     if (localStorage.getItem('darkMode') === 'enabled') document.body.classList.add('dark-mode');
+    if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-login-container').style.display = 'block';
 
-    // Show Biometric button if a user previously enabled it on this device
-    if (localStorage.getItem('bio_registered_user')) {
-      document.getElementById('bio-login-container').style.display = 'block';
-    }
-
-    // Standard Login
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value.trim();
-
       try {
         const res = await fetch(`${API_BASE}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
-
         if (!res.ok) throw new Error(await res.text());
-
         const data = await res.json();
-        // CRITICAL: Save username and session
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
         localStorage.setItem('username', username);
-
         window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
-      } catch (err) {
-        showMessage(err.message, false);
-      }
+      } catch (err) { showMessage(err.message, false); }
     });
 
-    // Biometric Login
     async function loginWithBiometrics() {
       const username = localStorage.getItem('bio_registered_user');
-      if (!username) return;
-
+      if (!username || !window.webauthnJson) return;
       try {
-        // WebAuthn request options
+        const challenge = "MTIzNDU2Nzg5MDEyMzQ1Ng"; // Match registration challenge
         const options = {
-          publicKey: {
-            challenge: new Uint8Array([5, 6, 7, 8]), // Match challenge logic or generate unique
-            allowCredentials: [],
-            userVerification: "required",
-            timeout: 60000
-          }
+            publicKey: { challenge: challenge, allowCredentials: [], userVerification: "required", timeout: 60000 }
         };
-
         const assertion = await window.webauthnJson.get(options);
-        
         const res = await fetch(`${API_BASE}/login-biometric`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, assertion })
         });
-
-        if (!res.ok) throw new Error("Biometrie fehlgeschlagen");
-
+        if (!res.ok) throw new Error();
         const data = await res.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
         localStorage.setItem('username', username);
-        
         window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
-      } catch (err) {
-        showMessage("Anmeldung fehlgeschlagen.", false);
-      }
+      } catch (err) { showMessage("Fehlgeschlagen.", false); }
     }
 
     function showMessage(t, s) {
-      const m = document.getElementById('message');
-      m.textContent = t; m.className = s ? 'success' : 'error';
-      m.style.display = 'block';
+      const m = document.getElementById('message'); m.textContent = t;
+      m.className = s ? 'success' : 'error'; m.style.display = 'block';
     }
   </script>
 </body>

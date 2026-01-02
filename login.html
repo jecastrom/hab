@@ -173,6 +173,7 @@
       msg.className = success ? 'success' : 'error';
       msg.style.display = 'block';
     }
+    localStorage.setItem('username', username);
     // Show bio button if previously registered on this browser
 if (localStorage.getItem('registered_user')) {
     document.getElementById('bio-login-container').style.display = 'block';

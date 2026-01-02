@@ -1,19 +1,6 @@
-const CACHE_NAME = 'melder-cache-v5';
-
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/admin.html',
-  '/login.html',
-  '/manifest.json',
-  '/auth-guard.js',
-  'https://cdn.jsdelivr.net/npm/@github/webauthn-json@2.1.1/dist/browser/webauthn-json.browser-global.js'
-];
+const CACHE_NAME = 'melder-cache-v7';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
-  );
   self.skipWaiting();
 });
 
@@ -38,8 +25,6 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => {
-        return caches.match(event.request);
-      })
+      .catch(() => caches.match(event.request))
   );
 });

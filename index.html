@@ -6,6 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Suche - Meldergruppen & Ringe</title>
     <style>
+        #offline-badge {
+    display: none;
+    background: var(--danger);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-left: 10px;
+}
+body.is-offline #offline-badge {
+    display: inline-block;
+}
         :root {
             --bg-color: #f8f9fa;
             --text-color: #212529;
@@ -157,7 +170,7 @@
     </div>
 
     <div class="container">
-        <h1>Meldergruppen & Ringe</h1>
+        <h1>Meldergruppen & Ringe <span id="offline-badge">OFFLINE MODE</span></h1>
 
         <div class="controls">
             <div class="controls-grid">
@@ -217,6 +230,18 @@
             .then(reg => console.log('Service Worker registered'))
             .catch(err => console.log('Service Worker failed', err));
     });
+    function updateOnlineStatus() {
+    if (navigator.onLine) {
+        document.body.classList.remove('is-offline');
+    } else {
+        document.body.classList.add('is-offline');
+    }
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+// Call once on load
+updateOnlineStatus();
 }
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
         let data = [];

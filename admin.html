@@ -178,7 +178,6 @@
             document.getElementById('deleteBtn').disabled = !cb.checked;
         }
 
-        // --- FIXED BIOMETRIC TOGGLE (WITH DEACTIVATION) ---
         async function handleBioToggle(checkbox) {
             const username = localStorage.getItem('username');
             if (!window.webauthnJson) return;
@@ -209,19 +208,20 @@
                     } else { throw new Error(); }
                 } catch (err) { checkbox.checked = false; showMessage("Fehler bei Aktivierung", false); }
             } else {
-                // Deactivate
-                if(!confirm("Möchten Sie Biometrie wirklich deaktivieren?")) { checkbox.checked = true; return; }
+                if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
                 try {
+                    // Use POST with an action flag for maximum compatibility
                     const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                        body: JSON.stringify({ action: 'delete' })
                     });
                     if (res.ok) {
                         localStorage.removeItem('bio_registered_user');
                         updateBioUI(false);
-                        showMessage("Deaktiviert", true);
+                        showMessage("Biometrie entfernt", true);
                     }
-                } catch (e) { checkbox.checked = true; showMessage("Fehler bei Deaktivierung", false); }
+                } catch (e) { checkbox.checked = true; showMessage("Fehler beim Deaktivieren", false); }
             }
         }
 
@@ -238,7 +238,6 @@
             } else { setTimeout(runBioCheck, 1500); }
         }
 
-        // Standard Functions
         async function addObject() {
             const field = document.getElementById('obj_fld');
             const code = field.value.trim().toUpperCase();

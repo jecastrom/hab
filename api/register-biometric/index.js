@@ -15,24 +15,23 @@ module.exports = async function (context, req) {
         const userIndex = users.findIndex(u => u.username === decoded.username);
 
         if (userIndex === -1) {
-            context.res = { status: 404, body: "Benutzer nicht gefunden" };
+            context.res = { status: 404, body: "User nicht gefunden" };
             return;
         }
 
+        // Handle both Registration (credential) and Deactivation (action: delete)
         if (req.method === 'POST') {
-            // Register biometric
-            const { credential } = req.body;
-            users[userIndex].biometric = credential;
-            await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
-            context.res = { status: 200, body: "Biometrie registriert" };
-        } 
-        else if (req.method === 'DELETE' || (req.method === 'POST' && req.body.action === 'delete')) {
-            // Deactivate biometric
-            delete users[userIndex].biometric;
-            await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
-            context.res = { status: 200, body: "Biometrie entfernt" };
+            if (req.body.action === 'delete') {
+                delete users[userIndex].biometric;
+                await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
+                context.res = { status: 200, body: "Biometrie entfernt" };
+            } else if (req.body.credential) {
+                users[userIndex].biometric = req.body.credential;
+                await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
+                context.res = { status: 200, body: "Biometrie registriert" };
+            }
         }
     } catch (e) {
-        context.res = { status: 401, body: "Fehler: " + e.message };
+        context.res = { status: 500, body: "Fehler: " + e.message };
     }
 };

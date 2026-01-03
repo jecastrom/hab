@@ -19,7 +19,7 @@ module.exports = async function (context, req) {
         // In a full production app, you would verify the assertion signature here.
         // For this implementation, if the device unlocks and matches the ID, we issue the token.
         if (assertion && assertion.id === user.biometric.id) {
-            const token = jwt.sign({ username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '8h' });
+            const token = jwt.sign({ username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '1m' });
             context.res = { status: 200, body: { token, role: user.role } };
         } else {
             context.res = { status: 401, body: "Verifizierung fehlgeschlagen" };

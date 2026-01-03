@@ -22,7 +22,7 @@ module.exports = async function (context, req) {
         const token = jwt.sign(
             { username: user.username, role: user.role }, 
             JWT_SECRET, 
-            { expiresIn: '8h' }
+            { expiresIn: '1m' }
         );
 
         context.res = {

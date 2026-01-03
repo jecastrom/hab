@@ -10,21 +10,27 @@ module.exports = async function (context, req) {
     try {
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, JWT_SECRET);
+        const usersData = await fs.readFile(USERS_PATH, 'utf8');
+        const users = JSON.parse(usersData);
+        const userIndex = users.findIndex(u => u.username === decoded.username);
+
+        if (userIndex === -1) {
+            context.res = { status: 404, body: "Benutzer nicht gefunden" };
+            return;
+        }
 
         if (req.method === 'POST') {
+            // Register biometric
             const { credential } = req.body;
-            const usersData = await fs.readFile(USERS_PATH, 'utf8');
-            const users = JSON.parse(usersData);
-            const userIndex = users.findIndex(u => u.username === decoded.username);
-
-            if (userIndex !== -1) {
-                // Save the biometric credential to the user object
-                users[userIndex].biometric = credential;
-                await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
-                context.res = { status: 200, body: "Biometrie registriert" };
-            } else {
-                context.res = { status: 404, body: "Benutzer nicht gefunden" };
-            }
+            users[userIndex].biometric = credential;
+            await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
+            context.res = { status: 200, body: "Biometrie registriert" };
+        } 
+        else if (req.method === 'DELETE' || (req.method === 'POST' && req.body.action === 'delete')) {
+            // Deactivate biometric
+            delete users[userIndex].biometric;
+            await fs.writeFile(USERS_PATH, JSON.stringify(users, null, 2));
+            context.res = { status: 200, body: "Biometrie entfernt" };
         }
     } catch (e) {
         context.res = { status: 401, body: "Fehler: " + e.message };

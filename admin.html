@@ -32,21 +32,17 @@
         .sidebar ul { list-style: none; padding: 0; margin-top: 30px; flex-grow: 1; }
         .sidebar li { margin-bottom: 25px; }
         .sidebar a { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); font-weight: bold; }
-        
-        /* Icon Alignment */
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
 
         .sidebar-close { display: none; position: absolute; top: 15px; right: 15px; font-size: 2rem; color: var(--danger); cursor: pointer; }
 
-        .sidebar-footer { padding: 20px 0; border-top: 1px solid var(--border); margin-top: auto; }
+        .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border); margin-top: auto; }
         .bio-settings { margin-bottom: 20px; }
         .bio-settings label { display: flex; align-items: center; cursor: pointer; gap: 10px; font-size: 0.9rem; }
         
-        /* Clean Logout Button */
         .btn-logout { 
             width: 100%; background: var(--danger); color: white; border: none; 
-            padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; 
-            font-size: 1rem;
+            padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem;
         }
 
         .main { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; position: relative; }
@@ -54,7 +50,7 @@
         .section.active { display: block; }
 
         .top-bar { display: flex; justify-content: flex-end; align-items: center; padding: 10px; }
-        .icon-btn { background: none; border: none; cursor: pointer; font-size: 1.6rem; color: var(--text); }
+        .icon-btn { background: none; border: none; cursor: pointer; font-size: 1.6rem; color: var(--text); padding: 5px; }
 
         input, select { 
             width: 100%; padding: 14px; box-sizing: border-box; background: var(--bg); 
@@ -66,7 +62,6 @@
         .btn-upload { background: var(--primary); color: white; }
         .btn-delete { background: var(--danger); color: white; }
 
-        /* Card-style Delete List */
         .objekt-card {
             background: var(--bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border);
             display: flex; align-items: center; gap: 15px; cursor: pointer; margin-bottom: 10px;
@@ -86,7 +81,7 @@
             .sidebar { position: fixed; left: 0; top: 0; height: 100%; transform: translateX(-100%); width: 280px; }
             .sidebar.open { transform: translateX(0); } 
             .main { padding-top: 80px; }
-            .top-bar { position: fixed; top: 12px; right: 15px; z-index: 1100; padding: 0; }
+            .top-bar { position: fixed; top: 12px; right: 15px; z-index: 1100; }
         }
     </style>
 </head>
@@ -120,7 +115,6 @@
 
             <section id="create" class="section active">
                 <h2>Neues Objekt</h2>
-                <!-- autocomplete="one-time-code" blocks password saving -->
                 <input type="text" id="obj_fld" placeholder="CODE EINGEBEN" autocomplete="one-time-code" spellcheck="false">
                 <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
             </section>
@@ -143,7 +137,7 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // --- Swipe Logic ---
+        // Sidebar Swipe
         let sx = 0;
         document.getElementById('sidebar').addEventListener('touchstart', e => sx = e.touches[0].clientX);
         document.getElementById('sidebar').addEventListener('touchend', e => {
@@ -184,6 +178,67 @@
             document.getElementById('deleteBtn').disabled = !cb.checked;
         }
 
+        // --- FIXED BIOMETRIC TOGGLE (WITH DEACTIVATION) ---
+        async function handleBioToggle(checkbox) {
+            const username = localStorage.getItem('username');
+            if (!window.webauthnJson) return;
+
+            if (checkbox.checked) {
+                try {
+                    const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
+                    const userId = btoa(username || 'admin').replace(/\+/g, '-').replace(/_/g, '/');
+                    const credential = await window.webauthnJson.create({
+                        publicKey: {
+                            challenge: challenge,
+                            rp: { name: "Melder Suche", id: window.location.hostname },
+                            user: { id: userId, name: username, displayName: username },
+                            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                            authenticatorSelection: { userVerification: "required" },
+                            timeout: 60000
+                        }
+                    });
+                    const res = await fetch(`${API_BASE}/register-biometric`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                        body: JSON.stringify({ credential })
+                    });
+                    if (res.ok) {
+                        localStorage.setItem('bio_registered_user', username);
+                        updateBioUI(true);
+                        showMessage("Biometrie aktiviert", true);
+                    } else { throw new Error(); }
+                } catch (err) { checkbox.checked = false; showMessage("Fehler bei Aktivierung", false); }
+            } else {
+                // Deactivate
+                if(!confirm("Möchten Sie Biometrie wirklich deaktivieren?")) { checkbox.checked = true; return; }
+                try {
+                    const res = await fetch(`${API_BASE}/register-biometric`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    });
+                    if (res.ok) {
+                        localStorage.removeItem('bio_registered_user');
+                        updateBioUI(false);
+                        showMessage("Deaktiviert", true);
+                    }
+                } catch (e) { checkbox.checked = true; showMessage("Fehler bei Deaktivierung", false); }
+            }
+        }
+
+        function updateBioUI(enabled) {
+            document.getElementById('bio-icon').textContent = enabled ? '🔒' : '🔓';
+            document.getElementById('bio-toggle').checked = enabled;
+        }
+
+        function runBioCheck() {
+            const statusEl = document.getElementById('bio-status');
+            if (window.webauthnJson) {
+                statusEl.textContent = "Bereit"; statusEl.style.color = "var(--success)";
+                updateBioUI(!!localStorage.getItem('bio_registered_user'));
+            } else { setTimeout(runBioCheck, 1500); }
+        }
+
+        // Standard Functions
         async function addObject() {
             const field = document.getElementById('obj_fld');
             const code = field.value.trim().toUpperCase();
@@ -192,24 +247,15 @@
             if(res.ok) { showMessage('Objekt gespeichert', true); field.value = ''; }
         }
 
-        async function deleteObject() {
-            const el = document.querySelector('input[name="del"]:checked');
-            if(!el || !confirm('Endgültig löschen?')) return;
-            const res = await fetch(`${API_BASE}/delete-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: el.value }) });
-            if(res.ok) { showMessage('Gelöscht', true); loadObjekte(); }
-        }
-
         async function uploadFileProcess() {
             const id = document.getElementById('linkedObjekte').value;
             const fileInput = document.getElementById('uploadFile');
             if (!id || !fileInput.files[0]) return;
-            document.getElementById('uploadBtn').disabled = true;
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const data = csvToJSON(e.target.result);
-                const res = await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: true }) });
-                showMessage(res.ok ? 'Erfolgreich' : 'Fehler', res.ok);
-                document.getElementById('uploadBtn').disabled = false;
+                await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: true }) });
+                showMessage('Erfolgreich', true);
             };
             reader.readAsText(fileInput.files[0], 'ISO-8859-1');
         }
@@ -227,56 +273,17 @@
             });
         }
 
-        async function handleBioToggle(checkbox) {
-            const username = localStorage.getItem('username');
-            if (!window.webauthnJson) return;
-            if (checkbox.checked) {
-                try {
-                    const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
-                    const userId = btoa(username || 'admin').replace(/\+/g, '-').replace(/_/g, '/');
-                    const credential = await window.webauthnJson.create({
-                        publicKey: {
-                            challenge: challenge,
-                            rp: { name: "Melder Suche", id: window.location.hostname },
-                            user: { id: userId, name: username, displayName: username },
-                            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-                            authenticatorSelection: { userVerification: "required" },
-                            timeout: 60000
-                        }
-                    });
-                    const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                        body: JSON.stringify({ credential })
-                    });
-                    if (res.ok) {
-                        document.getElementById('bio-icon').textContent = '🔒';
-                        localStorage.setItem('bio_registered_user', username);
-                        showMessage("Aktiviert", true);
-                    }
-                } catch (err) { checkbox.checked = false; }
-            } else {
-                document.getElementById('bio-icon').textContent = '🔓';
-                localStorage.removeItem('bio_registered_user');
-            }
+        async function deleteObject() {
+            const el = document.querySelector('input[name="del"]:checked');
+            const res = await fetch(`${API_BASE}/delete-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: el.value }) });
+            if(res.ok) loadObjekte();
         }
 
         function showMessage(t, s) {
-            const m = document.getElementById('message'); m.textContent = t;
-            m.className = s ? 'success' : 'error'; m.style.display = 'block';
-            setTimeout(() => m.style.display = 'none', 3000);
+            const m = document.getElementById('message'); m.textContent = t; m.className = s ? 'success' : 'error';
+            m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000);
         }
-        
-        function runBioCheck() {
-            const statusEl = document.getElementById('bio-status');
-            if (window.webauthnJson) {
-                statusEl.textContent = "Bereit"; statusEl.style.color = "var(--success)";
-                if (localStorage.getItem('bio_registered_user')) {
-                    document.getElementById('bio-icon').textContent = '🔒';
-                    document.getElementById('bio-toggle').checked = true;
-                }
-            } else { setTimeout(runBioCheck, 1500); }
-        }
-        
+
         if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('theme-toggle').textContent = '☀️'; }
         document.getElementById('theme-toggle').onclick = () => {
             const isDark = document.body.classList.toggle('dark-mode');
@@ -284,7 +291,7 @@
             localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         };
 
-        window.onload = loadObjekte;
+        window.onload = () => { loadObjekte(); runBioCheck(); };
     </script>
 </body>
 </html>

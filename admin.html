@@ -387,7 +387,9 @@
         }
 
         function logout() {
-            localStorage.clear();
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            // Note: WE DO NOT remove 'username' or 'bio_registered_user'
             window.location.href = 'login.html';
         }
 

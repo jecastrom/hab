@@ -36,9 +36,10 @@
       text-align: center; display: none;
     }
     .btn-bio {
-      background: var(--help); color: white; border: none; width: 60px; height: 60px;
-      border-radius: 50%; font-size: 1.8rem; cursor: pointer;
+      background: #6c757d; color: white; border: none; width: 80px; height: 80px;
+      border-radius: 50%; font-size: 2.5rem; cursor: pointer; transition: transform 0.2s;
     }
+    .btn-bio:active { transform: scale(0.9); }
     #message { margin-top: 20px; text-align: center; padding: 12px; border-radius: 8px; display: none; font-size: 0.9rem; }
     .success { background: #d1e7dd; color: #0f5132; }
     .error { background: #f8d7da; color: #842029; }
@@ -47,24 +48,35 @@
 <body>
   <div class="login-container">
     <h1>Melder Suche Login</h1>
-    <form id="login-form">
+    <!-- Autocomplete off helps discourage save-password prompts -->
+    <form id="login-form" autocomplete="off">
       <label>Benutzername</label>
-      <input type="text" id="username" required autocomplete="username">
+      <input type="text" id="username" required autocomplete="one-time-code">
+
       <label>Passwort</label>
-      <input type="password" id="password" required autocomplete="current-password">
+      <input type="password" id="password" required autocomplete="one-time-code">
+
       <button type="submit" class="btn-login">Einloggen</button>
     </form>
+
     <div id="bio-login-container">
-      <p style="font-size: 0.8rem; color: var(--help); margin-bottom: 15px;">Biometrie-Login:</p>
+      <p style="font-size: 0.85rem; color: var(--help); margin-bottom: 15px;">Anmeldung mit Biometrie:</p>
       <button type="button" class="btn-bio" onclick="loginWithBiometrics()">☝️</button>
     </div>
+
     <div id="message"></div>
   </div>
+
   <script>
     const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
     if (localStorage.getItem('darkMode') === 'enabled') document.body.classList.add('dark-mode');
-    if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-login-container').style.display = 'block';
+
+    // Display the bio button only if the device is registered
+    const registeredUser = localStorage.getItem('bio_registered_user');
+    if (registeredUser) {
+      document.getElementById('bio-login-container').style.display = 'block';
+    }
 
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -75,7 +87,7 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) throw new Error("Anmeldung fehlgeschlagen");
         const data = await res.json();
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
@@ -88,7 +100,7 @@
       const username = localStorage.getItem('bio_registered_user');
       if (!username || !window.webauthnJson) return;
       try {
-        const challenge = "MTIzNDU2Nzg5MDEyMzQ1Ng"; // Match registration challenge
+        const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
         const options = {
             publicKey: { challenge: challenge, allowCredentials: [], userVerification: "required", timeout: 60000 }
         };
@@ -103,7 +115,7 @@
         localStorage.setItem('role', data.role);
         localStorage.setItem('username', username);
         window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
-      } catch (err) { showMessage("Fehlgeschlagen.", false); }
+      } catch (err) { showMessage("Biometrie-Anmeldung fehlgeschlagen.", false); }
     }
 
     function showMessage(t, s) {

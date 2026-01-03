@@ -22,16 +22,10 @@
             transition: background-color 0.3s; overflow-x: hidden;
         }
 
-        /* Fixed Card Container */
         .container { 
-            width: 100%; max-width: 1000px; 
-            background: var(--card-bg); 
-            padding: 30px; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); 
-            border: 1px solid var(--border-color);
-            box-sizing: border-box;
-            margin-top: 60px; /* Space for hamburger */
+            width: 100%; max-width: 1000px; background: var(--card-bg); padding: 30px; 
+            border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); 
+            border: 1px solid var(--border-color); box-sizing: border-box; margin-top: 60px;
         }
 
         /* Sidebar Styles */
@@ -45,25 +39,24 @@
         .sidebar.open { transform: translateX(0); }
         .sidebar-header { padding-top: 40px; margin-bottom: 30px; }
         .sidebar-header h2 { font-size: 1.4em; margin: 0; color: var(--primary-color); }
-        
         .sidebar ul { list-style: none; padding: 0; flex-grow: 1; }
         .sidebar li { margin-bottom: 25px; }
         .sidebar a { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-color); font-weight: bold; }
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
 
         .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); }
-        .btn-logout { 
-            width: 100%; background: var(--danger); color: white; border: none; 
-            padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem;
-        }
-
-        /* Settings Items */
+        .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
         .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
-        .setting-item input { width: auto; height: auto; }
 
         /* UI Elements */
         h1 { font-size: 1.8rem; margin-bottom: 30px; text-align: center; color: var(--primary-color); }
-        #offline-badge { display: none; background: var(--danger); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; margin-left: 10px; vertical-align: middle; }
+        
+        /* Fixed Offline Indicator */
+        #offline-badge { 
+            display: none; background: var(--danger); color: white; 
+            padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; 
+            margin-left: 10px; vertical-align: middle; font-weight: 800;
+        }
         body.is-offline #offline-badge { display: inline-block; }
 
         .controls-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
@@ -79,26 +72,30 @@
 
         #status { text-align: center; color: var(--secondary-text); font-style: italic; margin-bottom: 20px; min-height: 1.2em;}
 
-        /* Search Results */
+        /* Desktop Results */
         .table-wrapper { margin-top: 20px; overflow-x: auto; width: 100%; }
         .hidden { display: none !important; }
         table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 12px; overflow: hidden; }
         th, td { padding: 14px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; }
 
+        /* Details Pane */
         .btn-details { background-color: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
-        .details-pane { display: none; padding: 15px; background: var(--bg-color); font-size: 0.9rem; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); line-height: 1.6; }
+        .details-pane { display: none; padding: 15px; background: var(--bg-color); font-size: 0.9rem; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); line-height: 1.6; color: var(--text-color); }
 
-        /* Icons/Hamburger */
+        /* Mobile Results */
+        #mobile-cards { margin-top: 20px; width: 100%; }
+        .result-item { background: var(--card-bg); padding: 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); }
+        .card-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--bg-color); padding-bottom: 4px; }
+        .card-row:last-of-type { border-bottom: none; }
+        .card-label { font-weight: bold; color: var(--secondary-text); font-size: 0.8rem; }
+
         .hamburger { position: fixed; top: 18px; left: 18px; z-index: 1300; cursor: pointer; width: 30px; }
         .hamburger span { display: block; width: 100%; height: 3px; background: var(--text-color); margin-bottom: 6px; border-radius: 4px; }
         .sidebar-close { position: absolute; top: 15px; right: 15px; font-size: 2rem; color: var(--danger); cursor: pointer; }
 
         @media (min-width: 768px) { #mobile-cards { display: none; } }
         @media (max-width: 767px) { .table-wrapper { display: none; } }
-        .result-item { background: var(--card-bg); padding: 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); }
-        .card-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
-        .card-label { font-weight: bold; color: var(--secondary-text); font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -109,23 +106,13 @@
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-close" onclick="toggleSidebar()">&times;</div>
         <div class="sidebar-header"><h2>Einstellungen</h2></div>
-        
         <ul>
             <li id="admin-nav" style="display:none;"><a href="admin.html"><span class="menu-icon">⚙️</span> Admin Panel</a></li>
         </ul>
-
         <div class="sidebar-footer">
-            <div class="setting-item">
-                <span>🌙 Dunkelmodus</span>
-                <input type="checkbox" id="dark-toggle" onchange="toggleTheme()">
-            </div>
-            
-            <div class="setting-item">
-                <span>🔒 Biometrie</span>
-                <input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)">
-            </div>
-            <span id="bio-status" style="font-size:0.7rem; color:var(--help); margin-bottom:15px; display:block;">Prüfe Modul...</span>
-
+            <div class="setting-item"><span>🌙 Dunkelmodus</span><input type="checkbox" id="dark-toggle" onchange="toggleTheme()"></div>
+            <div class="setting-item"><span>🔒 Biometrie</span><input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)"></div>
+            <span id="bio-status" style="font-size:0.7rem; color:var(--help); margin-left:25px; display:block; margin-bottom:15px; font-style:italic;">Prüfe Modul...</span>
             <button class="btn-logout" onclick="logout()">Abmelden</button>
         </div>
     </nav>
@@ -159,7 +146,6 @@
 
         <div id="status">Warte auf Auswahl...</div>
 
-        <!-- Hidden table wrapper by default -->
         <div id="table-wrapper" class="table-wrapper hidden">
             <table>
                 <thead>
@@ -175,20 +161,29 @@
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
         let data = [];
 
-        // 1. Sidebar & Settings Logic
+        // PWA & Sidebar
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                reg.onupdatefound = () => {
+                    const worker = reg.installing;
+                    worker.onstatechange = () => { if (worker.state === 'installed' && navigator.serviceWorker.controller) window.location.reload(); };
+                };
+            });
+        }
+
+        function updateOnlineStatus() { document.body.classList.toggle('is-offline', !navigator.onLine); }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
         const sidebar = document.getElementById('sidebar');
         function toggleSidebar() { sidebar.classList.toggle('open'); }
-        
         let sx = 0;
         sidebar.addEventListener('touchstart', e => sx = e.touches[0].clientX);
         sidebar.addEventListener('touchend', e => { if (sx - e.changedTouches[0].clientX > 60) sidebar.classList.remove('open'); });
 
         function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
-
-        function toggleTheme() {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-        }
+        function toggleTheme() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled'); }
 
         async function handleBioToggle(checkbox) {
             const username = localStorage.getItem('username');
@@ -221,22 +216,13 @@
             }
         }
 
-        // 2. Initialization & Core Logic
         async function initialize() {
-            const role = localStorage.getItem('role');
-            if (role === 'admin') document.getElementById('admin-nav').style.display = 'block';
-
-            if (localStorage.getItem('darkMode') === 'enabled') {
-                document.body.classList.add('dark-mode');
-                document.getElementById('dark-toggle').checked = true;
-            }
-
-            const statusEl = document.getElementById('bio-status');
+            if (localStorage.getItem('role') === 'admin') document.getElementById('admin-nav').style.display = 'block';
+            if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; }
             if (window.webauthnJson) {
-                statusEl.textContent = "Bereit"; statusEl.style.color = "var(--success)";
+                document.getElementById('bio-status').textContent = "Bereit"; document.getElementById('bio-status').style.color = "var(--success)";
                 if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-toggle').checked = true;
             }
-
             try {
                 const res = await fetch(`${API_BASE}/get-objects`);
                 const objects = await res.json();
@@ -251,11 +237,11 @@
         }
 
         async function loadData() {
-            const objectKey = document.getElementById('object').value;
-            if (!objectKey) return;
+            const key = document.getElementById('object').value;
+            if (!key) return;
             document.getElementById('status').textContent = 'Daten werden geladen...';
             try {
-                const response = await fetch(`${API_BASE}/get-data?id=${objectKey}`);
+                const response = await fetch(`${API_BASE}/get-data?id=${key}`);
                 data = await response.json();
                 document.getElementById('status').textContent = `${data.length} Einträge geladen.`;
                 clearSearch(true);
@@ -277,14 +263,9 @@
             const mobile = document.getElementById('mobile-cards');
             const table = document.getElementById('table-wrapper');
             const tableBody = document.getElementById('table-body');
-            
             tableBody.innerHTML = ''; mobile.innerHTML = '';
 
-            if (!query) {
-                table.classList.add('hidden');
-                mobile.classList.add('hidden');
-                return;
-            }
+            if (!query) { table.classList.add('hidden'); mobile.classList.add('hidden'); return; }
 
             const filtered = data.filter(item => {
                 const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || '');
@@ -292,18 +273,13 @@
             });
 
             if (filtered.length === 0) {
-                table.classList.add('hidden');
-                mobile.classList.remove('hidden');
+                table.classList.add('hidden'); mobile.classList.remove('hidden');
                 mobile.innerHTML = '<div class="status">Keine Treffer gefunden.</div>';
                 document.getElementById('status').textContent = "";
             } else {
-                table.classList.remove('hidden');
-                mobile.classList.remove('hidden');
+                table.classList.remove('hidden'); mobile.classList.remove('hidden');
                 document.getElementById('status').textContent = `${filtered.length} Treffer gefunden.`;
-                filtered.forEach((item, index) => {
-                    renderTableRow(item, index);
-                    renderMobileCard(item, index);
-                });
+                filtered.forEach((item, index) => { renderTableRow(item, index); renderMobileCard(item, index); });
             }
         }
 
@@ -328,7 +304,8 @@
             div.innerHTML = `
                 <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
                 <div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div>
-                <div class="card-row"><span class="card-label">Ring / AnzMelder:</span> <span>${item.Ring || '-'} / ${item.AnzMelder || '-'}</span></div>
+                <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
+                <div class="card-row"><span class="card-label">AnzMelder:</span> <span>${item.AnzMelder || '-'}</span></div>
                 <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button>
                 <div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
             `;
@@ -344,7 +321,8 @@
             const el = document.getElementById(id);
             const isVisible = el.style.display === 'block';
             el.style.display = isVisible ? 'none' : 'block';
-            btn.textContent = isVisible ? (window.innerWidth < 768 ? "Details anzeigen" : "Details") : (window.innerWidth < 768 ? "Details schließen" : "Schließen");
+            const isMobile = window.innerWidth < 768;
+            btn.textContent = isVisible ? (isMobile ? "Details anzeigen" : "Details") : (isMobile ? "Details schließen" : "Schließen");
         }
 
         function updateSearchUI() {
@@ -354,9 +332,7 @@
             clearSearch();
         }
 
-        // Search trigger on Enter
         document.getElementById('search').addEventListener('keypress', (e) => { if (e.key === 'Enter') filterResults(); });
-
         window.onload = initialize;
     </script>
 </body>

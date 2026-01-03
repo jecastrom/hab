@@ -13,38 +13,45 @@
       --bg: #121212; --text: #e9ecef; --card-bg: #1e1e1e; --border: #495057; --help: #adb5bd;
     }
     body {
-      font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg); color: var(--text);
       margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center;
       min-height: 100vh; transition: background-color 0.3s;
     }
     .login-container {
-      background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px;
-      padding: 30px; max-width: 380px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px;
+      padding: 35px; max-width: 360px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     }
-    h1 { text-align: center; color: var(--primary); margin-bottom: 25px; font-size: 1.4rem; }
-    label { display: block; margin: 15px 0 5px; font-weight: 600; font-size: 0.85rem; color: var(--help); }
-    input {
-      width: 100%; padding: 12px; box-sizing: border-box; background: var(--bg);
-      color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 1rem;
+    h1 { text-align: center; color: var(--primary); margin-bottom: 30px; font-size: 1.5rem; letter-spacing: -0.5px; }
+    
+    .input-group { margin-bottom: 15px; }
+    .input-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.75rem; color: var(--help); text-transform: uppercase; }
+    
+    /* Using non-standard IDs to bypass browser "Save Password" heuristics */
+    .field-input {
+      width: 100%; padding: 14px; box-sizing: border-box; background: var(--bg);
+      color: var(--text); border: 1px solid var(--border); border-radius: 12px; font-size: 1rem;
+      outline: none; transition: border-color 0.2s;
     }
+    .field-input:focus { border-color: var(--primary); }
+
     .btn-login {
-      width: 100%; padding: 14px; margin-top: 25px; background: var(--primary);
-      color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer;
+      width: 100%; padding: 16px; margin-top: 20px; background: var(--primary);
+      color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer;
     }
     
-    /* Biometric Section */
     #bio-login-container {
-      margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);
+      margin-top: 35px; padding-top: 25px; border-top: 1px solid var(--border);
       text-align: center; display: none;
     }
     .btn-bio {
-      background: none; border: none; cursor: pointer; padding: 10px;
-      transition: transform 0.2s; color: var(--text);
+      background: none; border: none; cursor: pointer; padding: 0;
+      transition: transform 0.1s ease; color: var(--text);
     }
-    .btn-bio:active { transform: scale(0.9); }
-    .bio-icon-svg { width: 64px; height: 64px; fill: currentColor; } /* Color follows Dark/Light mode */
+    .btn-bio:active { transform: scale(0.92); }
+    .bio-icon-svg { width: 55px; height: 55px; fill: currentColor; }
 
-    #message { margin-top: 20px; text-align: center; padding: 12px; border-radius: 8px; display: none; font-size: 0.85rem; }
+    #message { margin-top: 20px; text-align: center; padding: 12px; border-radius: 10px; display: none; font-size: 0.85rem; font-weight: 500; }
     .success { background: #d1e7dd; color: #0f5132; }
     .error { background: #f8d7da; color: #842029; }
   </style>
@@ -52,20 +59,26 @@
 <body>
   <div class="login-container">
     <h1>Melder Suche Login</h1>
-    <form id="login-form" autocomplete="off">
-      <label>BENUTZERNAME</label>
-      <input type="text" id="username" required autocomplete="one-time-code">
+    
+    <!-- Div instead of Form to block auto-submit/save heuristics -->
+    <div id="auth-box">
+      <div class="input-group">
+        <label>Benutzername</label>
+        <input type="text" id="usr_key" class="field-input" autocomplete="off" spellcheck="false">
+      </div>
 
-      <label>PASSWORT</label>
-      <input type="password" id="password" required autocomplete="one-time-code">
+      <div class="input-group">
+        <label>Passwort</label>
+        <input type="password" id="pw_key" class="field-input" autocomplete="new-password">
+      </div>
 
-      <button type="submit" class="btn-login">Einloggen</button>
-    </form>
+      <button type="button" class="btn-login" onclick="manualLogin()">Einloggen</button>
+    </div>
 
     <div id="bio-login-container">
-      <p id="bio-text" style="font-size: 0.8rem; color: var(--help); margin-bottom: 15px;">Mit Biometrie anmelden</p>
+      <p id="bio-label" style="font-size: 0.8rem; color: var(--help); margin-bottom: 12px;">Biometrie Login</p>
       <button type="button" class="btn-bio" onclick="loginWithBiometrics()" id="bio-btn-icon">
-        <!-- SVG will be injected here -->
+        <!-- SVG Injected via JS -->
       </button>
     </div>
 
@@ -75,92 +88,92 @@
   <script>
     const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-    // 1. Device Detection & Icon Injection
+    // 1. Device Detection & Native-style SVG injection
     function setupBiometricUI() {
         const container = document.getElementById('bio-login-container');
         const btnIcon = document.getElementById('bio-btn-icon');
-        const bioText = document.getElementById('bio-text');
+        const label = document.getElementById('bio-label');
         const isRegistered = localStorage.getItem('bio_registered_user');
 
         if (!isRegistered) return;
 
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         
-        // Face ID SVG for iOS, Fingerprint for Android/Others
         if (isIOS) {
-            bioText.textContent = "Mit Face ID anmelden";
-            btnIcon.innerHTML = `<svg class="bio-icon-svg" viewBox="0 0 24 24"><path d="M9,11H7V9H9V11M17,11H15V9H17V11M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20c-3.1,0-5.83-1.85-7.09-4.5c.34-.17.75-.24 1.15-.17c1.3.22 2.65.34 4,.34s2.7-.12 4-.34c.4-.07.81,0 1.15.17C17.83,18.15 15.1,20 12,20M12,12c-.55,0-1-.45-1-1s.45-1,1-1s1,.45,1,1s-.45,1-1,1Z"/></svg>`;
+            label.textContent = "Mit Face ID anmelden";
+            // Native-look Face ID SVG
+            btnIcon.innerHTML = `<svg class="bio-icon-svg" viewBox="0 0 24 24"><path d="M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 1,1 20,12A8,8 0 0,1 12,20M7,11.5A1.5,1.5 0 1,1 8.5,10A1.5,1.5 0 0,1 7,11.5M17,11.5A1.5,1.5 0 1,1 18.5,10A1.5,1.5 0 0,1 17,11.5M12,14A3,3 0 0,0 9,17H15A3,3 0 0,0 12,14Z"/></svg>`;
         } else {
-            bioText.textContent = "Mit Fingerabdruck anmelden";
+            label.textContent = "Mit Fingerabdruck anmelden";
+            // Clean Fingerprint SVG
             btnIcon.innerHTML = `<svg class="bio-icon-svg" viewBox="0 0 24 24"><path d="M17.81,4.47L17.73,4.47C15.69,4.47 14.35,4.73 13,5.23C11.58,5.75 10.53,6.45 9.61,7.44C8.75,8.35 8.19,9.45 8,10.59C7.87,11.33 8.39,12 9.13,12.13C9.87,12.26 10.54,11.73 10.67,11C10.81,10.23 11.2,9.47 11.75,8.87C12.44,8.13 13.2,7.63 14.3,7.24C15.34,6.86 16.32,6.67 17.81,6.67C19.33,6.67 20.31,6.85 21.36,7.24C22,7.47 22.75,7.15 23,6.5C23.23,5.85 22.9,5.1 22.25,4.87C20.89,4.37 19.34,4.47 17.81,4.47M3.5,12.19C4.15,11.96 4.5,11.21 4.27,10.56C3.7,8.91 3.73,7.31 4.36,5.77C5,4.2 6.32,3 8.04,2.32C11.5,0.96 15.32,1.21 18.59,3.03C19.23,3.38 20,3.17 20.4,2.54C20.76,1.91 20.55,1.1 19.92,0.74C15.75,-1.57 10.87,-1.88 6.44,0.15C4.22,1 2.53,2.56 1.63,4.64C0.82,6.6 0.77,8.74 1.5,10.96C1.72,11.61 2.47,11.96 3.12,11.74L3.5,12.19M13,11V18C13,18.83 12.33,19.5 11.5,19.5S10,18.83 10,18V11C10,10.17 10.67,9.5 11.5,9.5S13,10.17 13,11M16,11V15C16,15.83 15.33,16.5 14.5,16.5S13,15.83 13,15V11C13,10.17 13.67,9.5 14.5,9.5S16,10.17 16,11Z"/></svg>`;
         }
         container.style.display = 'block';
     }
 
     if (localStorage.getItem('darkMode') === 'enabled') document.body.classList.add('dark-mode');
-    
-    // Call setup on load
     setupBiometricUI();
 
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      try {
-        const res = await fetch(`${API_BASE}/login`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-        if (!res.ok) throw new Error("Anmeldung fehlgeschlagen");
-        const data = await res.json();
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role);
-        localStorage.setItem('username', username);
-        window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
-      } catch (err) { showMessage(err.message, false); }
-    });
+    async function manualLogin() {
+        const username = document.getElementById('usr_key').value.trim();
+        const password = document.getElementById('pw_key').value.trim();
 
-    // 2. Seamless Biometric Login logic
+        if (!username || !password) return showMessage("Bitte Daten eingeben", false);
+
+        try {
+            const res = await fetch(`${API_BASE}/login`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!res.ok) throw new Error("Falsche Anmeldedaten");
+
+            const data = await res.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('role', data.role);
+            localStorage.setItem('username', username);
+            window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
+        } catch (err) { showMessage(err.message, false); }
+    }
+
     async function loginWithBiometrics() {
-      const username = localStorage.getItem('bio_registered_user');
-      if (!username || !window.webauthnJson) return;
+        const username = localStorage.getItem('bio_registered_user');
+        if (!username || !window.webauthnJson) return;
 
-      try {
-        const challenge = "MTIzNDU2Nzg5MDEyMzQ1Ng"; 
-        const options = {
-            publicKey: { 
-                challenge: challenge, 
-                allowCredentials: [], 
-                userVerification: "required", 
-                timeout: 60000 
-            },
-            // Seamless flow: trigger system prompt immediately
-            mediation: "required" 
-        };
+        try {
+            // Constant challenge used during registration for simple direct match
+            const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
+            const options = {
+                publicKey: { 
+                    challenge: challenge, 
+                    allowCredentials: [], 
+                    userVerification: "required", 
+                    timeout: 60000 
+                }
+            };
 
-        const assertion = await window.webauthnJson.get(options);
-        
-        const res = await fetch(`${API_BASE}/login-biometric`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, assertion })
-        });
+            const assertion = await window.webauthnJson.get(options);
+            
+            const res = await fetch(`${API_BASE}/login-biometric`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, assertion })
+            });
 
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role);
-        localStorage.setItem('username', username);
-        window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
-      } catch (err) { 
-          console.error(err);
-          showMessage("Biometrie-Anmeldung fehlgeschlagen.", false); 
-      }
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('role', data.role);
+            localStorage.setItem('username', username);
+            window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
+        } catch (err) { 
+            showMessage("Biometrie fehlgeschlagen.", false); 
+        }
     }
 
     function showMessage(t, s) {
-      const m = document.getElementById('message'); m.textContent = t;
-      m.className = s ? 'success' : 'error'; m.style.display = 'block';
+        const m = document.getElementById('message'); m.textContent = t;
+        m.className = s ? 'success' : 'error'; m.style.display = 'block';
     }
   </script>
 </body>

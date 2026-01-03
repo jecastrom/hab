@@ -18,7 +18,7 @@
         }
         body {
             font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg-color);
-            color: var(--text-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            color: var(--text-color); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
             transition: background-color 0.3s; overflow-x: hidden;
         }
 
@@ -39,6 +39,7 @@
         .sidebar.open { transform: translateX(0); }
         .sidebar-header { padding-top: 40px; margin-bottom: 30px; }
         .sidebar-header h2 { font-size: 1.4em; margin: 0; color: var(--primary-color); }
+        
         .sidebar ul { list-style: none; padding: 0; flex-grow: 1; }
         .sidebar li { margin-bottom: 25px; }
         .sidebar a { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-color); font-weight: bold; }
@@ -46,17 +47,25 @@
 
         .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); }
         .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        
+        /* Toggle Switch Styling */
         .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
         /* UI Elements */
         h1 { font-size: 1.8rem; margin-bottom: 30px; text-align: center; color: var(--primary-color); }
-        
-        /* Fixed Offline Indicator */
-        #offline-badge { 
-            display: none; background: var(--danger); color: white; 
-            padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; 
-            margin-left: 10px; vertical-align: middle; font-weight: 800;
-        }
+        #offline-badge { display: none; background: var(--danger); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; margin-left: 10px; vertical-align: middle; font-weight: 800; }
         body.is-offline #offline-badge { display: inline-block; }
 
         .controls-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px; }
@@ -72,18 +81,16 @@
 
         #status { text-align: center; color: var(--secondary-text); font-style: italic; margin-bottom: 20px; min-height: 1.2em;}
 
-        /* Desktop Results */
+        /* Results Display */
         .table-wrapper { margin-top: 20px; overflow-x: auto; width: 100%; }
         .hidden { display: none !important; }
         table { width: 100%; border-collapse: collapse; background: var(--card-bg); border-radius: 12px; overflow: hidden; }
         th, td { padding: 14px; text-align: left; border-bottom: 1px solid var(--border-color); }
         th { background: var(--bg-color); color: var(--primary-color); font-weight: 600; }
 
-        /* Details Pane */
         .btn-details { background-color: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
         .details-pane { display: none; padding: 15px; background: var(--bg-color); font-size: 0.9rem; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); line-height: 1.6; color: var(--text-color); }
 
-        /* Mobile Results */
         #mobile-cards { margin-top: 20px; width: 100%; }
         .result-item { background: var(--card-bg); padding: 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); }
         .card-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid var(--bg-color); padding-bottom: 4px; }
@@ -110,9 +117,21 @@
             <li id="admin-nav" style="display:none;"><a href="admin.html"><span class="menu-icon">⚙️</span> Admin Panel</a></li>
         </ul>
         <div class="sidebar-footer">
-            <div class="setting-item"><span>🌙 Dunkelmodus</span><input type="checkbox" id="dark-toggle" onchange="toggleTheme()"></div>
-            <div class="setting-item"><span>🔒 Biometrie</span><input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)"></div>
-            <span id="bio-status" style="font-size:0.7rem; color:var(--help); margin-left:25px; display:block; margin-bottom:15px; font-style:italic;">Prüfe Modul...</span>
+            <div class="setting-item">
+                <span>🌙 Dunkelmodus</span>
+                <label class="switch">
+                    <input type="checkbox" id="dark-toggle" onchange="toggleTheme()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>🔒 Biometrie</span>
+                <label class="switch">
+                    <input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <span id="bio-status" style="font-size:0.7rem; color:var(--help); margin-left:0; text-align:center; display:block; margin-bottom:15px; font-style:italic;">Prüfe Modul...</span>
             <button class="btn-logout" onclick="logout()">Abmelden</button>
         </div>
     </nav>
@@ -160,16 +179,6 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
         let data = [];
-
-        // PWA & Sidebar
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').then(reg => {
-                reg.onupdatefound = () => {
-                    const worker = reg.installing;
-                    worker.onstatechange = () => { if (worker.state === 'installed' && navigator.serviceWorker.controller) window.location.reload(); };
-                };
-            });
-        }
 
         function updateOnlineStatus() { document.body.classList.toggle('is-offline', !navigator.onLine); }
         window.addEventListener('online', updateOnlineStatus);
@@ -220,7 +229,7 @@
             if (localStorage.getItem('role') === 'admin') document.getElementById('admin-nav').style.display = 'block';
             if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; }
             if (window.webauthnJson) {
-                document.getElementById('bio-status').textContent = "Bereit"; document.getElementById('bio-status').style.color = "var(--success)";
+                document.getElementById('bio-status').textContent = "Biometrie bereit"; document.getElementById('bio-status').style.color = "var(--success)";
                 if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-toggle').checked = true;
             }
             try {
@@ -264,14 +273,11 @@
             const table = document.getElementById('table-wrapper');
             const tableBody = document.getElementById('table-body');
             tableBody.innerHTML = ''; mobile.innerHTML = '';
-
             if (!query) { table.classList.add('hidden'); mobile.classList.add('hidden'); return; }
-
             const filtered = data.filter(item => {
                 const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || '');
                 return val === query;
             });
-
             if (filtered.length === 0) {
                 table.classList.add('hidden'); mobile.classList.remove('hidden');
                 mobile.innerHTML = '<div class="status">Keine Treffer gefunden.</div>';
@@ -285,30 +291,14 @@
 
         function renderTableRow(item, index) {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${item.Gruppe || '-'}</strong></td>
-                <td>${item.Installationsort || '-'}</td>
-                <td>${item.Ring || '-'}</td>
-                <td>${item.AnzMelder || '-'}</td>
-                <td>
-                    <button class="btn-details" onclick="toggleDetails('dt-${index}', this)">Details</button>
-                    <div id="dt-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
-                </td>
-            `;
+            tr.innerHTML = `<td><strong>${item.Gruppe || '-'}</strong></td><td>${item.Installationsort || '-'}</td><td>${item.Ring || '-'}</td><td>${item.AnzMelder || '-'}</td><td><button class="btn-details" onclick="toggleDetails('dt-${index}', this)">Details</button><div id="dt-${index}" class="details-pane">${formatTechnicalDetails(item)}</div></td>`;
             document.getElementById('table-body').appendChild(tr);
         }
 
         function renderMobileCard(item, index) {
             const div = document.createElement('div');
             div.className = 'result-item';
-            div.innerHTML = `
-                <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
-                <div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div>
-                <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
-                <div class="card-row"><span class="card-label">AnzMelder:</span> <span>${item.AnzMelder || '-'}</span></div>
-                <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button>
-                <div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
-            `;
+            div.innerHTML = `<div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div><div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div><div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div><div class="card-row"><span class="card-label">AnzMelder:</span> <span>${item.AnzMelder || '-'}</span></div><button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button><div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>`;
             document.getElementById('mobile-cards').appendChild(div);
         }
 

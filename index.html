@@ -260,8 +260,30 @@ async function precacheAllObjects(objects) {
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service Worker: Registriert'))
+            .then(reg => {
+                console.log('Service Worker: Registriert');
+                
+                // If there's a new update, force it to activate
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New content is available; please refresh.
+                            console.log('New content available, please refresh.');
+                        }
+                    };
+                };
+            })
             .catch(err => console.log('Service Worker: Fehler', err));
+    });
+
+    // This helps Safari recognize the controller immediately
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+            window.location.reload();
+            refreshing = true;
+        }
     });
 }
     </script>

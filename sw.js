@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hab-v6';
+const CACHE_NAME = 'hab-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -14,23 +14,29 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // Force the waiting service worker to become the active one
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-    ))
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then(keys => Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      )),
+      // THIS IS THE KEY FOR SAFARI:
+      self.clients.claim() 
+    ])
   );
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+
   const url = new URL(event.request.url);
 
-  // STRATEGY: Cache First for Data (get-data)
-  // This makes switching objects while offline much more stable
-  if (url.pathname.includes('get-data')) {
+  // Strategy for Data: Cache First, then Network
+  if (url.pathname.includes('get-data') || url.pathname.includes('get-objects')) {
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
         const fetchPromise = fetch(event.request).then(networkResponse => {
@@ -40,21 +46,18 @@ self.addEventListener('fetch', event => {
           }
           return networkResponse;
         });
-        // Return cached version immediately if found, otherwise wait for network
         return cachedResponse || fetchPromise;
       })
     );
     return;
   }
 
-  // DEFAULT STRATEGY: Network First for everything else
+  // Strategy for Files: Network First, falling back to Cache
   event.respondWith(
     fetch(event.request)
       .then(res => {
-        if (res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        }
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         return res;
       })
       .catch(() => caches.match(event.request))

@@ -127,58 +127,29 @@
         function toggleTheme() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled'); document.getElementById('dark-toggle').checked = isDark; }
 
         async function handleBioToggle(checkbox) {
-    const username = localStorage.getItem('username');
-    if (!window.webauthnJson) return;
-
-    if (checkbox.checked) {
-        try {
-            const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
-            const userId = btoa(username || 'user').replace(/\+/g, '-').replace(/_/g, '/');
-            
-            const credential = await window.webauthnJson.create({
-                publicKey: { 
-                    challenge, 
-                    rp: { name: "Melder Suche", id: window.location.hostname }, 
-                    user: { id: userId, name: username || 'user', displayName: username || 'user' }, 
-                    pubKeyCredParams: [{ type: "public-key", alg: -7 }], 
-                    authenticatorSelection: { 
-                        authenticatorAttachment: "platform", // Forces TouchID/FaceID
-                        userVerification: "required" 
-                    }, 
-                    timeout: 60000 
+            const username = localStorage.getItem('username');
+            if (!window.webauthnJson) return;
+            if (checkbox.checked) {
+                try {
+                    const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
+                    const userId = btoa(username || 'user').replace(/\+/g, '-').replace(/_/g, '/');
+                    const credential = await window.webauthnJson.create({
+                        publicKey: { challenge, rp: { name: "Melder Suche", id: window.location.hostname }, user: { id: userId, name: username || 'user', displayName: username || 'user' }, pubKeyCredParams: [{ type: "public-key", alg: -7 }], authenticatorSelection: { userVerification: "required" }, timeout: 60000 }
+                    });
+                    const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ credential }) });
+                    if (res.ok) { localStorage.setItem('bio_registered_user', username); showMessage("Biometrie aktiviert!", true); }
+                } catch (err) { 
+                    if (localStorage.getItem('bio_registered_user')) { showMessage("Biometrie aktiviert!", true); }
+                    else { checkbox.checked = false; }
                 }
-            });
-
-            const res = await fetch(`${API_BASE}/register-biometric`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, 
-                body: JSON.stringify({ credential }) 
-            });
-
-            if (res.ok) { 
-                localStorage.setItem('bio_registered_user', username); 
-                showMessage("Biometrie aktiviert!", true); 
-            } else { throw new Error(); }
-        } catch (err) { 
-            checkbox.checked = false;
-            if (err.name !== 'AbortError') showMessage("Registrierung fehlgeschlagen", false);
+            } else {
+                if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
+                try {
+                    const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ action: 'delete' }) });
+                    if (res.ok) { localStorage.removeItem('bio_registered_user'); showMessage("Biometrie entfernt.", true); }
+                } catch (e) { checkbox.checked = true; }
+            }
         }
-    } else {
-        if (!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
-        try {
-            await fetch(`${API_BASE}/register-biometric`, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, 
-                body: JSON.stringify({ action: 'delete' }) 
-            });
-            localStorage.removeItem('bio_registered_user');
-            showMessage("Biometrie entfernt.", true);
-        } catch (e) {
-            localStorage.removeItem('bio_registered_user');
-            showMessage("Biometrie lokal entfernt.", true);
-        }
-    }
-}
 
         async function initialize() {
             const role = localStorage.getItem('role');
@@ -221,29 +192,6 @@
 
         document.getElementById('search').addEventListener('keypress', (e) => { if (e.key === 'Enter') filterResults(); });
         window.onload = initialize;
-        // ... (inside the <script> tag of index.html)
-
-// SYNC LOGIC: Listen for changes in other tabs (like Admin)
-window.addEventListener('storage', (e) => {
-    if (e.key === 'darkMode') {
-        const isDark = e.newValue === 'enabled';
-        document.body.classList.toggle('dark-mode', isDark);
-        const toggle = document.getElementById('dark-toggle');
-        if(toggle) toggle.checked = isDark;
-    }
-    if (e.key === 'bio_registered_user') {
-        const toggle = document.getElementById('bio-toggle');
-        if(toggle) toggle.checked = !!e.newValue;
-    }
-});
-
-// Update the toggleTheme function to ensure it triggers local changes correctly
-function toggleTheme() {
-    const isDark = document.body.classList.toggle('dark-mode');
-    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-    document.getElementById('dark-toggle').checked = isDark;
-}
-
     </script>
 </body>
 </html>

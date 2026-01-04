@@ -1,75 +1,23 @@
-# Gruppen & Ringe – Schnelle Lokalisierung für Brandmeldeanlagen
+# Meldergruppen & Ringe Suche (PWA)
 
- 
-*Ein Tool für Informationselektroniker für Brandmeldetechnik und Gefahrenmeldeanlagen.*
+Eine hochperformante, offline-fähige Progressive Web App (PWA), die speziell für Techniker entwickelt wurde, um Melderdaten (ESSER Tools 8000) in Umgebungen mit eingeschränkter oder fehlender Konnektivität zu suchen und zu verwalten.
 
-## Überblick
-Dieses Web-Tool löst ein alltägliches Problem in der Wartung von Gefahrenmeldeanlagen: die rasche Zuordnung von Meldergruppen zu Ringen und umgekehrt. Es hilft Technikern, den Installationsort einer Gruppe zu finden, alle Gruppen in einem Ring aufzulisten und die Anzahl der Melder pro Gruppe einzusehen – alles in einer benutzerfreundlichen Oberfläche.
+## 🚀 Hauptmerkmale
 
-Entwickelt für den Praxiseinsatz, ermöglicht es eine effiziente Suche basierend auf exportierten Daten aus Systemen wie Esser Tools 8000. Kein langes Blättern durch Tabellen mehr – nur präzise Ergebnisse auf Knopfdruck!
+- **PWA-Architektur:** Installierbar auf iOS und Android mit dem Gefühl einer nativen App.
+- **Offline-First Suche:** Alle Objektdaten werden automatisch im Hintergrund lokal zwischengespeichert. Die Suche funktioniert einwandfrei in Untergeschossen oder abgeschirmten Gebäuden.
+- **Biometrische Sicherheit:** Sicherer Login via Face ID oder Fingerabdruck (WebAuthn) als nahtlose Alternative zum Passwort.
+- **Intelligenter Datenimport:** Admin-Panel zum Hochladen von ESSER Tools 8000 CSV-Exporten mit automatischer Datenbereinigung und Feld-Mapping.
+- **Rollenbasierte Zugriffskontrolle:** Klare Trennung zwischen „Teammitgliedern“ (nur Suche) und „Technischen Administratoren“ (vollständige Verwaltung).
+- **Universelle UX:** Konsistentes Design mit Dunkelmodus-Unterstützung und einheitlichen Einstellungen über alle Schnittstellen hinweg.
+- **Konnektivitäts-Status:** Echtzeit-Signalisierung des Online-/Offline-Status durch ein diskretes Benachrichtigungsbanner.
 
-## Funktionen
-- **Schnelle Abfragen**: Suche nach Gruppe oder Ring – erhalte sofort den Installationsort, zugehörige Elemente und Melderanzahl.
-- **Admin-UI für Wartung**: 
-  - Neue Objekte (Anlagen) hinzufügen.
-  - JSON-Daten hochladen (automatische Verarbeitung von CSV-Exports).
-  - Objekte löschen – alles ohne Code-Kenntnisse.
-- **Automatisierte Datenverarbeitung**: CSV aus Esser Tools 8000 wird nahtlos in JSON umgewandelt und integriert.
-- **Responsive Design**: Optimiert für Mobile und Desktop, mit Dark-Mode-Unterstützung.
+## 🛠 Tech-Stack
 
-## Technische Highlights
-- **Frontend**: HTML/CSS/JS mit responsivem Layout (Flexbox/Grid), Dark-Mode und Touch-Gesten.
-- **Backend**: Azure Functions für GitHub-Integration (Commits/Deploys).
-- **Hosting**: Azure Static Web Apps für hohe Verfügbarkeit, Skalierbarkeit und automatische Bereitstellung.
-- **Datenquelle**: Unterstützung für Esser Tools 8000 (CSV zu JSON); erweiterbar für Hekatron.
+- **Frontend:** HTML5, CSS3 (Modernes Flexbox/Grid), Vanilla JavaScript (ES6+).
+- **Backend:** Node.js, Azure Functions (Serverless).
+- **Authentifizierung:** JWT (JSON Web Tokens), bcryptjs, WebAuthn API.
+- **Speicherung:** Persistenter Azure-Dateispeicher (außerhalb des schreibgeschützten wwwroot).
+- **PWA:** Service Worker, Cache API, Web App Manifest.
+- **Bereitstellung:** Azure Static Web Apps (SWA).
 
-## Einrichtung & Nutzung
-1. Klone das Repository.
-2. Konfiguriere Azure (Functions, Static Web App, GitHub Token).
-3. Starte die App – suche oder administriere direkt!
-
-Für detaillierte Anleitungen siehe [Wiki](wiki-link-placeholder).
-
-*Entwickelt mit Fokus auf Einfachheit und Zuverlässigkeit.
-
-
-### Project Structure
-
-This repository is organized for Azure Static Web Apps (SWA) deployment: static files in root, Azure Functions in `/api/`. Below is the file tree:
-
-
-```
-hab/
-├── api/                  # Azure Functions backend
-│   ├── login/            # Password login
-│   │   ├── function.json
-│   │   └── index.js
-│   ├── register-biometric/ # New: Biometric registration (after password login)
-│   │   ├── function.json
-│   │   └── index.js      # Code below
-│   ├── login-biometric/  # New: Biometric login (challenge + verify)
-│   │   ├── function.json
-│   │   └── index.js      # Code below
-│   ├── users/            # User management (CRUD, admin-only)
-│   │   ├── function.json
-│   │   └── index.js
-│   ├── add-object/       # Existing
-│   │   ├── function.json
-│   │   └── index.js
-│   └── delete-object/    # Existing
-│       ├── function.json
-│       └── index.js
-├── login.html            # Static login page (with biometric buttons)
-├── index.html            # Main search page (protected)
-├── admin.html            # Admin panel (protected, with user mgmt)
-├── styles.css            # Shared CSS (optional)
-├── scripts/              # Modular JS (optional)
-│   └── auth.js           # Shared auth/biometric utils (code below)
-└── users.json            # User data (in root; add publicKey field)
-```
-
-- **Static Files**: Served directly by SWA for performance.
-- **Functions**: Auto-deployed as API endpoints (e.g., `/api/login`).
-- **Data**: `users.json` acts as simple DB (GitHub-hosted; update via Functions for security).
-
-For deployment: Push to GitHub → SWA auto-builds. Configure `JWT_SECRET` in Azure Function app settings.

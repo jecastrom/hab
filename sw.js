@@ -1,38 +1,57 @@
-const CACHE_NAME = 'melder-cache-v15';
-
+const CACHE_NAME = 'hab-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/admin.html',
   '/login.html',
+  '/admin.html',
   '/manifest.json',
   '/auth-guard.js',
-  '/webauthn-json.js' 
+  '/webauthn-json.js',
+  '/sw.js',
+  // Your data files from the /data/ directory
+  '/data/hab.json',
+  '/data/test.json',
+  '/data/objects.json',
+  '/data/users.json'
 ];
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Force active immediately
-  event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urlsToCache)));
-});
-
-self.addEventListener('activate', (event) => {
-  // Claim clients so the very first load is intercepted
-  event.waitUntil(self.clients.claim());
+// Install the service worker and cache files
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k))))
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
   );
 });
 
-self.addEventListener('fetch', (event) => {
+// Activate and clean up old caches
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
+// Fetch strategy: Cache First, then Network
+// This ensures that if you are offline, it pulls the JSON from the cache immediately.
+self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(event.request)
-      .then(res => {
-        if (res.status === 200) {
-          const cln = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, cln));
+    caches.match(event.request)
+      .then(response => {
+        // Cache hit - return response
+        if (response) {
+          return response;
         }
-        return res;
+        return fetch(event.request);
       })
-      .catch(() => caches.match(event.request))
   );
 });

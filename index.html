@@ -195,10 +195,7 @@ async function precacheAllObjects(objects) {
                 });
 
                 if (objects.length > 0) {
-                    // CHANGE THIS LINE FROM loadData() to loadEntries()
                     await loadData(); 
-
-                    // Start background download for offline use
                     if ('serviceWorker' in navigator) {
                         navigator.serviceWorker.ready.then(() => {
                             precacheAllObjects(objects);

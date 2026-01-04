@@ -185,7 +185,8 @@
                 <input type="text" id="new_user_name" placeholder="Name" autocomplete="off" style="text-transform: lowercase;" 
                 oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '')">
                 <label>Passwort</label>
-                <input type="password" id="new_user_pw" placeholder="Passwort">
+                <input type="password" id="new_user_pw" placeholder="Passwort" minlength="4" maxlength="8" 
+                oninput="this.value = this.value.replace(/\s/g, '')">
                 <label>Rolle</label>
                 <select id="new_user_role">
                     <option value="standard">Teammitglied</option>

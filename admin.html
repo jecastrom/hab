@@ -77,6 +77,32 @@
         #message { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; text-align: center; display: none; z-index: 2000; font-weight: bold; }
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
+        
+        /* Custom adjustment for Desktop visibility */
+@media (min-width: 1024px) {
+    /* 1. Show the sidebar permanently */
+    .sidebar {
+        transform: translateX(0);
+        box-shadow: none;
+    }
+
+    /* 2. Hide the hamburger and close buttons (not needed on desktop) */
+    .hamburger, .sidebar-close {
+        display: none !important;
+    }
+
+    /* 3. Move the main content to the right so it doesn't hide behind the menu */
+    .container {
+        margin-left: 280px; /* This matches the width of your sidebar */
+        width: calc(100% - 280px);
+        max-width: none;
+    }
+
+    /* 4. Disable the dark overlay on desktop */
+    #sidebar-overlay {
+        display: none !important;
+    }
+}
     </style>
 </head>
 <body>

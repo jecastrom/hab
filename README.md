@@ -1,75 +1,66 @@
-# Gruppen & Ringe – Schnelle Lokalisierung für Brandmeldeanlagen
+### Teil 1: GitHub README.md
 
- 
-*Ein Tool für Informationselektroniker für Brandmeldetechnik und Gefahrenmeldeanlagen.*
+# Meldergruppen & Ringe Suche (PWA)
 
-## Überblick
-Dieses Web-Tool löst ein alltägliches Problem in der Wartung von Gefahrenmeldeanlagen: die rasche Zuordnung von Meldergruppen zu Ringen und umgekehrt. Es hilft Technikern, den Installationsort einer Gruppe zu finden, alle Gruppen in einem Ring aufzulisten und die Anzahl der Melder pro Gruppe einzusehen – alles in einer benutzerfreundlichen Oberfläche.
+Eine hochperformante, offline-fähige Progressive Web App (PWA), die speziell für Techniker entwickelt wurde, um Melderdaten (ESSER Tools 8000) in Umgebungen mit eingeschränkter oder fehlender Konnektivität zu suchen und zu verwalten.
 
-Entwickelt für den Praxiseinsatz, ermöglicht es eine effiziente Suche basierend auf exportierten Daten aus Systemen wie Esser Tools 8000. Kein langes Blättern durch Tabellen mehr – nur präzise Ergebnisse auf Knopfdruck!
+## 🚀 Hauptmerkmale
 
-## Funktionen
-- **Schnelle Abfragen**: Suche nach Gruppe oder Ring – erhalte sofort den Installationsort, zugehörige Elemente und Melderanzahl.
-- **Admin-UI für Wartung**: 
-  - Neue Objekte (Anlagen) hinzufügen.
-  - JSON-Daten hochladen (automatische Verarbeitung von CSV-Exports).
-  - Objekte löschen – alles ohne Code-Kenntnisse.
-- **Automatisierte Datenverarbeitung**: CSV aus Esser Tools 8000 wird nahtlos in JSON umgewandelt und integriert.
-- **Responsive Design**: Optimiert für Mobile und Desktop, mit Dark-Mode-Unterstützung.
+- **PWA-Architektur:** Installierbar auf iOS und Android mit dem Gefühl einer nativen App.
+- **Offline-First Suche:** Alle Objektdaten werden automatisch im Hintergrund lokal zwischengespeichert. Die Suche funktioniert einwandfrei in Untergeschossen oder abgeschirmten Gebäuden.
+- **Biometrische Sicherheit:** Sicherer Login via Face ID oder Fingerabdruck (WebAuthn) als nahtlose Alternative zum Passwort.
+- **Intelligenter Datenimport:** Admin-Panel zum Hochladen von ESSER Tools 8000 CSV-Exporten mit automatischer Datenbereinigung und Feld-Mapping.
+- **Rollenbasierte Zugriffskontrolle:** Klare Trennung zwischen „Teammitgliedern“ (nur Suche) und „Technischen Administratoren“ (vollständige Verwaltung).
+- **Universelle UX:** Konsistentes Design mit Dunkelmodus-Unterstützung und einheitlichen Einstellungen über alle Schnittstellen hinweg.
+- **Konnektivitäts-Status:** Echtzeit-Signalisierung des Online-/Offline-Status durch ein diskretes Benachrichtigungsbanner.
 
-## Technische Highlights
-- **Frontend**: HTML/CSS/JS mit responsivem Layout (Flexbox/Grid), Dark-Mode und Touch-Gesten.
-- **Backend**: Azure Functions für GitHub-Integration (Commits/Deploys).
-- **Hosting**: Azure Static Web Apps für hohe Verfügbarkeit, Skalierbarkeit und automatische Bereitstellung.
-- **Datenquelle**: Unterstützung für Esser Tools 8000 (CSV zu JSON); erweiterbar für Hekatron.
+## 🛠 Tech-Stack
 
-## Einrichtung & Nutzung
-1. Klone das Repository.
-2. Konfiguriere Azure (Functions, Static Web App, GitHub Token).
-3. Starte die App – suche oder administriere direkt!
+- **Frontend:** HTML5, CSS3 (Modernes Flexbox/Grid), Vanilla JavaScript (ES6+).
+- **Backend:** Node.js, Azure Functions (Serverless).
+- **Authentifizierung:** JWT (JSON Web Tokens), bcryptjs, WebAuthn API.
+- **Speicherung:** Persistenter Azure-Dateispeicher (außerhalb des schreibgeschützten wwwroot).
+- **PWA:** Service Worker, Cache API, Web App Manifest.
+- **Bereitstellung:** Azure Static Web Apps (SWA).
 
-Für detaillierte Anleitungen siehe [Wiki](wiki-link-placeholder).
+---
 
-*Entwickelt mit Fokus auf Einfachheit und Zuverlässigkeit.
+### Teil 2: Umfassende Technische Dokumentation
 
+## 1. Systemarchitektur
+Die Anwendung basiert auf einer entkoppelten Architektur unter Verwendung von **Azure Static Web Apps**.
+- **Frontend:** Wird als statische Assets bereitgestellt. Ein **Service Worker** fängt Netzwerkanfragen ab und nutzt eine „Network-First“-Strategie mit Fallback auf den lokalen Cache.
+- **API (Backend):** Eine Reihe von serverlosen **Azure Functions** verarbeitet Authentifizierung, Benutzerverwaltung und Datei-I/O.
+- **Persistenzschicht:** Im Gegensatz zu Standard-SWA-Bereitstellungen, die schreibgeschützt sind, nutzt diese App das Verzeichnis `C:\home\data` innerhalb der Azure-Umgebung. Dort werden `users.json`, `objects.json` und die objektspezifischen Datendateien gespeichert, um die Beständigkeit über Code-Deployments hinweg zu gewährleisten.
 
-### Project Structure
+## 2. Datenimport & Bereinigungs-Engine
+Die Anwendung transformiert rohe Software-Exporte in durchsuchbare Informationen:
+- **CSV-Verarbeitung:** Der Parser ist auf Zeile 3 für Header und Zeile 4 für Daten optimiert (ESSER-Standard).
+- **Feld-Mapping:**
+  - `Nr.` ➔ `Gruppe`
+  - `Zusatztext` ➔ `Installationsort`
+  - `Installationsort` ➔ `Ring`
+- **Datenbereinigung:** Eine Regex-basierte Logik entfernt unerwünschte Zeichen aus Industrie-Exporten (`´`, `@`, `/`, `.`, `°`, `%`, `(`, `)`) und fasst mehrfache Leerzeichen zusammen. Dies garantiert eine saubere UI-Präsentation und eine zuverlässige Suche.
 
-This repository is organized for Azure Static Web Apps (SWA) deployment: static files in root, Azure Functions in `/api/`. Below is the file tree:
+## 3. Offline- & Caching-Strategie
+Um die Anforderungen für den Einsatz in Funklöchern (z. B. Tiefgaragen) zu erfüllen, wurde eine aggressive Caching-Strategie implementiert:
+- **Auto-Precache:** Beim Start lädt die App die globale `objects.json`. Danach startet ein Hintergrundtask, der automatisch die JSON-Daten für **jedes** gelistete Objekt abruft und im Cache speichert.
+- **Sitzungslogik:** Das Skript `auth-guard.js` überwacht `navigator.onLine`. Läuft ein Token ab, während der Techniker offline ist, wird die Abmeldung ausgesetzt, bis wieder eine Verbindung besteht. Dies verhindert den Ausschluss von der App während der Arbeit.
+- **Offline-Signalisierung:** Ein spezieller CSS-Status (`body.is-offline`) schaltet bei Verbindungsabbruch automatisch ein rotes „OFFLINE“-Badge frei.
 
+## 4. Authentifizierung & Biometrie
+- **JWT-Implementierung:** Sitzungen werden mit einem 8-Stunden-Token gesichert.
+- **WebAuthn (Passkeys):** 
+  - **Registrierung:** Erzeugt ein eindeutiges kryptografisches Schlüsselpaar auf dem Gerät und verknüpft den öffentlichen Schlüssel mit dem Benutzerkonto.
+  - **Login:** Ein nahtloser Login-Flow mit gerätespezifischen Icons (Face ID für iOS, Fingerabdruck für Android).
+- **Sicherheits-Maskierung:** Um die „Passwort speichern“-Dialoge der Browser zu unterdrücken (die oft mit der Biometrie-Registrierung verwechselt werden), nutzt die UI das Attribut `-webkit-text-security` auf Standard-Texteingabefeldern. Dies umgeht die Heuristiken der Browser zur Erkennung von Login-Formularen.
 
-```
-hab/
-├── api/                  # Azure Functions backend
-│   ├── login/            # Password login
-│   │   ├── function.json
-│   │   └── index.js
-│   ├── register-biometric/ # New: Biometric registration (after password login)
-│   │   ├── function.json
-│   │   └── index.js      # Code below
-│   ├── login-biometric/  # New: Biometric login (challenge + verify)
-│   │   ├── function.json
-│   │   └── index.js      # Code below
-│   ├── users/            # User management (CRUD, admin-only)
-│   │   ├── function.json
-│   │   └── index.js
-│   ├── add-object/       # Existing
-│   │   ├── function.json
-│   │   └── index.js
-│   └── delete-object/    # Existing
-│       ├── function.json
-│       └── index.js
-├── login.html            # Static login page (with biometric buttons)
-├── index.html            # Main search page (protected)
-├── admin.html            # Admin panel (protected, with user mgmt)
-├── styles.css            # Shared CSS (optional)
-├── scripts/              # Modular JS (optional)
-│   └── auth.js           # Shared auth/biometric utils (code below)
-└── users.json            # User data (in root; add publicKey field)
-```
+## 5. Benutzerverwaltung
+Das System unterstützt zwei Rollen:
+- **Standard (Teammitglied):** Zugriff nur auf die Suchseite (`index.html`). Kann Suchen durchführen, den Dunkelmodus nutzen und Biometrie für das eigene Gerät registrieren.
+- **Admin (Technischer Administrator):** Voller Zugriff auf das Admin-Panel (`admin.html`). Kann Objekte (Standorte) erstellen/löschen, die Benutzerdatenbank verwalten und Daten-Uploads durchführen.
 
-- **Static Files**: Served directly by SWA for performance.
-- **Functions**: Auto-deployed as API endpoints (e.g., `/api/login`).
-- **Data**: `users.json` acts as simple DB (GitHub-hosted; update via Functions for security).
-
-For deployment: Push to GitHub → SWA auto-builds. Configure `JWT_SECRET` in Azure Function app settings.
+## 6. Zukünftige Erweiterungen
+- **Hekatron-Integration:** Erweiterung des CSV-Parsers zur Unterstützung von Hekatron-Projekt-Exporten.
+- **Microsoft SSO:** Integration mit Microsoft Entra ID (ehemals Azure AD) für unternehmensweites Single Sign-On.
+- **Erweiterte Aktivitätsprotokolle:** Serverseitiges Logging von Suchanfragen und Administrator-Aktionen für Revisionszwecke.

@@ -109,8 +109,10 @@
     </div>
 
     <script>
+        let dataLibrary = {}; // This will hold all the loaded files
+        let data = [];        // This is the current active data for the search
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
-        let data = [];
+        
 
         function updateOnlineStatus() { document.body.classList.toggle('is-offline', !navigator.onLine); }
         window.addEventListener('online', updateOnlineStatus);
@@ -209,27 +211,42 @@ async function precacheAllObjects(objects) {
             }
         }
         async function loadData() {
-            const id = document.getElementById('object').value;
-            if (!id) return;
-            
-            const statusEl = document.getElementById('status');
-            statusEl.textContent = 'Lade Daten...';
-            
-            try {
-                // This fetch is intercepted by the Service Worker
-                const res = await fetch(`${API_BASE}/get-data?id=${id}`);
-                if (!res.ok) throw new Error('Download failed');
-                
-                data = await res.json();
-                statusEl.textContent = `${data.length} Einträge geladen.`;
-                
-                // Clear any old search results on screen
-                clearSearch(true); 
-            } catch (err) {
-                console.error("Fehler beim Laden:", err);
-                statusEl.textContent = 'Ladefehler.';
-            }
+    const id = document.getElementById('object').value;
+    if (!id) return;
+
+    // 1. Check if we already have this file in memory (fastest)
+    if (dataLibrary[id]) {
+        data = dataLibrary[id];
+        document.getElementById('status').textContent = `${data.length} Einträge (aus Speicher) geladen.`;
+        clearSearch(true);
+        return;
+    }
+
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = 'Lade Daten...';
+
+    try {
+        const res = await fetch(`${API_BASE}/get-data?id=${id}`);
+        if (!res.ok) throw new Error('Download failed');
+
+        const jsonData = await res.json();
+        
+        // 2. Save to library so we have it for later (even offline)
+        dataLibrary[id] = jsonData;
+        data = jsonData;
+
+        statusEl.textContent = `${data.length} Einträge geladen.`;
+        clearSearch(true);
+    } catch (err) {
+        console.error("Fehler beim Laden:", err);
+        // If fetch fails, try to see if we have ANY data to show
+        if (data.length > 0) {
+            statusEl.textContent = 'Offline - Nutze aktuelle Daten.';
+        } else {
+            statusEl.textContent = 'Ladefehler (Offline).';
         }
+    }
+}
 
         function clearSearch(keepStatus = false) { document.getElementById('search').value = ''; document.getElementById('mobile-cards').classList.add('hidden'); document.getElementById('table-wrapper').classList.add('hidden'); document.getElementById('mobile-cards').innerHTML = ''; document.getElementById('table-body').innerHTML = ''; if(!keepStatus) document.getElementById('status').textContent = `${data.length} Einträge geladen.`; }
         function filterResults() { const query = document.getElementById('search').value.trim(); const type = document.getElementById('searchType').value; const mobile = document.getElementById('mobile-cards'); const table = document.getElementById('table-wrapper'); const tableBody = document.getElementById('table-body'); tableBody.innerHTML = ''; mobile.innerHTML = ''; if (!query) { table.classList.add('hidden'); mobile.classList.add('hidden'); return; } const filtered = data.filter(item => { const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || ''); return val === query; }); if (filtered.length === 0) { table.classList.add('hidden'); mobile.classList.remove('hidden'); mobile.innerHTML = '<div class="status">Keine Treffer gefunden.</div>'; document.getElementById('status').textContent = ""; } else { table.classList.remove('hidden'); mobile.classList.remove('hidden'); document.getElementById('status').textContent = `${filtered.length} Treffer gefunden.`; filtered.forEach((item, index) => { renderTableRow(item, index); renderMobileCard(item, index); }); } }

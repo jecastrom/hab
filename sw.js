@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hab-v5';
+const CACHE_NAME = 'hab-v6';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -26,28 +26,37 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
 
+  // STRATEGY: Cache First for Data (get-data)
+  // This makes switching objects while offline much more stable
+  if (url.pathname.includes('get-data')) {
+    event.respondWith(
+      caches.match(event.request).then(cachedResponse => {
+        const fetchPromise = fetch(event.request).then(networkResponse => {
+          if (networkResponse.ok) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        });
+        // Return cached version immediately if found, otherwise wait for network
+        return cachedResponse || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // DEFAULT STRATEGY: Network First for everything else
   event.respondWith(
     fetch(event.request)
-      .then(networkResponse => {
-        // If the network request works, save/update it in the cache
-        if (networkResponse.ok) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
+      .then(res => {
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         }
-        return networkResponse;
+        return res;
       })
-      .catch(() => {
-        // If the network fails (OFFLINE), look for the match in the cache
-        return caches.match(event.request).then(cachedResponse => {
-          if (cachedResponse) return cachedResponse;
-          
-          // If even the cache is empty, we return a failure
-          return Promise.reject('no-match');
-        });
-      })
+      .catch(() => caches.match(event.request))
   );
 });

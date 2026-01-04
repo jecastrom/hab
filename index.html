@@ -192,6 +192,30 @@
 
         document.getElementById('search').addEventListener('keypress', (e) => { if (e.key === 'Enter') filterResults(); });
         window.onload = initialize;
+        // ... (inside the <script> tag of index.html)
+
+// SYNC LOGIC: Listen for changes in other tabs (like Admin)
+window.addEventListener('storage', (e) => {
+    if (e.key === 'darkMode') {
+        const isDark = e.newValue === 'enabled';
+        document.body.classList.toggle('dark-mode', isDark);
+        const toggle = document.getElementById('dark-toggle');
+        if(toggle) toggle.checked = isDark;
+    }
+    if (e.key === 'bio_registered_user') {
+        const toggle = document.getElementById('bio-toggle');
+        if(toggle) toggle.checked = !!e.newValue;
+    }
+});
+
+// Update the toggleTheme function to ensure it triggers local changes correctly
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    // Manual trigger for the current page since 'storage' event only fires on OTHER tabs
+    const toggle = document.getElementById('dark-toggle');
+    if(toggle) toggle.checked = isDark;
+}
     </script>
 </body>
 </html>

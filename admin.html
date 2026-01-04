@@ -355,6 +355,41 @@
             if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; }
             loadObjekte(); runBioCheck();
         };
+        // ... (inside the <script> tag of admin.html)
+
+// SYNC LOGIC: Listen for changes in other tabs (like Search)
+window.addEventListener('storage', (e) => {
+    if (e.key === 'darkMode') {
+        const isDark = e.newValue === 'enabled';
+        document.body.classList.toggle('dark-mode', isDark);
+        const toggle = document.getElementById('dark-toggle');
+        if(toggle) toggle.checked = isDark;
+    }
+    if (e.key === 'bio_registered_user') {
+        const toggle = document.getElementById('bio-toggle');
+        if(toggle) toggle.checked = !!e.newValue;
+    }
+});
+
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    const toggle = document.getElementById('dark-toggle');
+    if(toggle) toggle.checked = isDark;
+}
+
+function runBioCheck() {
+    const statusEl = document.getElementById('bio-status');
+    if (window.webauthnJson) {
+        statusEl.textContent = "Modul bereit"; 
+        statusEl.style.color = "var(--success)";
+        // FIX: Directly set checkbox, no call to non-existent updateBioUI
+        const bioRegistered = !!localStorage.getItem('bio_registered_user');
+        document.getElementById('bio-toggle').checked = bioRegistered;
+    } else {
+        setTimeout(runBioCheck, 1500);
+    }
+}
     </script>
 </body>
 </html>

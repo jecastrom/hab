@@ -150,6 +150,19 @@
                 } catch (e) { checkbox.checked = true; }
             }
         }
+        // Background Task: Download everything for offline use
+async function precacheAllObjects(objects) {
+    console.log("Starte Hintergrund-Download für Offline-Modus...");
+    for (const obj of objects) {
+        try {
+            // This fetch is intercepted by sw.js and saved to cache automatically
+            await fetch(`${API_BASE}/get-data?id=${obj.id}`);
+        } catch (e) {
+            console.warn(`Precache failed for: ${obj.id}`);
+        }
+    }
+    console.log("Alle Objekte sind nun offline verfügbar.");
+}
 
         async function initialize() {
             const role = localStorage.getItem('role');
@@ -165,7 +178,8 @@
                 const select = document.getElementById('object');
                 select.innerHTML = ''; 
                 objects.forEach(obj => { const opt = document.createElement('option'); opt.value = obj.id; opt.textContent = obj.display; select.appendChild(opt); });
-                if (objects.length > 0) loadData();
+                if (objects.length > 0) await loadData();
+                precacheAllObjects(objects); 
             } catch (err) { document.getElementById('status').textContent = 'Ladefehler.'; }
         }
 

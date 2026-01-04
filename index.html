@@ -165,51 +165,49 @@ async function precacheAllObjects(objects) {
 }
 
         async function initialize() {
-    const role = localStorage.getItem('role');
-    if (role === 'admin') document.getElementById('admin-nav').style.display = 'block';
-    if (localStorage.getItem('darkMode') === 'enabled') { 
-        document.body.classList.add('dark-mode'); 
-        document.getElementById('dark-toggle').checked = true; 
-    }
-    if (window.webauthnJson) {
-        document.getElementById('bio-status').textContent = "Biometrie bereit"; 
-        document.getElementById('bio-status').style.color = "var(--success)";
-        if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-toggle').checked = true;
-    }
+            const role = localStorage.getItem('role');
+            if (role === 'admin') document.getElementById('admin-nav').style.display = 'block';
+            if (localStorage.getItem('darkMode') === 'enabled') { 
+                document.body.classList.add('dark-mode'); 
+                document.getElementById('dark-toggle').checked = true; 
+            }
+            if (window.webauthnJson) {
+                document.getElementById('bio-status').textContent = "Biometrie bereit"; 
+                document.getElementById('bio-status').style.color = "var(--success)";
+                if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-toggle').checked = true;
+            }
 
-    try {
-        // Try to get objects (SW will provide cached version if offline)
-        const res = await fetch(`${API_BASE}/get-objects`);
-        if (!res.ok) throw new Error('Network response was not ok');
-        
-        const objects = await res.json();
-        const select = document.getElementById('object');
-        select.innerHTML = ''; 
-        
-        objects.forEach(obj => { 
-            const opt = document.createElement('option'); 
-            opt.value = obj.id; 
-            opt.textContent = obj.display; 
-            select.appendChild(opt); 
-        });
-
-        if (objects.length > 0) {
-            await loadEntries(); 
-
-            // Precache logic
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then(() => {
-                    // Start background download
-                    precacheAllObjects(objects);
+            try {
+                const res = await fetch(`${API_BASE}/get-objects`);
+                if (!res.ok) throw new Error('Network failed');
+                
+                const objects = await res.json();
+                const select = document.getElementById('object');
+                select.innerHTML = ''; 
+                
+                objects.forEach(obj => { 
+                    const opt = document.createElement('option'); 
+                    opt.value = obj.id; 
+                    opt.textContent = obj.display; 
+                    select.appendChild(opt); 
                 });
+
+                if (objects.length > 0) {
+                    // CHANGE THIS LINE FROM loadData() to loadEntries()
+                    await loadEntries(); 
+
+                    // Start background download for offline use
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(() => {
+                            precacheAllObjects(objects);
+                        });
+                    }
+                }
+            } catch (err) { 
+                console.error("Init error:", err);
+                document.getElementById('status').textContent = 'Ladefehler.'; 
             }
         }
-    } catch (err) { 
-        console.error("Init error:", err);
-        // Only show Ladefehler if we are truly stuck
-        document.getElementById('status').textContent = 'Ladefehler.'; 
-    }
-}
 
         function clearSearch(keepStatus = false) { document.getElementById('search').value = ''; document.getElementById('mobile-cards').classList.add('hidden'); document.getElementById('table-wrapper').classList.add('hidden'); document.getElementById('mobile-cards').innerHTML = ''; document.getElementById('table-body').innerHTML = ''; if(!keepStatus) document.getElementById('status').textContent = `${data.length} Einträge geladen.`; }
         function filterResults() { const query = document.getElementById('search').value.trim(); const type = document.getElementById('searchType').value; const mobile = document.getElementById('mobile-cards'); const table = document.getElementById('table-wrapper'); const tableBody = document.getElementById('table-body'); tableBody.innerHTML = ''; mobile.innerHTML = ''; if (!query) { table.classList.add('hidden'); mobile.classList.add('hidden'); return; } const filtered = data.filter(item => { const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || ''); return val === query; }); if (filtered.length === 0) { table.classList.add('hidden'); mobile.classList.remove('hidden'); mobile.innerHTML = '<div class="status">Keine Treffer gefunden.</div>'; document.getElementById('status').textContent = ""; } else { table.classList.remove('hidden'); mobile.classList.remove('hidden'); document.getElementById('status').textContent = `${filtered.length} Treffer gefunden.`; filtered.forEach((item, index) => { renderTableRow(item, index); renderMobileCard(item, index); }); } }

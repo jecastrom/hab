@@ -275,10 +275,12 @@ function toggleTheme() {
 
         // 4. General Admin Logic
         function toggleTheme() {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-            document.getElementById('dark-toggle').checked = isDark;
-        }
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    const toggle = document.getElementById('dark-toggle');
+    if (toggle) toggle.checked = isDark;
+}
+
 
         function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
 
@@ -376,15 +378,12 @@ window.addEventListener('storage', (e) => {
     if (e.key === 'darkMode') {
         const isDark = e.newValue === 'enabled';
         document.body.classList.toggle('dark-mode', isDark);
-        const toggle = document.getElementById('dark-toggle');
-        if(toggle) toggle.checked = isDark;
+        if (document.getElementById('dark-toggle')) document.getElementById('dark-toggle').checked = isDark;
     }
     if (e.key === 'bio_registered_user') {
-        const toggle = document.getElementById('bio-toggle');
-        if(toggle) toggle.checked = !!e.newValue;
+        if (document.getElementById('bio-toggle')) document.getElementById('bio-toggle').checked = !!e.newValue;
     }
 });
-
 function toggleTheme() {
     const isDark = document.body.classList.toggle('dark-mode');
     localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');

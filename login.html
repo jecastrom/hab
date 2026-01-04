@@ -35,53 +35,61 @@
             const bioUser = localStorage.getItem('bio_registered_user');
             document.getElementById('bio-btn').style.display = bioUser ? 'block' : 'none';
         }
-        window.addEventListener('storage', (e) => applySettings());
+        window.addEventListener('storage', applySettings);
 
         async function login() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
             try {
                 const res = await fetch(`${API_BASE}/login`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: u, password: p }) });
-                const data = await res.json();
                 if (res.ok) {
+                    const data = await res.json();
                     localStorage.setItem('token', data.token); localStorage.setItem('role', data.role); localStorage.setItem('username', u);
                     window.location.href = 'index.html';
-                } else { document.getElementById('message').textContent = "Fehler: Zugangsdaten prüfen"; }
+                } else { document.getElementById('message').textContent = "Login fehlgeschlagen"; }
             } catch (e) { document.getElementById('message').textContent = "Serverfehler"; }
         }
 
         async function loginBiometric() {
             const msg = document.getElementById('message');
             const username = localStorage.getItem('bio_registered_user');
-            if (!username) return;
-            msg.textContent = "Biometrie wird gestartet...";
+            if (!username || !window.webauthnJson) return;
+
             try {
+                msg.textContent = "Biometrie wird abgefragt...";
+                // 1. Get options from server
                 const optionsRes = await fetch(`${API_BASE}/login-biometric?username=${username}`);
                 const optionsJson = await optionsRes.json();
                 
-                // Use native browser parsing (standard in 2026) or library fallback
-                let assertion;
-                if (PublicKeyCredential.parseRequestOptionsFromJSON) {
-                    const publicKey = PublicKeyCredential.parseRequestOptionsFromJSON(optionsJson);
-                    assertion = await navigator.credentials.get({ publicKey });
-                } else {
-                    assertion = await window.webauthnJson.get({ publicKey: optionsJson });
-                }
+                // 2. Trigger the scan using webauthn-json library
+                // This converts the JSON strings from the API into binary automatically
+                const assertion = await window.webauthnJson.get({ publicKey: optionsJson });
 
+                // 3. Verify with server
                 const verifyRes = await fetch(`${API_BASE}/login-biometric`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ username, assertion })
                 });
                 
                 if (verifyRes.ok) {
                     const data = await verifyRes.json();
-                    localStorage.setItem('token', data.token); localStorage.setItem('role', data.role); localStorage.setItem('username', username);
+                    localStorage.setItem('token', data.token); 
+                    localStorage.setItem('role', data.role); 
+                    localStorage.setItem('username', username);
                     window.location.href = 'index.html';
-                } else { throw new Error("Verification failed"); }
+                } else {
+                    msg.textContent = "Verifizierung fehlgeschlagen";
+                }
             } catch (err) {
                 console.error("WebAuthn Error:", err);
-                msg.textContent = "Biometrie fehlgeschlagen";
-                msg.className = 'error';
+                // If user cancels, we don't show an aggressive error
+                if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+                    msg.textContent = "Biometrie fehlgeschlagen";
+                    msg.className = 'error';
+                } else {
+                    msg.textContent = "";
+                }
             }
         }
         window.onload = applySettings;

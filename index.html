@@ -131,7 +131,6 @@
     if (!window.webauthnJson) return;
 
     if (checkbox.checked) {
-        // ACTIVATE
         try {
             const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
             const userId = btoa(username || 'user').replace(/\+/g, '-').replace(/_/g, '/');
@@ -142,7 +141,10 @@
                     rp: { name: "Melder Suche", id: window.location.hostname }, 
                     user: { id: userId, name: username || 'user', displayName: username || 'user' }, 
                     pubKeyCredParams: [{ type: "public-key", alg: -7 }], 
-                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, 
+                    authenticatorSelection: { 
+                        authenticatorAttachment: "platform", // Forces TouchID/FaceID
+                        userVerification: "required" 
+                    }, 
                     timeout: 60000 
                 }
             });
@@ -158,36 +160,24 @@
                 showMessage("Biometrie aktiviert!", true); 
             } else { throw new Error(); }
         } catch (err) { 
-            checkbox.checked = false; // Scan cancelled or failed
-            if (err.name !== 'AbortError') showMessage("Registrierung abgebrochen", false);
+            checkbox.checked = false;
+            if (err.name !== 'AbortError') showMessage("Registrierung fehlgeschlagen", false);
         }
     } else {
-        // DEACTIVATE
-        if (!confirm("Biometrie für dieses Gerät deaktivieren?")) { 
-            checkbox.checked = true; 
-            return; 
-        }
+        if (!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
         try {
-            const res = await fetch(`${API_BASE}/register-biometric`, { 
+            await fetch(`${API_BASE}/register-biometric`, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, 
                 body: JSON.stringify({ action: 'delete' }) 
             });
-            // We remove from local storage regardless of res.ok to fix UI flicker
             localStorage.removeItem('bio_registered_user');
             showMessage("Biometrie entfernt.", true);
-        } catch (e) { 
-            localStorage.removeItem('bio_registered_user'); // Assume server will sync or cleanup later
-            showMessage("Lokale Biometrie entfernt.", true);
+        } catch (e) {
+            localStorage.removeItem('bio_registered_user');
+            showMessage("Biometrie lokal entfernt.", true);
         }
     }
-}
-
-function toggleTheme() {
-    const isDark = document.body.classList.toggle('dark-mode');
-    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-    // Important: Update all toggles on the page manually to avoid flicker
-    document.querySelectorAll('#dark-toggle').forEach(el => el.checked = isDark);
 }
 
         async function initialize() {

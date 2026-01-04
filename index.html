@@ -259,6 +259,14 @@ async function precacheAllObjects(objects) {
 
         document.getElementById('search').addEventListener('keypress', (e) => { if (e.key === 'Enter') filterResults(); });
         window.onload = initialize;
+        // This code actually starts the Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker: Registriert'))
+            .catch(err => console.log('Service Worker: Fehler', err));
+    });
+}
     </script>
 </body>
 </html>

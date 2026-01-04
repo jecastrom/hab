@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hab-20';
+const CACHE_NAME = 'hab-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

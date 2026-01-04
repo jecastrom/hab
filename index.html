@@ -194,7 +194,7 @@ async function precacheAllObjects(objects) {
 
                 if (objects.length > 0) {
                     // CHANGE THIS LINE FROM loadData() to loadEntries()
-                    await loadEntries(); 
+                    await loadData(); 
 
                     // Start background download for offline use
                     if ('serviceWorker' in navigator) {
@@ -206,6 +206,28 @@ async function precacheAllObjects(objects) {
             } catch (err) { 
                 console.error("Init error:", err);
                 document.getElementById('status').textContent = 'Ladefehler.'; 
+            }
+        }
+        async function loadData() {
+            const id = document.getElementById('object').value;
+            if (!id) return;
+            
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'Lade Daten...';
+            
+            try {
+                // This fetch is intercepted by the Service Worker
+                const res = await fetch(`${API_BASE}/get-data?id=${id}`);
+                if (!res.ok) throw new Error('Download failed');
+                
+                data = await res.json();
+                statusEl.textContent = `${data.length} Einträge geladen.`;
+                
+                // Clear any old search results on screen
+                clearSearch(true); 
+            } catch (err) {
+                console.error("Fehler beim Laden:", err);
+                statusEl.textContent = 'Ladefehler.';
             }
         }
 

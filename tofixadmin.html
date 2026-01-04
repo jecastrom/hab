@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
@@ -22,7 +23,6 @@
         }
         .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: 70px; }
 
-        /* Sidebar & Overlay - Identical to index.html */
         .sidebar {
             width: 280px; background: var(--card-bg); padding: 20px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: transform 0.3s ease;
@@ -42,9 +42,7 @@
         .sidebar a.active { color: var(--primary-color); }
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
 
-        .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); }
-        .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        
+        .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); margin-top: auto; }
         .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -52,9 +50,11 @@
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(20px); }
+        .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
 
-        /* Main Content */
-        .main-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .main-card { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .main-card.active { display: block; }
+        
         h2 { margin-top: 0; color: var(--primary-color); font-size: 1.2rem; }
         label { display: block; margin: 15px 0 8px; font-weight: 600; font-size: 0.85rem; }
         input, select { width: 100%; padding: 14px; box-sizing: border-box; background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 10px; font-size: 1rem; }
@@ -64,7 +64,6 @@
         .btn-upload { background: var(--primary-color); color: white; }
         .btn-delete { background: var(--danger); color: white; }
 
-        /* Objekt Cards */
         .objekt-card { background: var(--bg-color); padding: 18px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 15px; cursor: pointer; margin-bottom: 10px; }
         .objekt-card input { width: 22px; height: 22px; margin: 0; }
 
@@ -75,6 +74,30 @@
         #message { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; text-align: center; display: none; z-index: 2000; font-weight: bold; }
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
+
+        /* Desktop Layout Adjustments */
+        @media (min-width: 1024px) {
+            .sidebar { transform: translateX(0); box-shadow: none; }
+            .hamburger, .sidebar-close, #sidebar-overlay { display: none !important; }
+            .container { 
+                margin-left: 280px; 
+                width: calc(100% - 280px); 
+                max-width: none; 
+                padding: 40px;
+                box-sizing: border-box;
+            }
+            .main-content {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 25px;
+            }
+            .main-content h1 { grid-column: span 2; }
+            .main-card { 
+                display: block !important; 
+                margin-bottom: 0; 
+                height: fit-content;
+            }
+        }
     </style>
 </head>
 <body>
@@ -97,11 +120,17 @@
             <div class="sidebar-footer">
                 <div class="setting-item">
                     <span>🌙 Dunkelmodus</span>
-                    <label class="switch"><input type="checkbox" id="dark-toggle" onchange="toggleTheme()"><span class="slider"></span></label>
+                    <label class="switch">
+                        <input type="checkbox" id="dark-toggle" onchange="toggleTheme()">
+                        <span class="slider"></span>
+                    </label>
                 </div>
                 <div class="setting-item">
                     <span>🔒 Biometrie</span>
-                    <label class="switch"><input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)"><span class="slider"></span></label>
+                    <label class="switch">
+                        <input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)">
+                        <span class="slider"></span>
+                    </label>
                 </div>
                 <span id="bio-status" style="font-size:0.7rem; color:var(--help); text-align:center; display:block; margin-bottom:15px; font-style:italic;">Prüfe Modul...</span>
                 <button class="btn-logout" onclick="logout()">Abmelden</button>
@@ -113,21 +142,16 @@
 
             <section id="create" class="main-card active">
                 <h2>Neues Objekt hinzufügen</h2>
-                <label>Objekt-Code (Nur Buchstaben/Zahlen):</label>
+                <label>Objekt-Code (Alphanumerisch):</label>
                 <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off" style="text-transform: uppercase;">
-                <button class="action-btn btn-add" onclick="addObject()">Objekt speichern</button>
+                <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
             </section>
 
             <section id="upload" class="main-card">
                 <h2>Datendatei hochladen</h2>
                 <label>Objekt wählen:</label>
                 <select id="linkedObjekte"></select>
-                <label>Datenquelle:</label>
-                <select id="sourceType">
-                    <option value="esser">ESSER Tools 8000 (CSV)</option>
-                    <option value="hekatron" disabled>Hekatron (nicht aktiv)</option>
-                </select>
-                <label>Datei auswählen:</label>
+                <label>Datei auswählen (CSV):</label>
                 <input type="file" id="uploadFile" accept=".csv">
                 <button class="action-btn btn-upload" id="uploadBtn" onclick="uploadFileProcess()">Datei verarbeiten</button>
             </section>
@@ -141,12 +165,12 @@
             <section id="user_admin" class="main-card">
                 <h2>Benutzerverwaltung</h2>
                 <label>Benutzername</label>
-                <input type="text" id="new_user_name" placeholder="techniker1" autocomplete="off">
+                <input type="text" id="new_user_name" placeholder="Name">
                 <label>Passwort</label>
-                <input type="password" id="new_user_pw" placeholder="Passwort vergeben" style="width:100%; padding:14px; border-radius:10px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color);">
+                <input type="password" id="new_user_pw" placeholder="Passwort">
                 <label>Rolle</label>
                 <select id="new_user_role">
-                    <option value="standard">Techniker (Standard)</option>
+                    <option value="standard">Techniker</option>
                     <option value="admin">Administrator</option>
                 </select>
                 <button class="action-btn btn-add" onclick="createNewUser()">Benutzer anlegen</button>
@@ -157,82 +181,74 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // 1. Sidebar & Nav
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         function toggleSidebar() { 
             const isOpen = sidebar.classList.toggle('open');
             overlay.classList.toggle('visible', isOpen);
         }
-        let sx = 0; sidebar.addEventListener('touchstart', e => sx = e.touches[0].clientX);
-        sidebar.addEventListener('touchend', e => { if (sx - e.changedTouches[0].clientX > 60) toggleSidebar(); });
 
-        function showSection(id) {
-            document.querySelectorAll('.main-card').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(window.innerWidth < 768) toggleSidebar();
-            if(id === 'upload' || id === 'delete') loadObjekte();
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'darkMode') {
+                const isDark = e.newValue === 'enabled';
+                document.body.classList.toggle('dark-mode', isDark);
+                document.getElementById('dark-toggle').checked = isDark;
+            }
+            if (e.key === 'bio_registered_user') {
+                document.getElementById('bio-toggle').checked = !!e.newValue;
+            }
+        });
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         }
 
-        // 2. Standardized Biometric Logic (Identical to index.html)
         async function handleBioToggle(checkbox) {
             const username = localStorage.getItem('username');
             if (!window.webauthnJson) return;
-
             if (checkbox.checked) {
                 try {
                     const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
                     const userId = btoa(username || 'user').replace(/\+/g, '-').replace(/_/g, '/');
                     const credential = await window.webauthnJson.create({
-                        publicKey: {
-                            challenge, rp: { name: "Melder Suche", id: window.location.hostname },
-                            user: { id: userId, name: username || 'user', displayName: username || 'user' },
-                            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-                            authenticatorSelection: { userVerification: "required" }, timeout: 60000
-                        }
+                        publicKey: { challenge, rp: { name: "Melder Suche", id: window.location.hostname }, user: { id: userId, name: username || 'user', displayName: username || 'user' }, pubKeyCredParams: [{ type: "public-key", alg: -7 }], authenticatorSelection: { userVerification: "required" }, timeout: 60000 }
                     });
-                    const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                        body: JSON.stringify({ credential })
-                    });
+                    const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ credential }) });
                     if (res.ok) { localStorage.setItem('bio_registered_user', username); showMessage("Biometrie aktiviert!", true); }
                 } catch (err) { 
-                    if (localStorage.getItem('bio_registered_user')) { showMessage("Biometrie aktiviert!", true); }
-                    else { checkbox.checked = false; }
+                    checkbox.checked = !!localStorage.getItem('bio_registered_user');
                 }
             } else {
                 if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
-                const res = await fetch(`${API_BASE}/register-biometric`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                    body: JSON.stringify({ action: 'delete' })
-                });
-                if(res.ok) { localStorage.removeItem('bio_registered_user'); showMessage("Biometrie entfernt.", true); }
+                try {
+                    const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ action: 'delete' }) });
+                    if (res.ok) { localStorage.removeItem('bio_registered_user'); showMessage("Biometrie entfernt.", true); }
+                } catch (e) { checkbox.checked = true; }
             }
         }
 
-        function runBioCheck() {
-            const statusEl = document.getElementById('bio-status');
-            if (window.webauthnJson) {
-                statusEl.textContent = "Biometrie bereit"; statusEl.style.color = "var(--success)";
-                if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-toggle').checked = true;
-            } else { setTimeout(runBioCheck, 1500); }
+        function showSection(id) {
+            if (window.innerWidth < 1024) {
+                document.querySelectorAll('.main-card').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+                const activeLink = document.querySelector(`.sidebar a[onclick*="${id}"]`);
+                if(activeLink) activeLink.classList.add('active');
+                toggleSidebar();
+            } else {
+                const target = document.getElementById(id);
+                window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
+            }
+            if(id === 'upload' || id === 'delete') loadObjekte();
         }
-
-        // 3. System Management
-        function toggleTheme() {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-            document.getElementById('dark-toggle').checked = isDark;
-        }
-
-        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
 
         async function addObject() {
-            const fld = document.getElementById('obj_fld');
-            const code = fld.value.trim().toUpperCase();
+            const field = document.getElementById('obj_fld');
+            const code = field.value.trim().toUpperCase();
             if(!code) return;
             const res = await fetch(`${API_BASE}/add-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code }) });
-            if(res.ok) { showMessage('Objekt gespeichert', true); fld.value = ''; }
+            if(res.ok) { showMessage('Objekt gespeichert', true); field.value = ''; }
         }
 
         async function createNewUser() {
@@ -276,10 +292,11 @@
             reader.onload = async (e) => {
                 const data = csvToJSON(e.target.result);
                 const res = await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: false }) });
-                if(res.status === 409 && confirm("Überschreiben?")) {
+                if(res.status === 409 && confirm("Datei existiert bereits. Überschreiben?")) {
                     await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: true }) });
                 }
-                showMessage('Erfolgreich', true); btn.disabled = false;
+                showMessage('Erfolgreich!', true); btn.disabled = false;
+                document.getElementById('uploadFile').value = '';
             };
             reader.readAsText(fileInput.files[0], 'ISO-8859-1');
         }
@@ -309,11 +326,21 @@
             m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000);
         }
 
-        document.getElementById('obj_fld').oninput = (e) => { e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase(); };
+        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
 
         window.onload = () => {
-            if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; }
-            loadObjekte(); runBioCheck();
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('dark-toggle').checked = true;
+            }
+            if (window.webauthnJson) {
+                document.getElementById('bio-status').textContent = "Biometrie bereit";
+                document.getElementById('bio-status').style.color = "var(--success)";
+                if (localStorage.getItem('bio_registered_user')) {
+                    document.getElementById('bio-toggle').checked = true;
+                }
+            }
+            loadObjekte();
         };
     </script>
 </body>

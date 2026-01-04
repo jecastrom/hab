@@ -21,8 +21,9 @@
             color: var(--text-color); margin: 0; padding: 0; display: flex; min-height: 100vh;
             transition: background-color 0.3s; overflow-x: hidden;
         }
-        .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: 70px; }
+        .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: 70px; box-sizing: border-box; }
 
+        /* Sidebar Navigation */
         .sidebar {
             width: 280px; background: var(--card-bg); padding: 20px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: transform 0.3s ease;
@@ -42,6 +43,7 @@
         .sidebar a.active { color: var(--primary-color); }
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
 
+        /* Sidebar Footer Settings */
         .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); margin-top: auto; }
         .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
@@ -52,9 +54,10 @@
         input:checked + .slider:before { transform: translateX(20px); }
         .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
 
+        /* Section Cards */
         .main-card { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .main-card.active { display: block; }
-
+        
         h2 { margin-top: 0; color: var(--primary-color); font-size: 1.2rem; }
         label { display: block; margin: 15px 0 8px; font-weight: 600; font-size: 0.85rem; }
         input, select { width: 100%; padding: 14px; box-sizing: border-box; background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 10px; font-size: 1rem; }
@@ -75,19 +78,40 @@
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
 
-        /* Requested Desktop Layout Adjustments */
+        /* DESKTOP OPTIMIZATIONS */
         @media (min-width: 1024px) {
+            .sidebar {
+                transform: translateX(0);
+                box-shadow: none;
+            }
+            .hamburger, .sidebar-close, #sidebar-overlay {
+                display: none !important;
+            }
+            .container {
+                margin-left: 280px;
+                width: calc(100% - 280px);
+                max-width: none;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding-top: 50px;
+            }
             .main-content {
+                width: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
             }
             .main-card {
-                width: 600px;
-                min-height: 500px; /* Ensures consistent length for all sections */
-                margin-left: auto;
-                margin-right: auto;
-                box-sizing: border-box;
+                width: 100%;
+                max-width: 650px; /* Rectangular proportionate size */
+                min-height: 450px; /* Matching length for consistency */
+                display: none;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .main-card.active {
+                display: flex; /* Centers content inside the card vertically */
             }
         }
     </style>
@@ -133,44 +157,47 @@
             <h1 style="text-align:center; color:var(--primary-color); margin-bottom:30px;">Administration</h1>
 
             <section id="create" class="main-card active">
-                <h2>Neues Objekt hinzufügen</h2>
-                <label>Objekt-Code (Alphanumerisch, keine Leerzeichen):</label>
-                <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off" style="text-transform: uppercase;">
-                <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
+                <div>
+                    <h2>Neues Objekt hinzufügen</h2>
+                    <label>Objekt-Code (Alphanumerisch):</label>
+                    <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off" style="text-transform: uppercase;">
+                    <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
+                </div>
             </section>
 
             <section id="upload" class="main-card">
-                <h2>Datendatei hochladen</h2>
-                <label>Objekt wählen:</label>
-                <select id="linkedObjekte"></select>
-                <label>Datenquelle:</label>
-                <select id="sourceType">
-                    <option value="esser">ESSER Tools 8000 (CSV)</option>
-                    <option value="hekatron" disabled>Hekatron (nicht aktiv)</option>
-                </select>
-                <label>Datei auswählen:</label>
-                <input type="file" id="uploadFile" accept=".csv">
-                <button class="action-btn btn-upload" id="uploadBtn" onclick="uploadFileProcess()">Datei verarbeiten</button>
+                <div>
+                    <h2>Datendatei hochladen</h2>
+                    <label>Objekt wählen:</label>
+                    <select id="linkedObjekte"></select>
+                    <label>Datei auswählen (CSV):</label>
+                    <input type="file" id="uploadFile" accept=".csv">
+                    <button class="action-btn btn-upload" id="uploadBtn" onclick="uploadFileProcess()">Datei verarbeiten</button>
+                </div>
             </section>
 
             <section id="delete" class="main-card">
-                <h2>Objekt löschen</h2>
-                <div id="objektList"></div>
-                <button class="action-btn btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Markiertes entfernen</button>
+                <div>
+                    <h2>Objekt löschen</h2>
+                    <div id="objektList" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;"></div>
+                    <button class="action-btn btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Markiertes entfernen</button>
+                </div>
             </section>
 
             <section id="user_admin" class="main-card">
-                <h2>Benutzerverwaltung</h2>
-                <label>Benutzername</label>
-                <input type="text" id="new_user_name" placeholder="techniker1" autocomplete="off">
-                <label>Passwort</label>
-                <input type="password" id="new_user_pw" placeholder="Passwort vergeben">
-                <label>Rolle</label>
-                <select id="new_user_role">
-                    <option value="standard">Techniker (Standard)</option>
-                    <option value="admin">Administrator</option>
-                </select>
-                <button class="action-btn btn-add" onclick="createNewUser()">Benutzer anlegen</button>
+                <div>
+                    <h2>Benutzerverwaltung</h2>
+                    <label>Benutzername</label>
+                    <input type="text" id="new_user_name" placeholder="Name">
+                    <label>Passwort</label>
+                    <input type="password" id="new_user_pw" placeholder="Passwort">
+                    <label>Rolle</label>
+                    <select id="new_user_role">
+                        <option value="standard">Techniker</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                    <button class="action-btn btn-add" onclick="createNewUser()">Benutzer anlegen</button>
+                </div>
             </section>
         </main>
     </div>
@@ -184,22 +211,22 @@
             const isOpen = sidebar.classList.toggle('open');
             overlay.classList.toggle('visible', isOpen);
         }
-        let sx = 0; sidebar.addEventListener('touchstart', e => sx = e.touches[0].clientX);
-        sidebar.addEventListener('touchend', e => { if (sx - e.changedTouches[0].clientX > 60) toggleSidebar(); });
 
-        function showSection(id) {
-            document.querySelectorAll('.main-card').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-            const activeLink = document.querySelector(`.sidebar a[onclick*="${id}"]`);
-            if(activeLink) activeLink.classList.add('active');
-            if(window.innerWidth < 1024) toggleSidebar();
-            if(id === 'upload' || id === 'delete') loadObjekte();
-        }
-
-        document.getElementById('obj_fld').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'darkMode') {
+                const isDark = e.newValue === 'enabled';
+                document.body.classList.toggle('dark-mode', isDark);
+                document.getElementById('dark-toggle').checked = isDark;
+            }
+            if (e.key === 'bio_registered_user') {
+                document.getElementById('bio-toggle').checked = !!e.newValue;
+            }
         });
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        }
 
         async function handleBioToggle(checkbox) {
             const username = localStorage.getItem('username');
@@ -225,20 +252,15 @@
             }
         }
 
-        function runBioCheck() {
-            const statusEl = document.getElementById('bio-status');
-            if (window.webauthnJson) {
-                statusEl.textContent = "Modul bereit"; statusEl.style.color = "var(--success)";
-                document.getElementById('bio-toggle').checked = !!localStorage.getItem('bio_registered_user');
-            } else { setTimeout(runBioCheck, 1500); }
+        function showSection(id) {
+            document.querySelectorAll('.main-card').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            const activeLink = document.querySelector(`.sidebar a[onclick*="${id}"]`);
+            if(activeLink) activeLink.classList.add('active');
+            if(window.innerWidth < 1024) toggleSidebar();
+            if(id === 'upload' || id === 'delete') loadObjekte();
         }
-
-        function toggleTheme() {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-        }
-
-        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
 
         async function addObject() {
             const field = document.getElementById('obj_fld');
@@ -323,9 +345,21 @@
             m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000);
         }
 
+        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
+
         window.onload = () => {
-            if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; }
-            loadObjekte(); runBioCheck();
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('dark-toggle').checked = true;
+            }
+            if (window.webauthnJson) {
+                document.getElementById('bio-status').textContent = "Biometrie bereit";
+                document.getElementById('bio-status').style.color = "var(--success)";
+                if (localStorage.getItem('bio_registered_user')) {
+                    document.getElementById('bio-toggle').checked = true;
+                }
+            }
+            loadObjekte();
         };
     </script>
 </body>

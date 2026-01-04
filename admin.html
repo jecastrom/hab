@@ -21,9 +21,10 @@
             color: var(--text-color); margin: 0; padding: 0; display: flex; min-height: 100vh;
             transition: background-color 0.3s; overflow-x: hidden;
         }
-        .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: 70px; }
+        
+        /* Mobile Layout Default */
+        .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: 70px; box-sizing: border-box; }
 
-        /* Sidebar Navigation */
         .sidebar {
             width: 280px; background: var(--card-bg); padding: 20px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: transform 0.3s ease;
@@ -43,7 +44,6 @@
         .sidebar a.active { color: var(--primary-color); }
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
 
-        /* Sidebar Footer Settings */
         .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); margin-top: auto; }
         .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
@@ -54,8 +54,7 @@
         input:checked + .slider:before { transform: translateX(20px); }
         .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
 
-        /* Section Cards */
-        .main-card { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .main-card { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); box-sizing: border-box; }
         .main-card.active { display: block; }
         
         h2 { margin-top: 0; color: var(--primary-color); font-size: 1.2rem; }
@@ -78,31 +77,44 @@
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
 
-        /* Custom adjustment for Desktop visibility */
-@media (min-width: 1024px) {
-    /* 1. Show the sidebar permanently */
-    .sidebar {
-        transform: translateX(0);
-        box-shadow: none;
-    }
+        /* DESKTOP ADJUSTMENTS */
+        @media (min-width: 1024px) {
+            .sidebar { transform: translateX(0); box-shadow: none; border-right: 1px solid var(--border-color); }
+            .hamburger, .sidebar-close, #sidebar-overlay { display: none !important; }
+            
+            .container {
+                margin-left: 280px; 
+                width: calc(100% - 280px);
+                max-width: none;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding-top: 50px;
+            }
 
-    /* 2. Hide the hamburger and close buttons (not needed on desktop) */
-    .hamburger, .sidebar-close {
-        display: none !important;
-    }
+            .main-content {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
 
-    /* 3. Move the main content to the right so it doesn't hide behind the menu */
-    .container {
-        margin-left: 280px; /* This matches the width of your sidebar */
-        width: calc(100% - 280px);
-        max-width: none;
-    }
+            .main-card {
+                width: 600px;           /* Proportionate rectangular width */
+                display: none;
+                margin: 0 auto;
+                position: relative;
+                min-height: auto;      /* Eliminates forced empty space */
+            }
+            .main-card.active { display: block; }
 
-    /* 4. Disable the dark overlay on desktop */
-    #sidebar-overlay {
-        display: none !important;
-    }
-}
+            #objektList {
+                max-height: 250px;
+                overflow-y: auto;
+                margin-bottom: 10px;
+                padding-right: 5px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -125,17 +137,11 @@
             <div class="sidebar-footer">
                 <div class="setting-item">
                     <span>🌙 Dunkelmodus</span>
-                    <label class="switch">
-                        <input type="checkbox" id="dark-toggle" onchange="toggleTheme()">
-                        <span class="slider"></span>
-                    </label>
+                    <label class="switch"><input type="checkbox" id="dark-toggle" onchange="toggleTheme()"><span class="slider"></span></label>
                 </div>
                 <div class="setting-item">
                     <span>🔒 Biometrie</span>
-                    <label class="switch">
-                        <input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)">
-                        <span class="slider"></span>
-                    </label>
+                    <label class="switch"><input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)"><span class="slider"></span></label>
                 </div>
                 <span id="bio-status" style="font-size:0.7rem; color:var(--help); text-align:center; display:block; margin-bottom:15px; font-style:italic;">Prüfe Modul...</span>
                 <button class="btn-logout" onclick="logout()">Abmelden</button>
@@ -159,7 +165,6 @@
                 <label>Datenquelle:</label>
                 <select id="sourceType">
                     <option value="esser">ESSER Tools 8000 (CSV)</option>
-                    <option value="hekatron" disabled>Hekatron (nicht aktiv)</option>
                 </select>
                 <label>Datei auswählen:</label>
                 <input type="file" id="uploadFile" accept=".csv">
@@ -175,13 +180,13 @@
             <section id="user_admin" class="main-card">
                 <h2>Benutzerverwaltung</h2>
                 <label>Benutzername</label>
-                <input type="text" id="new_user_name" placeholder="Name">
+                <input type="text" id="new_user_name" placeholder="Name" autocomplete="off">
                 <label>Passwort</label>
                 <input type="password" id="new_user_pw" placeholder="Passwort">
                 <label>Rolle</label>
                 <select id="new_user_role">
-                    <option value="standard">Teammitglied</option>
-                    <option value="admin">Tecniker Administrator</option>
+                    <option value="standard">Techniker (Standard)</option>
+                    <option value="admin">Administrator</option>
                 </select>
                 <button class="action-btn btn-add" onclick="createNewUser()">Benutzer anlegen</button>
             </section>
@@ -191,7 +196,6 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // --- SIDEBAR & SYNC LOGIC ---
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         function toggleSidebar() { 
@@ -199,7 +203,6 @@
             overlay.classList.toggle('visible', isOpen);
         }
 
-        // Listen for changes from index.html (Dark mode / Bio toggle)
         window.addEventListener('storage', (e) => {
             if (e.key === 'darkMode') {
                 const isDark = e.newValue === 'enabled';
@@ -211,9 +214,14 @@
             }
         });
 
-        function toggleTheme() {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        function showSection(id) {
+            document.querySelectorAll('.main-card').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            const activeLink = document.querySelector(`.sidebar a[onclick*="${id}"]`);
+            if(activeLink) activeLink.classList.add('active');
+            if(window.innerWidth < 1024) toggleSidebar();
+            if(id === 'upload' || id === 'delete') loadObjekte();
         }
 
         async function handleBioToggle(checkbox) {
@@ -228,9 +236,7 @@
                     });
                     const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ credential }) });
                     if (res.ok) { localStorage.setItem('bio_registered_user', username); showMessage("Biometrie aktiviert!", true); }
-                } catch (err) { 
-                    checkbox.checked = !!localStorage.getItem('bio_registered_user');
-                }
+                } catch (err) { checkbox.checked = !!localStorage.getItem('bio_registered_user'); }
             } else {
                 if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
                 try {
@@ -240,17 +246,13 @@
             }
         }
 
-        function showSection(id) {
-            document.querySelectorAll('.main-card').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-            const activeLink = document.querySelector(`.sidebar a[onclick*="${id}"]`);
-            if(activeLink) activeLink.classList.add('active');
-            if(window.innerWidth < 768) toggleSidebar();
-            if(id === 'upload' || id === 'delete') loadObjekte();
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
         }
 
-        // --- ADMIN FUNCTIONALITY ---
+        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
+
         async function addObject() {
             const field = document.getElementById('obj_fld');
             const code = field.value.trim().toUpperCase();
@@ -334,22 +336,11 @@
             m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000);
         }
 
-        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
-
-        // --- INITIALIZATION ---
         window.onload = () => {
-            // Theme Sync
-            if (localStorage.getItem('darkMode') === 'enabled') {
-                document.body.classList.add('dark-mode');
-                document.getElementById('dark-toggle').checked = true;
-            }
-            // Biometric Sync
+            if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; }
             if (window.webauthnJson) {
-                document.getElementById('bio-status').textContent = "Biometrie bereit";
-                document.getElementById('bio-status').style.color = "var(--success)";
-                if (localStorage.getItem('bio_registered_user')) {
-                    document.getElementById('bio-toggle').checked = true;
-                }
+                document.getElementById('bio-status').textContent = "Biometrie bereit"; document.getElementById('bio-status').style.color = "var(--success)";
+                if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-toggle').checked = true;
             }
             loadObjekte();
         };

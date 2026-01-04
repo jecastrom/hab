@@ -48,6 +48,9 @@
         .sidebar a.active { color: var(--primary); }
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
 
+        .sidebar-close { position: absolute; top: 15px; right: 15px; font-size: 2rem; color: var(--danger); cursor: pointer; }
+
+        /* Sidebar Footer (Settings & Logout) */
         .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border); margin-top: auto; }
         
         /* Toggle Switch Styling */
@@ -62,12 +65,9 @@
         .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
 
         /* Main Content */
-        .main { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; position: relative; padding-top: 80px; }
+        .main { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; position: relative; padding-top: 60px; }
         .section { display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .section.active { display: block; }
-
-        .top-bar { position: fixed; top: 12px; right: 15px; z-index: 1100; }
-        .icon-btn { background: none; border: none; cursor: pointer; font-size: 1.6rem; color: var(--text); padding: 5px; }
 
         label { display: block; margin: 15px 0 8px; font-weight: 600; font-size: 0.85rem; }
         input, select { width: 100%; padding: 14px; box-sizing: border-box; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 1rem; }
@@ -82,13 +82,20 @@
         .objekt-card { background: var(--bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; cursor: pointer; margin-bottom: 10px; }
         .objekt-card input { width: 22px; height: 22px; margin: 0; }
 
-        .hamburger { position: fixed; top: 22px; left: 18px; z-index: 1300; cursor: pointer; width: 30px; }
+        .hamburger { position: fixed; top: 18px; left: 18px; z-index: 1300; cursor: pointer; width: 30px; }
         .hamburger span { display: block; width: 100%; height: 3px; background: var(--text); margin-bottom: 6px; border-radius: 4px; }
-        .sidebar-close { position: absolute; top: 15px; right: 15px; font-size: 2rem; color: var(--danger); cursor: pointer; }
 
         #message { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; text-align: center; display: none; z-index: 2000; font-weight: bold; }
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
+
+        @media (max-width: 767px) {
+            .hamburger { display: block; }
+            .sidebar-close { display: block; }
+            .sidebar { position: fixed; left: 0; top: 0; height: 100%; transform: translateX(-100%); width: 280px; }
+            .sidebar.open { transform: translateX(0); } 
+            .main { padding-top: 80px; }
+        }
     </style>
 </head>
 <body>
@@ -123,15 +130,10 @@
         </nav>
 
         <main class="main">
-            <div class="top-bar">
-                <!-- Theme toggle matches index.html -->
-                <button id="theme-btn" class="icon-btn" onclick="toggleTheme()">🌙</button>
-            </div>
-
             <section id="create" class="section active">
                 <h2>Neues Objekt</h2>
-                <label>Objekt-Code (Nur Buchstaben/Zahlen):</label>
-                <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="one-time-code" spellcheck="false">
+                <label>Objekt-Code (Alphanumerisch, keine Leerzeichen):</label>
+                <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off" spellcheck="false">
                 <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
             </section>
 
@@ -139,13 +141,11 @@
                 <h2>Daten Upload</h2>
                 <label>Objekt wählen:</label>
                 <select id="linkedObjekte"></select>
-                
                 <label>Datenquelle:</label>
                 <select id="sourceType">
                     <option value="esser">ESSER Tools 8000 (CSV)</option>
                     <option value="hekatron" disabled>Hekatron (nicht aktiv)</option>
                 </select>
-
                 <label>Datei auswählen:</label>
                 <input type="file" id="uploadFile" accept=".csv">
                 <button class="action-btn btn-upload" id="uploadBtn" onclick="uploadFileProcess()">Hochladen</button>
@@ -154,7 +154,7 @@
             <section id="delete" class="section">
                 <h2>Löschen</h2>
                 <div id="objektList"></div>
-                <button class="action-btn btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Ausgewähltes entfernen</button>
+                <button class="action-btn btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Markiertes entfernen</button>
             </section>
 
             <section id="user_admin" class="section">
@@ -176,7 +176,7 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // 1. Sidebar, Overlay & Swipe
+        // 1. Sidebar & Overlay Logic
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         function toggleSidebar() { 
@@ -187,74 +187,16 @@
         sidebar.addEventListener('touchstart', e => sx = e.touches[0].clientX);
         sidebar.addEventListener('touchend', e => { if (sx - e.changedTouches[0].clientX > 60) toggleSidebar(); });
 
-        // 2. Input Enforcement (Strict Alphanumeric)
+        // 2. Strict Input Enforcement
         document.getElementById('obj_fld').addEventListener('input', (e) => {
             e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
         });
 
-        // 3. File Upload Logic with Override Warning
-        async function uploadFileProcess() {
-            const id = document.getElementById('linkedObjekte').value;
-            const fileInput = document.getElementById('uploadFile');
-            const source = document.getElementById('sourceType').value;
-
-            if (!id || !fileInput.files[0]) return showMessage("Bitte alle Felder ausfüllen", false);
-            if (source !== 'esser') return showMessage("Hekatron ist noch nicht verfügbar.", false);
-
-            const btn = document.getElementById('uploadBtn');
-            btn.disabled = true;
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const data = csvToJSON(e.target.result);
-                    await performUpload(id, data, false);
-                } catch (err) { showMessage("Dateifehler", false); btn.disabled = false; }
-            };
-            reader.readAsText(fileInput.files[0], 'ISO-8859-1');
-        }
-
-        async function performUpload(id, data, override) {
-            try {
-                const res = await fetch(`${API_BASE}/upload-data`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ id, data, override })
-                });
-
-                if (res.status === 409) {
-                    // --- THE WARNING ---
-                    if (confirm(`Für '${id}' existiert bereits eine Datei. Möchten Sie diese überschreiben?`)) {
-                        await performUpload(id, data, true);
-                    } else { resetUploadUI(); }
-                } else if (res.ok) {
-                    showMessage("Upload erfolgreich!", true);
-                    resetUploadUI();
-                } else {
-                    showMessage("Serverfehler", false);
-                    resetUploadUI();
-                }
-            } catch (e) { showMessage("Netzwerkfehler", false); resetUploadUI(); }
-        }
-
-        function resetUploadUI() {
-            document.getElementById('uploadBtn').disabled = false;
-            document.getElementById('uploadFile').value = '';
-        }
-
-        // 4. Core Helper Functions
-        function toggleTheme() {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-            document.getElementById('theme-btn').textContent = isDark ? '☀️' : '🌙';
-            document.getElementById('dark-toggle').checked = isDark;
-        }
-
-        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
-
+        // 3. Optimized Biometric Logic (Sync & Confirmation)
         async function handleBioToggle(checkbox) {
             const username = localStorage.getItem('username');
             if (!window.webauthnJson) return;
+
             if (checkbox.checked) {
                 try {
                     const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
@@ -268,37 +210,74 @@
                         }
                     });
                     const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify({ credential })
                     });
-                    if (res.ok) { localStorage.setItem('bio_registered_user', username); document.getElementById('bio-icon').textContent = '🔒'; }
-                } catch (err) { checkbox.checked = false; }
+                    if (res.ok) {
+                        localStorage.setItem('bio_registered_user', username);
+                        updateBioUI(true); // Sync slider immediately
+                        showMessage("Biometrie erfolgreich aktiviert!", true);
+                    } else { throw new Error(); }
+                } catch (err) { 
+                    checkbox.checked = false; 
+                    showMessage("Aktivierung abgebrochen oder fehlgeschlagen", false); 
+                }
             } else {
-                if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
-                const res = await fetch(`${API_BASE}/register-biometric`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                    body: JSON.stringify({ action: 'delete' })
-                });
-                if(res.ok) { localStorage.removeItem('bio_registered_user'); document.getElementById('bio-icon').textContent = '🔓'; }
+                if(!confirm("Möchten Sie die biometrische Anmeldung deaktivieren?")) { checkbox.checked = true; return; }
+                try {
+                    const res = await fetch(`${API_BASE}/register-biometric`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                        body: JSON.stringify({ action: 'delete' })
+                    });
+                    if (res.ok) {
+                        localStorage.removeItem('bio_registered_user');
+                        updateBioUI(false); // Sync slider immediately
+                        showMessage("Biometrie deaktiviert.", true);
+                    }
+                } catch (e) { 
+                    checkbox.checked = true; 
+                    showMessage("Fehler beim Deaktivieren", false); 
+                }
             }
+        }
+
+        function updateBioUI(enabled) {
+            document.getElementById('bio-icon').textContent = enabled ? '🔒' : '🔓';
+            document.getElementById('bio-toggle').checked = enabled;
         }
 
         function runBioCheck() {
             const statusEl = document.getElementById('bio-status');
             if (window.webauthnJson) {
-                statusEl.textContent = "Bereit"; statusEl.style.color = "var(--success)";
-                if (localStorage.getItem('bio_registered_user')) {
-                    document.getElementById('bio-toggle').checked = true;
-                    document.getElementById('bio-icon').textContent = '🔒';
-                }
+                statusEl.textContent = "Modul bereit"; statusEl.style.color = "var(--success)";
+                updateBioUI(!!localStorage.getItem('bio_registered_user'));
             } else { setTimeout(runBioCheck, 1500); }
         }
 
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(window.innerWidth < 768) sidebar.classList.remove('open'); overlay.classList.remove('visible');
-            if(id === 'upload' || id === 'delete') loadObjekte();
+        // 4. Core Functions
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+            document.getElementById('dark-toggle').checked = isDark;
+        }
+
+        function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
+
+        async function createNewUser() {
+            const newUsername = document.getElementById('new_user_name').value.trim();
+            const newPassword = document.getElementById('new_user_pw').value.trim();
+            const newRole = document.getElementById('new_user_role').value;
+            if (!newUsername || !newPassword) return showMessage("Bitte alle Felder ausfüllen", false);
+            try {
+                const res = await fetch(`${API_BASE}/add-user`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    body: JSON.stringify({ newUsername, newPassword, newRole })
+                });
+                if (res.ok) { showMessage("Benutzer erstellt!", true); document.getElementById('new_user_name').value = ''; document.getElementById('new_user_pw').value = ''; }
+                else showMessage(await res.text(), false);
+            } catch (e) { showMessage("Fehler", false); }
         }
 
         async function loadObjekte() {
@@ -333,19 +312,24 @@
             if(res.ok) { showMessage('Objekt gespeichert', true); field.value = ''; }
         }
 
-        async function deleteObject() {
-            const el = document.querySelector('input[name="del"]:checked');
-            const res = await fetch(`${API_BASE}/delete-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: el.value }) });
-            if(res.ok) loadObjekte();
-        }
-
-        async function createNewUser() {
-            const newUsername = document.getElementById('new_user_name').value.trim();
-            const newPassword = document.getElementById('new_user_pw').value.trim();
-            const newRole = document.getElementById('new_user_role').value;
-            if (!newUsername || !newPassword) return showMessage("Felder ausfüllen", false);
-            const res = await fetch(`${API_BASE}/add-user`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ newUsername, newPassword, newRole }) });
-            if (res.ok) { showMessage("Benutzer erstellt!", true); document.getElementById('new_user_name').value = ''; document.getElementById('new_user_pw').value = ''; }
+        async function uploadFileProcess() {
+            const id = document.getElementById('linkedObjekte').value;
+            const fileInput = document.getElementById('uploadFile');
+            if (!id || !fileInput.files[0]) return showMessage("Daten unvollständig", false);
+            const btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const data = csvToJSON(e.target.result);
+                const res = await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: false }) });
+                if (res.status === 409) {
+                    if (confirm(`Überschreiben?`)) await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: true }) });
+                }
+                showMessage('Erfolgreich', true);
+                btn.disabled = false;
+                document.getElementById('uploadFile').value = '';
+            };
+            reader.readAsText(fileInput.files[0], 'ISO-8859-1');
         }
 
         function csvToJSON(t) {
@@ -361,20 +345,25 @@
             });
         }
 
-        function showMessage(t, s) {
-            const m = document.getElementById('message'); m.textContent = t; m.className = s ? 'success' : 'error';
-            m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000);
+        async function deleteObject() {
+            const el = document.querySelector('input[name="del"]:checked');
+            const res = await fetch(`${API_BASE}/delete-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: el.value }) });
+            if(res.ok) { showMessage("Gelöscht", true); loadObjekte(); }
         }
 
-        // Initialize on load
+        function showMessage(t, s) {
+            const m = document.getElementById('message'); m.textContent = t;
+            m.className = s ? 'success' : 'error'; m.style.display = 'block';
+            setTimeout(() => m.style.display = 'none', 3000);
+        }
+
         window.onload = () => {
             if (localStorage.getItem('darkMode') === 'enabled') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('dark-toggle').checked = true;
-                document.getElementById('theme-btn').textContent = '☀️';
             }
             loadObjekte(); 
-            runBioCheck();
+            runBioCheck(); 
         };
     </script>
 </body>

@@ -129,7 +129,7 @@
             localStorage.setItem('token', data.token);
             localStorage.setItem('role', data.role);
             localStorage.setItem('username', username);
-            window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
+            window.location.href = 'index.html';
         } catch (err) { showMessage(err.message, false); }
     }
 
@@ -150,7 +150,7 @@
             localStorage.setItem('token', data.token);
             localStorage.setItem('role', data.role);
             localStorage.setItem('username', username);
-            window.location.href = data.role === 'admin' ? 'admin.html' : 'index.html';
+            window.location.href = 'index.html';
         } catch (err) { showMessage("Biometrie fehlgeschlagen", false); }
     }
 

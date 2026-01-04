@@ -182,7 +182,8 @@
             <section id="user_admin" class="main-card">
                 <h2>Benutzerverwaltung</h2>
                 <label>Benutzername</label>
-                <input type="text" id="new_user_name" placeholder="Name" autocomplete="off">
+                <input type="text" id="new_user_name" placeholder="Name" autocomplete="off" style="text-transform: lowercase;" 
+                oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '')">
                 <label>Passwort</label>
                 <input type="password" id="new_user_pw" placeholder="Passwort">
                 <label>Rolle</label>

@@ -163,6 +163,7 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
+        // 1. Sidebar & Overlay logic
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         function toggleSidebar() { 
@@ -180,7 +181,7 @@
             if(id === 'upload' || id === 'delete') loadObjekte();
         }
 
-        // --- SYNCHRONIZED BIOMETRIC LOGIC ---
+        // 2. Biometric Management (Synchronized with index.html)
         async function handleBioToggle(checkbox) {
             const username = localStorage.getItem('username');
             if (!window.webauthnJson) return;
@@ -188,11 +189,11 @@
             if (checkbox.checked) {
                 try {
                     const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
-                    const userId = btoa(username || 'admin').replace(/\+/g, '-').replace(/_/g, '/');
+                    const userId = btoa(username || 'user').replace(/\+/g, '-').replace(/_/g, '/');
                     const options = {
                         publicKey: {
                             challenge, rp: { name: "Melder Suche", id: window.location.hostname },
-                            user: { id: userId, name: username || 'admin', displayName: username || 'admin' },
+                            user: { id: userId, name: username || 'user', displayName: username || 'user' },
                             pubKeyCredParams: [{ type: "public-key", alg: -7 }],
                             authenticatorSelection: { userVerification: "required" }, timeout: 60000
                         }
@@ -211,7 +212,7 @@
                         showMessage("Biometrie aktiviert!", true);
                     } else { throw new Error(); }
                 } catch (err) { 
-                    // Verify actual state for silent success handling
+                    // Silent success check: did it save despite a browser glitch?
                     if (localStorage.getItem('bio_registered_user')) {
                         updateBioUI(true);
                         showMessage("Biometrie aktiviert!", true);
@@ -246,11 +247,12 @@
             const statusEl = document.getElementById('bio-status');
             if (window.webauthnJson) {
                 statusEl.textContent = "Biometrie bereit"; statusEl.style.color = "var(--success)";
+                // Persistent Check on Page Refresh
                 updateBioUI(!!localStorage.getItem('bio_registered_user'));
             } else { setTimeout(runBioCheck, 1500); }
         }
 
-        // --- Standard Helpers ---
+        // 3. Core Logic
         function toggleTheme() {
             const isDark = document.body.classList.toggle('dark-mode');
             localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');

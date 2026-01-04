@@ -194,7 +194,7 @@ async function precacheAllObjects(objects) {
         });
 
         if (objects.length > 0) {
-            await loadData(); 
+            await loadEntries(); 
 
             // Precache logic
             if ('serviceWorker' in navigator) {

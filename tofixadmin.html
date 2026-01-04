@@ -77,13 +77,13 @@
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
 
-        /* DESKTOP ADJUSTMENTS: Fixed Sidebar + Centered Rectangular Cards */
+        /* DESKTOP ADJUSTMENTS */
         @media (min-width: 1024px) {
             .sidebar { transform: translateX(0); box-shadow: none; border-right: 1px solid var(--border-color); }
             .hamburger, .sidebar-close, #sidebar-overlay { display: none !important; }
             
             .container {
-                margin-left: 280px; /* Offset for the fixed sidebar */
+                margin-left: 280px; 
                 width: calc(100% - 280px);
                 max-width: none;
                 display: flex;
@@ -101,16 +101,15 @@
 
             .main-card {
                 width: 600px;           /* Proportionate rectangular width */
-                min-height: 400px;      /* Consistent length for all sections */
                 display: none;
                 margin: 0 auto;
                 position: relative;
+                min-height: auto;      /* Eliminates forced empty space */
             }
             .main-card.active { display: block; }
 
-            /* Ensure lists inside cards don't break the rectangular shape */
             #objektList {
-                max-height: 180px;
+                max-height: 250px;
                 overflow-y: auto;
                 margin-bottom: 10px;
                 padding-right: 5px;

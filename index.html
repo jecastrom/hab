@@ -177,22 +177,28 @@ async function precacheAllObjects(objects) {
                 const objects = await res.json();
                 const select = document.getElementById('object');
                 select.innerHTML = ''; 
-                objects.forEach(obj => { const opt = document.createElement('option'); opt.value = obj.id; opt.textContent = obj.display; select.appendChild(opt); });
-                if (objects.length > 0) await loadData();
-                precacheAllObjects(objects); 
-            } catch (err) { document.getElementById('status').textContent = 'Ladefehler.'; }
-        }
+                
+                objects.forEach(obj => { 
+                    const opt = document.createElement('option'); 
+                    opt.value = obj.id; 
+                    opt.textContent = obj.display; 
+                    select.appendChild(opt); 
+                });
 
-        async function loadData() {
-            const key = document.getElementById('object').value;
-            if (!key) return;
-            document.getElementById('status').textContent = 'Daten werden geladen...';
-            try {
-                const response = await fetch(`${API_BASE}/get-data?id=${key}`);
-                data = await response.json();
-                document.getElementById('status').textContent = `${data.length} Einträge geladen.`;
-                clearSearch(true);
-            } catch (e) { document.getElementById('status').textContent = 'Keine Daten gefunden.'; }
+                if (objects.length > 0) {
+                    await loadData(); 
+
+                    // SAFARI FIX: Wait for Service Worker to be ready before precaching
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(() => {
+                            // Small delay to ensure the worker is 100% in control
+                            setTimeout(() => precacheAllObjects(objects), 1000);
+                        });
+                    }
+                }
+            } catch (err) { 
+                document.getElementById('status').textContent = 'Ladefehler.'; 
+            }
         }
 
         function clearSearch(keepStatus = false) { document.getElementById('search').value = ''; document.getElementById('mobile-cards').classList.add('hidden'); document.getElementById('table-wrapper').classList.add('hidden'); document.getElementById('mobile-cards').innerHTML = ''; document.getElementById('table-body').innerHTML = ''; if(!keepStatus) document.getElementById('status').textContent = `${data.length} Einträge geladen.`; }

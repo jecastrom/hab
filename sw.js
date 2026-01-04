@@ -7,19 +7,20 @@ const urlsToCache = [
   '/login.html',
   '/manifest.json',
   '/auth-guard.js',
-  '/webauthn-json.js' // Local file
+  '/webauthn-json.js' 
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force active immediately
   event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(urlsToCache)));
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
+  // Claim clients so the very first load is intercepted
+  event.waitUntil(self.clients.claim());
   event.waitUntil(
     caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k))))
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {

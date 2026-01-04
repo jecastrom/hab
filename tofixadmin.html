@@ -22,7 +22,7 @@
         }
         .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: 70px; }
 
-        /* Sidebar & Overlay */
+        /* Sidebar & Overlay - Identical to index.html */
         .sidebar {
             width: 280px; background: var(--card-bg); padding: 20px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: transform 0.3s ease;
@@ -42,9 +42,9 @@
         .sidebar a.active { color: var(--primary-color); }
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
 
-        .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); margin-top: auto; }
+        .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); }
+        .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
         
-        /* Toggle Switch */
         .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -53,17 +53,8 @@
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
-
-        /* Content Sections */
-        .main-card { 
-            display: none; /* Hidden by default */
-            background: var(--card-bg); border: 1px solid var(--border-color); 
-            border-radius: 16px; padding: 25px; margin-bottom: 30px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        }
-        .main-card.active { display: block; } /* Show when active */
-
+        /* Main Content */
+        .main-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         h2 { margin-top: 0; color: var(--primary-color); font-size: 1.2rem; }
         label { display: block; margin: 15px 0 8px; font-weight: 600; font-size: 0.85rem; }
         input, select { width: 100%; padding: 14px; box-sizing: border-box; background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 10px; font-size: 1rem; }
@@ -122,9 +113,9 @@
 
             <section id="create" class="main-card active">
                 <h2>Neues Objekt hinzufügen</h2>
-                <label>Objekt-Code (Alphanumerisch, keine Leerzeichen):</label>
+                <label>Objekt-Code (Nur Buchstaben/Zahlen):</label>
                 <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off" style="text-transform: uppercase;">
-                <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
+                <button class="action-btn btn-add" onclick="addObject()">Objekt speichern</button>
             </section>
 
             <section id="upload" class="main-card">
@@ -166,7 +157,7 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // 1. Sidebar & Nav Logic
+        // 1. Sidebar & Nav
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
         function toggleSidebar() { 
@@ -177,25 +168,13 @@
         sidebar.addEventListener('touchend', e => { if (sx - e.changedTouches[0].clientX > 60) toggleSidebar(); });
 
         function showSection(id) {
-            // Correctly hide all cards and show targeted card
             document.querySelectorAll('.main-card').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            
-            // Manage Active Link State
-            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-            const activeLink = document.querySelector(`.sidebar a[onclick*="${id}"]`);
-            if(activeLink) activeLink.classList.add('active');
-
             if(window.innerWidth < 768) toggleSidebar();
             if(id === 'upload' || id === 'delete') loadObjekte();
         }
 
-        // 2. Strict Input Enforcement (Object Code)
-        document.getElementById('obj_fld').addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        });
-
-        // 3. Biometric Logic (Sync with index.html)
+        // 2. Standardized Biometric Logic (Identical to index.html)
         async function handleBioToggle(checkbox) {
             const username = localStorage.getItem('username');
             if (!window.webauthnJson) return;
@@ -204,62 +183,42 @@
                 try {
                     const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
                     const userId = btoa(username || 'user').replace(/\+/g, '-').replace(/_/g, '/');
-                    const options = {
+                    const credential = await window.webauthnJson.create({
                         publicKey: {
                             challenge, rp: { name: "Melder Suche", id: window.location.hostname },
                             user: { id: userId, name: username || 'user', displayName: username || 'user' },
                             pubKeyCredParams: [{ type: "public-key", alg: -7 }],
                             authenticatorSelection: { userVerification: "required" }, timeout: 60000
                         }
-                    };
-                    const credential = await window.webauthnJson.create(options);
+                    });
                     const res = await fetch(`${API_BASE}/register-biometric`, {
                         method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                         body: JSON.stringify({ credential })
                     });
-                    if (res.ok) {
-                        localStorage.setItem('bio_registered_user', username);
-                        updateBioUI(true);
-                        showMessage("Biometrie aktiviert!", true);
-                    } else { throw new Error(); }
+                    if (res.ok) { localStorage.setItem('bio_registered_user', username); showMessage("Biometrie aktiviert!", true); }
                 } catch (err) { 
-                    if (localStorage.getItem('bio_registered_user')) {
-                        updateBioUI(true); showMessage("Biometrie aktiviert!", true);
-                    } else {
-                        checkbox.checked = false;
-                        if (err.name !== "NotAllowedError") showMessage("Fehler bei Aktivierung", false);
-                    }
+                    if (localStorage.getItem('bio_registered_user')) { showMessage("Biometrie aktiviert!", true); }
+                    else { checkbox.checked = false; }
                 }
             } else {
                 if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
-                try {
-                    const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                        body: JSON.stringify({ action: 'delete' })
-                    });
-                    if (res.ok) {
-                        localStorage.removeItem('bio_registered_user');
-                        updateBioUI(false);
-                        showMessage("Biometrie entfernt.", true);
-                    }
-                } catch (e) { checkbox.checked = true; }
+                const res = await fetch(`${API_BASE}/register-biometric`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    body: JSON.stringify({ action: 'delete' })
+                });
+                if(res.ok) { localStorage.removeItem('bio_registered_user'); showMessage("Biometrie entfernt.", true); }
             }
-        }
-
-        function updateBioUI(enabled) {
-            document.getElementById('bio-icon').textContent = enabled ? '🔒' : '🔓';
-            document.getElementById('bio-toggle').checked = enabled;
         }
 
         function runBioCheck() {
             const statusEl = document.getElementById('bio-status');
             if (window.webauthnJson) {
-                statusEl.textContent = "Modul bereit"; statusEl.style.color = "var(--success)";
-                updateBioUI(!!localStorage.getItem('bio_registered_user'));
+                statusEl.textContent = "Biometrie bereit"; statusEl.style.color = "var(--success)";
+                if (localStorage.getItem('bio_registered_user')) document.getElementById('bio-toggle').checked = true;
             } else { setTimeout(runBioCheck, 1500); }
         }
 
-        // 4. General Admin Logic
+        // 3. System Management
         function toggleTheme() {
             const isDark = document.body.classList.toggle('dark-mode');
             localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
@@ -269,11 +228,11 @@
         function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
 
         async function addObject() {
-            const field = document.getElementById('obj_fld');
-            const code = field.value.trim().toUpperCase();
+            const fld = document.getElementById('obj_fld');
+            const code = fld.value.trim().toUpperCase();
             if(!code) return;
             const res = await fetch(`${API_BASE}/add-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code }) });
-            if(res.ok) { showMessage('Objekt gespeichert', true); field.value = ''; }
+            if(res.ok) { showMessage('Objekt gespeichert', true); fld.value = ''; }
         }
 
         async function createNewUser() {
@@ -317,11 +276,10 @@
             reader.onload = async (e) => {
                 const data = csvToJSON(e.target.result);
                 const res = await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: false }) });
-                if(res.status === 409 && confirm("Datei existiert bereits. Überschreiben?")) {
+                if(res.status === 409 && confirm("Überschreiben?")) {
                     await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: true }) });
                 }
-                showMessage('Erfolgreich!', true); btn.disabled = false;
-                document.getElementById('uploadFile').value = '';
+                showMessage('Erfolgreich', true); btn.disabled = false;
             };
             reader.readAsText(fileInput.files[0], 'ISO-8859-1');
         }
@@ -350,6 +308,8 @@
             const m = document.getElementById('message'); m.textContent = t; m.className = s ? 'success' : 'error';
             m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000);
         }
+
+        document.getElementById('obj_fld').oninput = (e) => { e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase(); };
 
         window.onload = () => {
             if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; }

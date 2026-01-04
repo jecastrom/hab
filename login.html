@@ -6,41 +6,16 @@
     <title>Login - Melder Suche</title>
     <script src="webauthn-json.js"></script>
     <style>
-        :root {
-            --bg-color: #f8f9fa; --text-color: #212529; --card-bg: #ffffff; --border-color: #dee2e6;
-            --primary-color: #0d6efd;
-        }
-        /* Dark Mode Support */
-        body.dark-mode {
-            --bg-color: #121212; --text-color: #e9ecef; --card-bg: #1e1e1e; --border-color: #495057;
-        }
-        body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background-color: var(--bg-color); color: var(--text-color);
-            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;
-            transition: background-color 0.3s;
-        }
-        .login-card {
-            background: var(--card-bg); padding: 40px; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--border-color);
-            width: 100%; max-width: 350px; text-align: center;
-        }
+        :root { --bg-color: #f8f9fa; --text-color: #212529; --card-bg: #ffffff; --border-color: #dee2e6; --primary-color: #0d6efd; }
+        body.dark-mode { --bg-color: #121212; --text-color: #e9ecef; --card-bg: #1e1e1e; --border-color: #495057; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; transition: background-color 0.3s; }
+        .login-card { background: var(--card-bg); padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--border-color); width: 100%; max-width: 350px; text-align: center; }
         h1 { color: var(--primary-color); margin-bottom: 30px; }
-        input {
-            width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);
-            border-radius: 10px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;
-        }
-        .btn-login {
-            width: 100%; padding: 14px; border: none; border-radius: 10px;
-            background: var(--primary-color); color: white; font-weight: bold; cursor: pointer; margin-bottom: 15px;
-        }
-        .btn-bio {
-            width: 100%; padding: 12px; border: 2px solid var(--primary-color);
-            border-radius: 10px; background: transparent; color: var(--primary-color);
-            font-weight: bold; cursor: pointer; display: none;
-        }
-        #message { margin-top: 15px; font-size: 0.9rem; min-height: 1.2em; }
-        .error { color: #dc3545; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; }
+        .btn-login { width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--primary-color); color: white; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
+        .btn-bio { width: 100%; padding: 12px; border: 2px solid var(--primary-color); border-radius: 10px; background: transparent; color: var(--primary-color); font-weight: bold; cursor: pointer; display: none; }
+        #message { margin-top: 15px; font-size: 0.9rem; min-height: 1.2em; font-weight: 500; }
+        .error { color: #dc3545; } .success { color: #198754; }
     </style>
 </head>
 <body>
@@ -52,69 +27,48 @@
         <button id="bio-btn" class="btn-bio" onclick="loginBiometric()">Fingerabdruck / FaceID</button>
         <div id="message"></div>
     </div>
-
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
-
-        // --- SYNC LOGIC ---
         function applySettings() {
-            const isDark = localStorage.getItem('darkMode') === 'enabled';
-            document.body.classList.toggle('dark-mode', isDark);
-            
-            // Show bio button only if a user is registered on this device
-            const bioUser = localStorage.getItem('bio_registered_user');
-            document.getElementById('bio-btn').style.display = bioUser ? 'block' : 'none';
+            document.body.classList.toggle('dark-mode', localStorage.getItem('darkMode') === 'enabled');
+            document.getElementById('bio-btn').style.display = localStorage.getItem('bio_registered_user') ? 'block' : 'none';
         }
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'darkMode' || e.key === 'bio_registered_user') applySettings();
-        });
+        window.addEventListener('storage', (e) => { if (e.key === 'darkMode' || e.key === 'bio_registered_user') applySettings(); });
 
         async function login() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
             const msg = document.getElementById('message');
             try {
-                const res = await fetch(`${API_BASE}/login`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ username: u, password: p })
-                });
+                const res = await fetch(`${API_BASE}/login`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: u, password: p }) });
                 const data = await res.json();
                 if (res.ok) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('role', data.role);
-                    localStorage.setItem('username', u);
+                    localStorage.setItem('token', data.token); localStorage.setItem('role', data.role); localStorage.setItem('username', u);
                     window.location.href = 'index.html';
-                } else {
-                    msg.textContent = "Check credentials"; msg.className = 'error';
-                }
-            } catch (e) { msg.textContent = "Server error"; }
+                } else { msg.textContent = "Ungültige Zugangsdaten"; msg.className = 'error'; }
+            } catch (e) { msg.textContent = "Serverfehler"; msg.className = 'error'; }
         }
 
         async function loginBiometric() {
-            if (!window.webauthnJson) return;
             const msg = document.getElementById('message');
+            const username = localStorage.getItem('bio_registered_user');
+            if (!username || !window.webauthnJson) return;
             try {
-                const username = localStorage.getItem('bio_registered_user');
                 const optionsRes = await fetch(`${API_BASE}/login-biometric?username=${username}`);
                 const options = await optionsRes.json();
+                // Ensure options is passed correctly as a PublicKeyCredentialRequestOptions JSON
                 const assertion = await window.webauthnJson.get({ publicKey: options });
                 const verifyRes = await fetch(`${API_BASE}/login-biometric`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ username, assertion })
                 });
                 const data = await verifyRes.json();
                 if (verifyRes.ok) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('role', data.role);
-                    localStorage.setItem('username', username);
+                    localStorage.setItem('token', data.token); localStorage.setItem('role', data.role); localStorage.setItem('username', username);
                     window.location.href = 'index.html';
-                }
-            } catch (err) { msg.textContent = "Biometrie fehlgeschlagen"; }
+                } else { throw new Error(); }
+            } catch (err) { msg.textContent = "Biometrie fehlgeschlagen"; msg.className = 'error'; }
         }
-
         window.onload = applySettings;
     </script>
 </body>

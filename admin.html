@@ -197,54 +197,40 @@
 
         // 3. Biometric Logic (Sync with index.html)
         async function handleBioToggle(checkbox) {
-            const username = localStorage.getItem('username');
-            if (!window.webauthnJson) return;
+    const username = localStorage.getItem('username');
+    if (!window.webauthnJson) return;
+    const originalState = !checkbox.checked; // Keep track if we need to revert
 
-            if (checkbox.checked) {
-                try {
-                    const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
-                    const userId = btoa(username || 'user').replace(/\+/g, '-').replace(/_/g, '/');
-                    const options = {
-                        publicKey: {
-                            challenge, rp: { name: "Melder Suche", id: window.location.hostname },
-                            user: { id: userId, name: username || 'user', displayName: username || 'user' },
-                            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-                            authenticatorSelection: { userVerification: "required" }, timeout: 60000
-                        }
-                    };
-                    const credential = await window.webauthnJson.create(options);
-                    const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                        body: JSON.stringify({ credential })
-                    });
-                    if (res.ok) {
-                        localStorage.setItem('bio_registered_user', username);
-                        updateBioUI(true);
-                        showMessage("Biometrie aktiviert!", true);
-                    } else { throw new Error(); }
-                } catch (err) { 
-                    if (localStorage.getItem('bio_registered_user')) {
-                        updateBioUI(true); showMessage("Biometrie aktiviert!", true);
-                    } else {
-                        checkbox.checked = false;
-                        if (err.name !== "NotAllowedError") showMessage("Fehler bei Aktivierung", false);
-                    }
-                }
-            } else {
-                if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
-                try {
-                    const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                        body: JSON.stringify({ action: 'delete' })
-                    });
-                    if (res.ok) {
-                        localStorage.removeItem('bio_registered_user');
-                        updateBioUI(false);
-                        showMessage("Biometrie entfernt.", true);
-                    }
-                } catch (e) { checkbox.checked = true; }
-            }
+    if (checkbox.checked) {
+        try {
+            const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
+            const userId = btoa(username || 'user').replace(/\+/g, '-').replace(/_/g, '/');
+            const credential = await window.webauthnJson.create({
+                publicKey: { challenge, rp: { name: "Melder Suche", id: window.location.hostname }, user: { id: userId, name: username || 'user', displayName: username || 'user' }, pubKeyCredParams: [{ type: "public-key", alg: -7 }], authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, timeout: 60000 }
+            });
+            const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ credential }) });
+            if (res.ok) { 
+                localStorage.setItem('bio_registered_user', username); 
+                showMessage("Biometrie aktiviert!", true); 
+            } else { throw new Error(); }
+        } catch (err) { 
+            checkbox.checked = false; 
+            showMessage("Fehler bei Registrierung", false); 
         }
+    } else {
+        if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
+        try {
+            const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ action: 'delete' }) });
+            if (res.ok) { 
+                localStorage.removeItem('bio_registered_user'); 
+                showMessage("Biometrie entfernt.", true); 
+            } else { throw new Error(); }
+        } catch (e) { 
+            checkbox.checked = true; 
+            showMessage("Fehler beim Löschen", false); 
+        }
+    }
+}
 
         function updateBioUI(enabled) {
             document.getElementById('bio-icon').textContent = enabled ? '🔒' : '🔓';
@@ -381,14 +367,17 @@ function toggleTheme() {
 function runBioCheck() {
     const statusEl = document.getElementById('bio-status');
     if (window.webauthnJson) {
-        statusEl.textContent = "Modul bereit"; 
-        statusEl.style.color = "var(--success)";
-        // FIX: Directly set checkbox, no call to non-existent updateBioUI
-        const bioRegistered = !!localStorage.getItem('bio_registered_user');
-        document.getElementById('bio-toggle').checked = bioRegistered;
+        statusEl.textContent = "Modul bereit"; statusEl.style.color = "var(--success)";
+        document.getElementById('bio-toggle').checked = !!localStorage.getItem('bio_registered_user');
     } else {
-        setTimeout(runBioCheck, 1500);
+        setTimeout(runBioCheck, 1000);
     }
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    document.getElementById('dark-toggle').checked = isDark;
 }
     </script>
 </body>

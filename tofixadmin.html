@@ -22,7 +22,8 @@
             transition: background-color 0.3s; overflow-x: hidden;
         }
         
-        .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: 70px; }
+        /* Mobile Layout Default */
+        .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; padding-top: 70px; box-sizing: border-box; }
 
         .sidebar {
             width: 280px; background: var(--card-bg); padding: 20px;
@@ -53,7 +54,7 @@
         input:checked + .slider:before { transform: translateX(20px); }
         .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
 
-        .main-card { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .main-card { display: none; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); box-sizing: border-box; }
         .main-card.active { display: block; }
         
         h2 { margin-top: 0; color: var(--primary-color); font-size: 1.2rem; }
@@ -76,13 +77,13 @@
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
 
-        /* Desktop Adjustments for Fixed Menu and Proportionate Rectangular Cards */
+        /* DESKTOP ADJUSTMENTS: Fixed Sidebar + Centered Rectangular Cards */
         @media (min-width: 1024px) {
-            .sidebar { transform: translateX(0); box-shadow: none; }
+            .sidebar { transform: translateX(0); box-shadow: none; border-right: 1px solid var(--border-color); }
             .hamburger, .sidebar-close, #sidebar-overlay { display: none !important; }
             
             .container {
-                margin-left: 280px;
+                margin-left: 280px; /* Offset for the fixed sidebar */
                 width: calc(100% - 280px);
                 max-width: none;
                 display: flex;
@@ -91,16 +92,29 @@
                 padding-top: 50px;
             }
 
-            .main-content { width: 100%; display: flex; flex-direction: column; align-items: center; }
+            .main-content {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
 
             .main-card {
-                width: 550px; /* Rectangular proportionate width */
-                min-height: 520px; /* Consistent length across all sections */
-                margin: 0 auto;
-                box-sizing: border-box;
+                width: 600px;           /* Proportionate rectangular width */
+                min-height: 400px;      /* Consistent length for all sections */
                 display: none;
+                margin: 0 auto;
+                position: relative;
             }
             .main-card.active { display: block; }
+
+            /* Ensure lists inside cards don't break the rectangular shape */
+            #objektList {
+                max-height: 180px;
+                overflow-y: auto;
+                margin-bottom: 10px;
+                padding-right: 5px;
+            }
         }
     </style>
 </head>
@@ -160,7 +174,7 @@
 
             <section id="delete" class="main-card">
                 <h2>Objekt löschen</h2>
-                <div id="objektList" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px;"></div>
+                <div id="objektList"></div>
                 <button class="action-btn btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Markiertes entfernen</button>
             </section>
 

@@ -22,8 +22,6 @@
             overflow-x: hidden;
         }
         .container { display: flex; min-height: 100vh; }
-        
-        /* Sidebar & Overlay */
         .sidebar {
             width: 280px; background: var(--card-bg); padding: 20px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1); transition: transform 0.3s ease;
@@ -32,14 +30,8 @@
             transform: translateX(-100%);
         }
         .sidebar.open { transform: translateX(0); }
-        
-        #sidebar-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--overlay-bg); z-index: 1400;
-            display: none; opacity: 0; transition: opacity 0.3s;
-        }
+        #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--overlay-bg); z-index: 1400; display: none; opacity: 0; transition: opacity 0.3s; }
         #sidebar-overlay.visible { display: block; opacity: 1; }
-
         .sidebar-header { padding-top: 40px; margin-bottom: 30px; }
         .sidebar-header h1 { font-size: 1.4em; margin: 0; color: var(--primary); }
         .sidebar ul { list-style: none; padding: 0; margin-top: 10px; flex-grow: 1; }
@@ -47,44 +39,30 @@
         .sidebar a { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); font-weight: bold; cursor: pointer; }
         .sidebar a.active { color: var(--primary); }
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
-
         .sidebar-close { position: absolute; top: 15px; right: 15px; font-size: 2rem; color: var(--danger); cursor: pointer; }
-
-        /* Sidebar Footer */
         .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border); margin-top: auto; }
         .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
-        
-        /* Toggle Switch */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(20px); }
-
         .btn-logout { width: 100%; background: var(--danger); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem; }
-
-        /* Main Content */
         .main { flex: 1; padding: 20px; max-width: 800px; margin: 0 auto; position: relative; padding-top: 80px; }
         .section { display: none; background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 25px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .section.active { display: block; }
-
         label { display: block; margin: 15px 0 8px; font-weight: 600; font-size: 0.85rem; }
         input, select { width: 100%; padding: 14px; box-sizing: border-box; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px; font-size: 1rem; }
-        
         button.action-btn { width: 100%; padding: 16px; margin-top: 20px; border: none; border-radius: 12px; font-size: 1em; font-weight: bold; cursor: pointer; }
         .btn-add { background: var(--success); color: white; }
         .btn-upload { background: var(--primary); color: white; }
         .btn-delete { background: var(--danger); color: white; }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        /* Card-style list */
         .objekt-card { background: var(--bg); padding: 18px; border-radius: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; cursor: pointer; margin-bottom: 10px; }
         .objekt-card input { width: 22px; height: 22px; margin: 0; }
-
         .hamburger { position: fixed; top: 22px; left: 18px; z-index: 1300; cursor: pointer; width: 30px; }
         .hamburger span { display: block; width: 100%; height: 3px; background: var(--text); margin-bottom: 6px; border-radius: 4px; }
-
         #message { position: fixed; top: 0; left: 0; width: 100%; padding: 15px; text-align: center; display: none; z-index: 2000; font-weight: bold; }
         .success { background: #d1e7dd; color: #0f5132; }
         .error { background: #f8d7da; color: #842029; }
@@ -106,16 +84,9 @@
                 <li><a onclick="showSection('user_admin')"><span class="menu-icon">👥</span> Benutzer</a></li>
                 <li><a href="index.html"><span class="menu-icon">🔍</span> Suche</a></li>
             </ul>
-
             <div class="sidebar-footer">
-                <div class="setting-item">
-                    <span>🌙 Dunkelmodus</span>
-                    <label class="switch"><input type="checkbox" id="dark-toggle" onchange="toggleTheme()"><span class="slider"></span></label>
-                </div>
-                <div class="setting-item">
-                    <span>🔒 Biometrie</span>
-                    <label class="switch"><input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)"><span class="slider"></span></label>
-                </div>
+                <div class="setting-item"><span>🌙 Dunkelmodus</span><label class="switch"><input type="checkbox" id="dark-toggle" onchange="toggleTheme()"><span class="slider"></span></label></div>
+                <div class="setting-item"><span>🔒 Biometrie</span><label class="switch"><input type="checkbox" id="bio-toggle" onchange="handleBioToggle(this)"><span class="slider"></span></label></div>
                 <span id="bio-status" style="font-size:0.7rem; color:var(--help); text-align:center; display:block; margin-bottom:15px; font-style:italic;">Prüfe Modul...</span>
                 <button class="btn-logout" onclick="logout()">Abmelden</button>
             </div>
@@ -124,42 +95,25 @@
         <main class="main">
             <section id="create" class="section active">
                 <h2>Neues Objekt</h2>
-                <label>Objekt-Code (Alphanumerisch):</label>
+                <label>Objekt-Code:</label>
                 <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off" spellcheck="false">
                 <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
             </section>
-
             <section id="upload" class="section">
                 <h2>Daten Upload</h2>
-                <label>Objekt wählen:</label>
-                <select id="linkedObjekte"></select>
-                <label>Datenquelle:</label>
-                <select id="sourceType">
-                    <option value="esser">ESSER Tools 8000 (CSV)</option>
-                    <option value="hekatron" disabled>Hekatron (nicht aktiv)</option>
-                </select>
-                <label>Datei auswählen:</label>
-                <input type="file" id="uploadFile" accept=".csv">
+                <label>Objekt wählen:</label><select id="linkedObjekte"></select>
+                <label>Datenquelle:</label><select id="sourceType"><option value="esser">ESSER Tools 8000 (CSV)</option><option value="hekatron" disabled>Hekatron (nicht aktiv)</option></select>
+                <label>Datei auswählen:</label><input type="file" id="uploadFile" accept=".csv">
                 <button class="action-btn btn-upload" id="uploadBtn" onclick="uploadFileProcess()">Hochladen</button>
             </section>
-
             <section id="delete" class="section">
-                <h2>Löschen</h2>
-                <div id="objektList"></div>
-                <button class="action-btn btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Objekt entfernen</button>
+                <h2>Löschen</h2><div id="objektList"></div><button class="action-btn btn-delete" onclick="deleteObject()" id="deleteBtn" disabled>Objekt entfernen</button>
             </section>
-
             <section id="user_admin" class="section">
                 <h2>Benutzerverwaltung</h2>
-                <label>Benutzername</label>
-                <input type="text" id="new_user_name" placeholder="techniker1" autocomplete="off">
-                <label>Passwort</label>
-                <input type="password" id="new_user_pw" placeholder="Passwort vergeben" autocomplete="new-password" style="width:100%; padding:14px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
-                <label>Rolle</label>
-                <select id="new_user_role">
-                    <option value="standard">Techniker (Standard)</option>
-                    <option value="admin">Administrator</option>
-                </select>
+                <label>Benutzername</label><input type="text" id="new_user_name" placeholder="techniker1" autocomplete="off">
+                <label>Passwort</label><input type="password" id="new_user_pw" placeholder="Passwort vergeben" autocomplete="new-password">
+                <label>Rolle</label><select id="new_user_role"><option value="standard">Techniker (Standard)</option><option value="admin">Administrator</option></select>
                 <button class="action-btn btn-add" onclick="createNewUser()">Benutzer anlegen</button>
             </section>
         </main>
@@ -168,15 +122,10 @@
     <script>
         const API_BASE = 'https://hab-api-functions-agf8hya9f2cgdeaf.westus2-01.azurewebsites.net/api';
 
-        // 1. Sidebar & Nav
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
-        function toggleSidebar() { 
-            const isOpen = sidebar.classList.toggle('open');
-            overlay.classList.toggle('visible', isOpen);
-        }
-        let sx = 0;
-        sidebar.addEventListener('touchstart', e => sx = e.touches[0].clientX);
+        function toggleSidebar() { const isOpen = sidebar.classList.toggle('open'); overlay.classList.toggle('visible', isOpen); }
+        let sx = 0; sidebar.addEventListener('touchstart', e => sx = e.touches[0].clientX);
         sidebar.addEventListener('touchend', e => { if (sx - e.changedTouches[0].clientX > 60) toggleSidebar(); });
 
         function showSection(id) {
@@ -186,7 +135,6 @@
             if(id === 'upload' || id === 'delete') loadObjekte();
         }
 
-        // 2. Biometric State Fix
         async function handleBioToggle(checkbox) {
             const username = localStorage.getItem('username');
             if (!window.webauthnJson) return;
@@ -195,159 +143,47 @@
                 try {
                     const challenge = btoa("1234567890123456").replace(/\+/g, '-').replace(/_/g, '/');
                     const userId = btoa(username || 'admin').replace(/\+/g, '-').replace(/_/g, '/');
-                    const options = {
-                        publicKey: {
-                            challenge, rp: { name: "Melder Suche", id: window.location.hostname },
-                            user: { id: userId, name: username || 'admin', displayName: username || 'admin' },
-                            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-                            authenticatorSelection: { userVerification: "required" }, timeout: 60000
-                        }
-                    };
-
-                    const credential = await window.webauthnJson.create(options);
-                    const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                        body: JSON.stringify({ credential })
+                    const credential = await window.webauthnJson.create({
+                        publicKey: { challenge, rp: { name: "Melder Suche", id: window.location.hostname }, user: { id: userId, name: username || 'admin', displayName: username || 'admin' }, pubKeyCredParams: [{ type: "public-key", alg: -7 }], authenticatorSelection: { userVerification: "required" }, timeout: 60000 }
                     });
 
+                    const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ credential }) });
+                    
                     if (res.ok) {
                         localStorage.setItem('bio_registered_user', username);
                         updateBioUI(true);
                         showMessage("Biometrie erfolgreich aktiviert!", true);
                     } else { throw new Error(); }
                 } catch (err) { 
-                    checkbox.checked = false; 
-                    // Only show error if it wasn't a user cancellation
-                    if (err.name !== "NotAllowedError") showMessage("Aktivierung fehlgeschlagen", false); 
+                    if (localStorage.getItem('bio_registered_user')) { updateBioUI(true); showMessage("Biometrie aktiviert!", true); }
+                    else { checkbox.checked = false; if (err.name !== "NotAllowedError") showMessage("Aktivierung fehlgeschlagen", false); }
                 }
             } else {
                 if(!confirm("Biometrie deaktivieren?")) { checkbox.checked = true; return; }
                 try {
-                    const res = await fetch(`${API_BASE}/register-biometric`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                        body: JSON.stringify({ action: 'delete' })
-                    });
-                    if (res.ok) {
-                        localStorage.removeItem('bio_registered_user');
-                        updateBioUI(false);
-                        showMessage("Biometrie deaktiviert.", true);
-                    }
+                    const res = await fetch(`${API_BASE}/register-biometric`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` }, body: JSON.stringify({ action: 'delete' }) });
+                    if (res.ok) { localStorage.removeItem('bio_registered_user'); updateBioUI(false); showMessage("Biometrie deaktiviert.", true); }
                 } catch (e) { checkbox.checked = true; showMessage("Fehler beim Deaktivieren", false); }
             }
         }
 
-        function updateBioUI(enabled) {
-            document.getElementById('bio-icon').textContent = enabled ? '🔒' : '🔓';
-            document.getElementById('bio-toggle').checked = enabled;
-        }
+        function updateBioUI(enabled) { document.getElementById('bio-icon').textContent = enabled ? '🔒' : '🔓'; document.getElementById('bio-toggle').checked = enabled; }
+        function runBioCheck() { const statusEl = document.getElementById('bio-status'); if (window.webauthnJson) { statusEl.textContent = "Modul bereit"; statusEl.style.color = "var(--success)"; updateBioUI(!!localStorage.getItem('bio_registered_user')); } else { setTimeout(runBioCheck, 1500); } }
 
-        function runBioCheck() {
-            const statusEl = document.getElementById('bio-status');
-            if (window.webauthnJson) {
-                statusEl.textContent = "Modul bereit"; statusEl.style.color = "var(--success)";
-                updateBioUI(!!localStorage.getItem('bio_registered_user'));
-            } else { setTimeout(runBioCheck, 1500); }
-        }
-
-        // 3. Core Logic
-        function toggleTheme() {
-            const isDark = document.body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-            document.getElementById('dark-toggle').checked = isDark;
-        }
-
+        function toggleTheme() { const isDark = document.body.classList.toggle('dark-mode'); localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled'); document.getElementById('dark-toggle').checked = isDark; }
         function logout() { localStorage.removeItem('token'); localStorage.removeItem('role'); window.location.href = 'login.html'; }
 
-        async function addObject() {
-            const fld = document.getElementById('obj_fld');
-            const code = fld.value.trim().toUpperCase();
-            if(!code) return;
-            const res = await fetch(`${API_BASE}/add-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code }) });
-            if(res.ok) { showMessage('Objekt gespeichert', true); fld.value = ''; }
-        }
-
-        async function createNewUser() {
-            const n = document.getElementById('new_user_name').value.trim();
-            const p = document.getElementById('new_user_pw').value.trim();
-            const r = document.getElementById('new_user_role').value;
-            if(!n || !p) return showMessage("Daten fehlen", false);
-            const res = await fetch(`${API_BASE}/add-user`, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}`}, body: JSON.stringify({ newUsername: n, newPassword: p, newRole: r }) });
-            if(res.ok) { showMessage("Benutzer erstellt", true); document.getElementById('new_user_name').value=''; document.getElementById('new_user_pw').value=''; }
-        }
-
-        async function loadObjekte() {
-            try {
-                const res = await fetch(`${API_BASE}/get-objects`);
-                const objects = await res.json();
-                const list = document.getElementById('objektList');
-                const select = document.getElementById('linkedObjekte');
-                list.innerHTML = ''; select.innerHTML = '';
-                objects.forEach(obj => {
-                    const opt = document.createElement('option'); opt.value = obj.id; opt.textContent = obj.display;
-                    select.appendChild(opt);
-                    const card = document.createElement('div'); card.className = 'objekt-card';
-                    card.onclick = () => { const c = card.querySelector('input'); c.checked = !c.checked; toggleDelBtn(c); };
-                    card.innerHTML = `<input type="checkbox" name="del" value="${obj.id}" onclick="event.stopPropagation(); toggleDelBtn(this)"> <strong>${obj.display}</strong>`;
-                    list.appendChild(card);
-                });
-            } catch (e) {}
-        }
-
-        function toggleDelBtn(cb) {
-            document.querySelectorAll('input[name="del"]').forEach(c => { if(c !== cb) c.checked = false; });
-            document.getElementById('deleteBtn').disabled = !cb.checked;
-        }
-
-        async function uploadFileProcess() {
-            const id = document.getElementById('linkedObjekte').value;
-            const fileInput = document.getElementById('uploadFile');
-            if(!id || !fileInput.files[0]) return showMessage("Daten fehlen", false);
-            const btn = document.getElementById('uploadBtn'); btn.disabled = true;
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const data = csvToJSON(e.target.result);
-                const res = await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: false }) });
-                if(res.status === 409 && confirm("Überschreiben?")) {
-                    await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: true }) });
-                }
-                showMessage('Erfolgreich', true); btn.disabled = false;
-            };
-            reader.readAsText(fileInput.files[0], 'ISO-8859-1');
-        }
-
-        function csvToJSON(t) {
-            const l = t.split(/\r?\n/); if(l.length < 4) return [];
-            const d = l[2].includes(';') ? ';' : ',';
-            const h = l[2].split(d).map(v => v.replace(/["\r]/g, '').replace(/\./g, '').trim());
-            return l.slice(3).filter(x => x.trim()).map(x => {
-                const v = x.split(d); const o = {};
-                h.forEach((k, i) => {
-                    let val = v[i] ? v[i].replace(/["\r´°%()]/g, '').replace(/[@\/.]/g, ' ').replace(/\s+/g, ' ').trim() : "";
-                    if(k === "Nr") o["Gruppe"] = val; else if(k === "Zusatztext") o["Installationsort"] = val; else if(k === "Installationsort") o["Ring"] = val; else o[k] = val;
-                });
-                return o;
-            });
-        }
-
-        async function deleteObject() {
-            const el = document.querySelector('input[name="del"]:checked');
-            const res = await fetch(`${API_BASE}/delete-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: el.value }) });
-            if(res.ok) { showMessage("Gelöscht", true); loadObjekte(); }
-        }
-
-        function showMessage(t, s) {
-            const m = document.getElementById('message'); m.textContent = t; m.className = s ? 'success' : 'error'; m.style.display = 'block';
-            setTimeout(() => m.style.display = 'none', 3000);
-        }
+        async function addObject() { const fld = document.getElementById('obj_fld'); const code = fld.value.trim().toUpperCase(); if(!code) return; const res = await fetch(`${API_BASE}/add-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ code }) }); if(res.ok) { showMessage('Objekt gespeichert', true); fld.value = ''; } }
+        async function createNewUser() { const n = document.getElementById('new_user_name').value.trim(); const p = document.getElementById('new_user_pw').value.trim(); const r = document.getElementById('new_user_role').value; if(!n || !p) return showMessage("Daten fehlen", false); const res = await fetch(`${API_BASE}/add-user`, { method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}`}, body: JSON.stringify({ newUsername: n, newPassword: p, newRole: r }) }); if(res.ok) { showMessage("Benutzer erstellt", true); document.getElementById('new_user_name').value=''; document.getElementById('new_user_pw').value=''; } }
+        async function loadObjekte() { try { const res = await fetch(`${API_BASE}/get-objects`); const objects = await res.json(); const list = document.getElementById('objektList'); const select = document.getElementById('linkedObjekte'); list.innerHTML = ''; select.innerHTML = ''; objects.forEach(obj => { const opt = document.createElement('option'); opt.value = obj.id; opt.textContent = obj.display; select.appendChild(opt); const card = document.createElement('div'); card.className = 'objekt-card'; card.onclick = () => { const c = card.querySelector('input'); c.checked = !c.checked; toggleDelBtn(c); }; card.innerHTML = `<input type="checkbox" name="del" value="${obj.id}" onclick="event.stopPropagation(); toggleDelBtn(this)"> <strong>${obj.display}</strong>`; list.appendChild(card); }); } catch (e) {} }
+        function toggleDelBtn(cb) { document.querySelectorAll('input[name="del"]').forEach(c => { if(c !== cb) c.checked = false; }); document.getElementById('deleteBtn').disabled = !cb.checked; }
+        async function uploadFileProcess() { const id = document.getElementById('linkedObjekte').value; const fileInput = document.getElementById('uploadFile'); if(!id || !fileInput.files[0]) return showMessage("Daten fehlen", false); const btn = document.getElementById('uploadBtn'); btn.disabled = true; const reader = new FileReader(); reader.onload = async (e) => { const data = csvToJSON(e.target.result); const res = await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: false }) }); if(res.status === 409 && confirm("Überschreiben?")) { await fetch(`${API_BASE}/upload-data`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, data, override: true }) }); } showMessage('Erfolgreich', true); btn.disabled = false; }; reader.readAsText(fileInput.files[0], 'ISO-8859-1'); }
+        function csvToJSON(t) { const l = t.split(/\r?\n/); if(l.length < 4) return []; const d = l[2].includes(';') ? ';' : ','; const h = l[2].split(d).map(v => v.replace(/["\r]/g, '').replace(/\./g, '').trim()); return l.slice(3).filter(x => x.trim()).map(x => { const v = x.split(d); const o = {}; h.forEach((k, i) => { let val = v[i] ? v[i].replace(/["\r´°%()]/g, '').replace(/[@\/.]/g, ' ').replace(/\s+/g, ' ').trim() : ""; if(k === "Nr") o["Gruppe"] = val; else if(k === "Zusatztext") o["Installationsort"] = val; else if(k === "Installationsort") o["Ring"] = val; else o[k] = val; }); return o; }); }
+        async function deleteObject() { const el = document.querySelector('input[name="del"]:checked'); const res = await fetch(`${API_BASE}/delete-object`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id: el.value }) }); if(res.ok) { showMessage("Gelöscht", true); loadObjekte(); } }
+        function showMessage(t, s) { const m = document.getElementById('message'); m.textContent = t; m.className = s ? 'success' : 'error'; m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000); }
 
         document.getElementById('obj_fld').oninput = (e) => { e.target.value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase(); };
-
-        window.onload = () => {
-            if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; }
-            loadObjekte(); runBioCheck();
-        };
+        window.onload = () => { if (localStorage.getItem('darkMode') === 'enabled') { document.body.classList.add('dark-mode'); document.getElementById('dark-toggle').checked = true; } loadObjekte(); runBioCheck(); };
     </script>
 </body>
 </html>

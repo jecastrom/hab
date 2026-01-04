@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hab-v4';
+const CACHE_NAME = 'hab-20';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -10,7 +10,6 @@ const STATIC_ASSETS = [
   '/sw.js'
 ];
 
-// Install: Cache the app shell
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -18,7 +17,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activate: Clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -27,27 +25,27 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch Strategy: Network First, falling back to Cache
 self.addEventListener('fetch', event => {
-  // We only care about GET requests for data and files
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     fetch(event.request)
       .then(networkResponse => {
-        // If we are online and get data, save/update it in the cache
-        return caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, networkResponse.clone());
-          return networkResponse;
-        });
+        // If the network request works, save/update it in the cache
+        if (networkResponse.ok) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
       })
       .catch(() => {
-        // If we are OFFLINE, look for the data in the cache
+        // If the network fails (OFFLINE), look for the match in the cache
         return caches.match(event.request).then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // If it's not in cache and no network, this is where "Ladefehler" usually triggers
+          if (cachedResponse) return cachedResponse;
+          
+          // If even the cache is empty, we return a failure
           return Promise.reject('no-match');
         });
       })

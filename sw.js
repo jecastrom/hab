@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hab-v3'; // Increased version
+const CACHE_NAME = 'hab-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -10,7 +10,7 @@ const STATIC_ASSETS = [
   '/sw.js'
 ];
 
-// 1. Install: Cache the UI layout
+// Install: Cache the app shell
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
@@ -18,7 +18,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// 2. Activate: Clean up old versions
+// Activate: Clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -27,23 +27,29 @@ self.addEventListener('activate', event => {
   );
 });
 
-// 3. Fetch: Network First, then Cache
+// Fetch Strategy: Network First, falling back to Cache
 self.addEventListener('fetch', event => {
-  // Only handle GET requests
+  // We only care about GET requests for data and files
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     fetch(event.request)
       .then(networkResponse => {
-        // If network works, save a copy of the data to the cache
+        // If we are online and get data, save/update it in the cache
         return caches.open(CACHE_NAME).then(cache => {
           cache.put(event.request, networkResponse.clone());
           return networkResponse;
         });
       })
       .catch(() => {
-        // If network fails (OFFLINE), look for it in the cache
-        return caches.match(event.request);
+        // If we are OFFLINE, look for the data in the cache
+        return caches.match(event.request).then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // If it's not in cache and no network, this is where "Ladefehler" usually triggers
+          return Promise.reject('no-match');
+        });
       })
   );
 });

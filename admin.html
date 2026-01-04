@@ -154,7 +154,8 @@
             <section id="create" class="main-card active">
                 <h2>Neues Objekt hinzufügen</h2>
                 <label>Objekt-Code (Alphanumerisch):</label>
-                <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off" style="text-transform: uppercase;">
+                <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off" style="text-transform: uppercase;"
+                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')">
                 <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
             </section>
 

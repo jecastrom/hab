@@ -27,4 +27,4 @@ jobs:
         with:
           app-name: 'hab-api-functions-agf8hya9f2cgdeaf'
           package: functionapp.zip
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          publish-profile: ${{secrets.TEST_SECRET}}

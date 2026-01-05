@@ -46,5 +46,22 @@ markdown_extensions:
   - pymdownx.tasklist
   - toc:
       permalink: true
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: de
+          default: true
+          name: Deutsch
+          build: true
+          site_name: Dokumentation – Rauchmelder-Suche Web App
+        - locale: en
+          name: English
+          build: true
+          site_name: Documentation – Smoke Detector Search Web App
 
 copyright: © 2026 Jorge Castro

@@ -31,7 +31,7 @@ module.exports = async function (context, req) {
             return;
         }
 
-        // Save the processed JSON
+        // Save the processed JSON.TEST
         await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
 
         context.res = {

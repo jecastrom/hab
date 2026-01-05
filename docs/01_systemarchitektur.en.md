@@ -10,7 +10,7 @@ The application is based on a decoupled architecture using **Azure Static Web Ap
 - A series of serverless **Azure Functions** handle authentication, user management, and file I/O.
 
 ## Persistence Layer
-In contrast to standard SWA deployments (which are read-only), this app uses the directory `C:\home\data` within the Azure environment.
+In contrast to standard SWA deployments (which are read-only),  this app uses the directory `C:\home\data` within the Azure environment.
 
 Stored there:
 - `users.json`

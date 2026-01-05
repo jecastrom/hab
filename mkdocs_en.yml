@@ -1,10 +1,10 @@
-site_name: Dokumentation – Rauchmelder-Suche Web App
+site_name: Documentation – Smoke Detector Search Web App
 site_description: Technische Dokumentation für die Progressive Web App zur Suche und Verwaltung von ESSER Tools 8000-Daten
 site_author: Dein Name
 
 theme:
   name: material
-  language: de
+  language: en
   palette:
     - scheme: default
       primary: indigo
@@ -30,13 +30,13 @@ theme:
     - content.code.copy
 
 nav:
-  - Startseite: index.md
-  - Systemarchitektur: 01_systemarchitektur.md
-  - Datenimport: 02_datenimport.md
-  - Caching und Offline-Funktionalität: 03_caching.md
-  - Authentifizierung: 04_authentifizierung.md
-  - Benutzerverwaltung: 05_benutzerverwaltung.md
-  - Geplante Erweiterungen: 06_erweiterungen.md
+  - Home: index.md
+  - System Architecture: 01_systemarchitektur.md
+  - Data Import: 02_datenimport.md
+  - Caching and Offline Functionality: 03_caching.md
+  - Authentication: 04_authentifizierung.md
+  - User Management: 05_benutzerverwaltung.md
+  - Planned Extensions: 06_erweiterungen.md
 
 markdown_extensions:
   - admonition
@@ -46,14 +46,14 @@ markdown_extensions:
   - pymdownx.tasklist
   - toc:
       permalink: true
-
+         
 extra:
   alternate:
-    - name: Deutsch
-      lang: de
-      link: /hab/
     - name: English
       lang: en
       link: /hab/en/
+    - name: Deutsch
+      lang: de
+      link: /hab/
 
 copyright: © 2026 Jorge Castro

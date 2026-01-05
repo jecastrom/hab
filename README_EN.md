@@ -19,5 +19,5 @@ A high-performance, offline-capable Progressive Web App (PWA) designed for techn
 - **Authentication:** JWT (JSON Web Tokens), bcryptjs, WebAuthn API.
 - **Persistence:** Azure Persistent File Storage (outside the read-only wwwroot).
 - **PWA:** Service Workers, Cache API, Web App Manifest.
-- **Deployment:** Azure Static Web Apps (SWA).
+- **Deployment:** Azure Static Web Apps (SWA)..
 

@@ -2,29 +2,34 @@ name: Deploy Azure Functions
 
 on:
   push:
-    branches: [main]
-    paths: ['api/**']  # Only trigger on API changes
+    branches:
+      - main
+    paths:
+      - 'api/**'  # This ensures the backend only deploys when the api code changes
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
+      - name: 'Checkout GitHub Action'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install Dependencies
+
+      - name: 'Install Dependencies'
         run: |
           cd api
-          npm install  # Changed from ci to install for no-lock scenarios
-      - name: ZIP API
-        run: |
-          cd api
-          zip -r ../functionapp.zip . -x 'node_modules/*'  # Exclude node_modules (Oryx reinstalls)
-      - name: Deploy to Azure Functions
+          npm install
+
+      - name: 'Deploy to Azure Functions'
         uses: Azure/functions-action@v1
         with:
-          app-name: 'hab-api-functions-agf8hya9f2cgdeaf'
-          package: functionapp.zip
+          # IMPORTANT: This must match the name in the Azure Portal exactly
+          app-name: 'hab-api-functions' 
+          # IMPORTANT: Point to the subdirectory
+          package: './api' 
+          # IMPORTANT: Check this name in GitHub Secrets
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}

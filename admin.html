@@ -43,15 +43,6 @@
         .sidebar a { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; }
         .sidebar a.active { color: var(--primary-color); }
         .menu-icon { width: 28px; text-align: center; display: inline-block; font-size: 1.2rem; }
-        
-        .sidebar {
-    transition: transform 0.3s ease;
-    /* assuming your closed state uses translateX(-100%) or similar */
-}
-
-#sidebar-overlay {
-    transition: opacity 0.3s ease;
-}
 
         .sidebar-footer { padding: 20px 0 30px; border-top: 1px solid var(--border-color); margin-top: auto; }
         .setting-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; font-size: 0.9rem; font-weight: 600; }
@@ -194,8 +185,7 @@
                 <input type="text" id="new_user_name" placeholder="Name" autocomplete="off" style="text-transform: lowercase;" 
                 oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9]/g, '')">
                 <label>Passwort</label>
-                <input type="password" id="new_user_pw" placeholder="Passwort" minlength="4" maxlength="8" 
-                oninput="this.value = this.value.replace(/\s/g, '')">
+                <input type="password" id="new_user_pw" placeholder="Passwort" minlength="4" maxlength="8" oninput="this.value = this.value.replace(/\s/g, '')">
                 <label>Rolle</label>
                 <select id="new_user_role">
                     <option value="standard">Teammitglied</option>
@@ -358,63 +348,5 @@
             loadObjekte();
         };
     </script>
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-
-        if (!sidebar || !overlay) return;
-
-        let startX = 0;
-        let currentX = 0;
-        let isDragging = false;
-
-        const onTouchStart = (e) => {
-            // Only enable swipe when sidebar is open (adjust if your open class is different, e.g. 'active')
-            if (!sidebar.classList.contains('open') && !sidebar.classList.contains('active')) return;
-
-            startX = e.touches[0].clientX;
-            isDragging = true;
-        };
-
-        const onTouchMove = (e) => {
-            if (!isDragging) return;
-
-            currentX = e.touches[0].clientX;
-            const diffX = currentX - startX;
-
-            // Only allow left swipe
-            if (diffX < 0) {
-                sidebar.style.transform = `translateX(${diffX}px)`;
-                // Optional: fade overlay while dragging
-                overlay.style.opacity = `${1 + (diffX / 300)}`;
-                e.preventDefault(); // prevent scrolling
-            }
-        };
-
-        const onTouchEnd = () => {
-            if (!isDragging) return;
-            isDragging = false;
-
-            const diffX = currentX - startX;
-
-            if (diffX < -80) { // swiped left enough → close
-                toggleSidebar(); // reuses your existing function
-            } else { // snap back
-                sidebar.style.transform = '';
-                overlay.style.opacity = '';
-            }
-
-            // Reset
-            startX = 0;
-            currentX = 0;
-        };
-
-        sidebar.addEventListener('touchstart', onTouchStart, { passive: true });
-        sidebar.addEventListener('touchmove', onTouchMove, { passive: false });
-        sidebar.addEventListener('touchend', onTouchEnd);
-        sidebar.addEventListener('touchcancel', onTouchEnd);
-    });
-</script>
 </body>
 </html>

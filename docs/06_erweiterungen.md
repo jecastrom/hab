@@ -37,3 +37,15 @@ Optimierung des Workflows zum Hinzufügen neuer Standorte (Objekte) im Admin-Pan
 Der bestehende **separate Daten-Upload-Bereich** bleibt unverändert und ermöglicht schnelle Aktualisierungen bestehender Standorte durch reines Hochladen neuer CSV-Dateien (ohne Änderung des Namens).
 
 Dies reduziert den Verwaltungsaufwand und minimiert Fehler beim Anlegen neuer Projekte.
+
+## Mobile Push-Benachrichtigungen
+
+Einführung von Push-Benachrichtigungen, um Techniker im Außeneinsatz über Datenaktualisierungen zu informieren.
+
+- Nutzung der **Web Push API** (vollständig kompatibel mit der bestehenden PWA), um Benachrichtigungen auch bei geschlossener App zu senden.
+- Haupt-Anwendungsfall: **Verfügbarkeit neuer Daten**
+  - Bei Upload einer neuen CSV-Datei für ein Objekt/Standort durch einen Administrator wird eine Benachrichtigung an alle relevanten Nutzer gesendet.
+  - Beispiel-Nachricht: „Neue Datenaktualisierung für Standort ABC123 verfügbar“
+- Vorteil: Techniker erhalten rechtzeitig einen Hinweis, solange sie noch Internetverbindung haben. Sie können die App öffnen und den Cache aktualisieren, bevor sie in Bereiche mit schlechtem oder keinem Empfang (z. B. Kellerräume, abgeschirmte Zonen) gehen.
+
+So arbeiten die Nutzer stets mit den aktuellsten Melder-/Zonendaten, ohne manuell nachprüfen zu müssen.

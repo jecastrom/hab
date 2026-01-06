@@ -37,3 +37,15 @@ Streamline the process of adding new sites (objects) in the admin panel.
 The existing **separate data upload** section remains unchanged, allowing quick updates to existing sites by uploading new CSV files without modifying the site name.
 
 This reduces administrative effort and minimizes errors when onboarding new projects.
+
+## Mobile Push Notifications
+
+Add support for push notifications to keep field technicians informed about data updates.
+
+- Leverage the **Web Push API** (fully compatible with the existing PWA) to deliver notifications even when the app is not open.
+- Primary use case: **New data availability**
+  - When an administrator uploads a new CSV file for a site/object, trigger a notification to all relevant users.
+  - Example message: "New data update available for site ABC123"
+- Benefit: Technicians receive a timely alert while they still have internet connectivity, allowing them to open the app and refresh the cache before entering areas with poor or no signal (e.g., basements, shielded rooms).
+
+This ensures users always work with the latest detector/zone data without needing to manually check.

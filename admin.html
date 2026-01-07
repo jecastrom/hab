@@ -640,6 +640,29 @@
             }
             loadObjekte();
         };
+        // Swipe gesture to close sidebar
+        const sidebarElement = document.getElementById('sidebar');
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        sidebarElement.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        sidebarElement.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleGesture();
+        }, { passive: true });
+
+        function handleGesture() {
+            // If the difference between start and end is positive and greater than 50px
+            // it means the user swiped from right to left
+            if (touchStartX - touchEndX > 50) {
+                if (sidebarElement.classList.contains('open')) {
+                    toggleSidebar();
+                }
+            }
+        }
     </script>
 </body>
 

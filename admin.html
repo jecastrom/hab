@@ -439,15 +439,40 @@
         <main class="main-content">
             <h1 style="text-align:center; color:var(--primary-color); margin-bottom:30px;">Administration</h1>
 
+            <!-- Unified Section: Create + Upload Pair -->
             <section id="create" class="main-card active">
-                <h2>Neues Objekt hinzufügen</h2>
-                <label>Objekt-Code (Alphanumerisch):</label>
-                <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off"
-                    style="text-transform: uppercase;"
-                    oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')">
-                <button class="action-btn btn-add" onclick="addObject()">Speichern</button>
+                <h2 style="color:var(--primary-color); font-size: 1.2rem; margin-bottom: 25px;">Neues Objekt hinzufügen
+                </h2>
+
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Objekt-Code
+                        (Alphanumerisch):</label>
+                    <input type="text" id="obj_fld" placeholder="Z.B. ABC123" autocomplete="off"
+                        style="text-transform: uppercase; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);"
+                        oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')">
+                </div>
+
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Datenquelle:</label>
+                    <select id="sourceType_new"
+                        style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-color); color: var(--text-color);">
+                        <option value="esser">ESSER Tools 8000 (CSV)</option>
+                        <option value="" disabled>Hekatron IAC Datei (Inaktiv)</option>
+                    </select>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 25px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold;">Datei auswählen:</label>
+                    <input type="file" id="uploadFile_new" accept=".csv" style="width: 100%; padding: 10px;">
+                </div>
+
+                <button class="action-btn btn-add" id="createPairBtn" onclick="createAndUploadProcess()"
+                    style="width: 100%; padding: 15px; font-weight: bold;">
+                    Neues Objekt erstellen
+                </button>
             </section>
 
+            <!-- Upload Section remains as fallback -->
             <section id="upload" class="main-card">
                 <h2>Datendatei hochladen</h2>
                 <label>Objekt wählen:</label>
@@ -455,7 +480,7 @@
                 <label>Datenquelle:</label>
                 <select id="sourceType">
                     <option value="esser">ESSER Tools 8000 (CSV)</option>
-                    <option value="" disabled>Hekatron IAC Datai (Inaktiv, bitte Administrator kontaktieren)</option>
+                    <option value="" disabled>Hekatron IAC Datai (Inaktiv)</option>
                 </select>
                 <label>Datei auswählen:</label>
                 <input type="file" id="uploadFile" accept=".csv">

@@ -1,8 +1,5 @@
 # Meldergruppen & Ringe Suche (PWA)
 
-
-# hab
-
 <p align="center">
   <a href="https://jecastrom.github.io/hab/">
     <img src="https://img.shields.io/badge/📚_Full_Documentation-View_Now-brightgreen?style=for-the-badge" alt="Full Documentation">

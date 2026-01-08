@@ -632,6 +632,81 @@
             reader.readAsText(fileInput.files[0], 'ISO-8859-1');
         }
 
+        async function createAndUploadProcess() {
+            const code = document.getElementById('obj_fld').value.trim().toUpperCase();
+            const fileInput = document.getElementById('uploadFile_new');
+            const btn = document.getElementById('createPairBtn');
+
+            // 1. Validation
+            if (!code) return showMessage("Bitte Objekt-Code eingeben", false);
+            if (!fileInput.files[0]) return showMessage("Bitte eine CSV-Datei auswählen", false);
+
+            btn.disabled = true;
+            btn.textContent = "Verarbeite...";
+
+            try {
+                // 2. Step One: Create the Object
+                // We attempt to create it. If it already exists, we proceed anyway to upload the data.
+                const addRes = await fetch(`${API_BASE}/add-object`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+
+                // 3. Step Two: Read and Process the File
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const data = csvToJSON(e.target.result);
+
+                    // 4. Step Three: Upload the data to the new Object
+                    // Note: The 'code' serves as the 'id' for the upload-data endpoint
+                    const uploadRes = await fetch(`${API_BASE}/upload-data`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: code, data, override: false })
+                    });
+
+                    // Handle Conflict (File already exists)
+                    if (uploadRes.status === 409) {
+                        if (confirm("Dieses Objekt hat bereits Daten. Überschreiben?")) {
+                            await fetch(`${API_BASE}/upload-data`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ id: code, data, override: true })
+                            });
+                        } else {
+                            btn.disabled = false;
+                            btn.textContent = "Neues Objekt erstellen";
+                            return;
+                        }
+                    }
+
+                    // Success
+                    showMessage('Objekt erstellt und Daten geladen!', true);
+
+                    // Reset UI
+                    document.getElementById('obj_fld').value = '';
+                    fileInput.value = '';
+                    btn.disabled = false;
+                    btn.textContent = "Neues Objekt erstellen";
+
+                    // Refresh the lists in other sections
+                    loadObjekte();
+                };
+
+                reader.onerror = () => {
+                    throw new Error("Fehler beim Lesen der Datei");
+                };
+
+                reader.readAsText(fileInput.files[0], 'ISO-8859-1');
+
+            } catch (err) {
+                showMessage(err.message || "Ein Fehler ist aufgetreten", false);
+                btn.disabled = false;
+                btn.textContent = "Neues Objekt erstellen";
+            }
+        }
+
         function csvToJSON(t) {
             const l = t.split(/\r?\n/); if (l.length < 4) return [];
             const d = l[2].includes(';') ? ';' : ',';

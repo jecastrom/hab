@@ -26,18 +26,6 @@ Einführung von serverseitigem Logging wichtiger Aktionen.
 
 Dies erhöht die Compliance und Transparenz der Anwendung.
 
-## Verbesserte Objekt-Erstellung im Admin-Panel
-
-Optimierung des Workflows zum Hinzufügen neuer Standorte (Objekte) im Admin-Panel.
-
-- Zusammenführen des bisherigen zweistufigen Prozesses (Objekt erstellen → Daten hochladen und verknüpfen) in ein **einheitliches Formular**.
-- Administratoren geben den Standortnamen ein und laden die CSV-Datei in einem einzigen Schritt hoch.
-- Das Backend übernimmt automatisch sowohl die Objekt-Erstellung als auch die Datenverknüpfung.
-
-Der bestehende **separate Daten-Upload-Bereich** bleibt unverändert und ermöglicht schnelle Aktualisierungen bestehender Standorte durch reines Hochladen neuer CSV-Dateien (ohne Änderung des Namens).
-
-Dies reduziert den Verwaltungsaufwand und minimiert Fehler beim Anlegen neuer Projekte.
-
 ## Mobile Push-Benachrichtigungen
 
 Einführung von Push-Benachrichtigungen, um Techniker im Außeneinsatz über Datenaktualisierungen zu informieren.

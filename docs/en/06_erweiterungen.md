@@ -26,18 +26,6 @@ Introduction of server-side logging of important actions.
 
 This increases compliance and transparency of the application.
 
-## Improved Object Creation in the Admin Panel
-
-Streamline the process of adding new sites (objects) in the admin panel.
-
-- Combine the current two-step workflow (create object → upload and link data) into a **single unified form**.
-- Administrators will enter the site name and upload the CSV file in one action.
-- The backend will handle both object creation and data pairing automatically.
-
-The existing **separate data upload** section remains unchanged, allowing quick updates to existing sites by uploading new CSV files without modifying the site name.
-
-This reduces administrative effort and minimizes errors when onboarding new projects.
-
 ## Mobile Push Notifications
 
 Add support for push notifications to keep field technicians informed about data updates.

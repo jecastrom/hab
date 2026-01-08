@@ -1,5 +1,14 @@
 # Meldergruppen & Ringe Suche (PWA)
 
+
+# hab
+
+<p align="center">
+  <a href="https://jecastrom.github.io/hab/">
+    <img src="https://img.shields.io/badge/📚_Vollständige_Dokumentation-Jetzt_ansehen-brightgreen?style=for-the-badge" alt="Vollständige Dokumentation">
+  </a>
+</p>
+
 Eine hochperformante, offline-fähige Progressive Web App (PWA), die speziell für Techniker entwickelt wurde, um Melderdaten (ESSER Tools 8000) in Umgebungen mit eingeschränkter oder fehlender Konnektivität zu suchen und zu verwalten.
 
 ## 🚀 Hauptmerkmale

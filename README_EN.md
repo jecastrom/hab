@@ -1,5 +1,14 @@
 # Meldergruppen & Ringe Suche (PWA)
 
+
+# hab
+
+<p align="center">
+  <a href="https://jecastrom.github.io/hab/">
+    <img src="https://img.shields.io/badge/📚_Full_Documentation-View_Now-brightgreen?style=for-the-badge" alt="Full Documentation">
+  </a>
+</p>
+
 A high-performance, offline-capable Progressive Web App (PWA) designed for technicians to search and manage fire alarm detector data (ESSER Tools 8000) in environments with limited or no connectivity.
 
 ## 🚀 Key Features

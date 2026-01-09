@@ -472,19 +472,27 @@
             </section>
 
             <!-- Upload Section remains as the update an existing objekt -->
+            <!-- Update Section -->
             <section id="upload" class="main-card">
                 <h2>Objektdaten aktualisieren</h2>
                 <label>Objekt wählen:</label>
-                <select id="linkedObjekte"></select>
+                <select id="linkedObjekte"
+                    style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px;"></select>
+
                 <label>Datenquelle:</label>
-                <select id="sourceType">
+                <select id="sourceType" style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px;">
                     <option value="esser">ESSER Tools 8000 (CSV)</option>
-                    <option value="" disabled>Hekatron IAC Datai (Inaktiv)</option>
+                    <option value="" disabled>Hekatron IAC Datei (Inaktiv)</option>
                 </select>
+
                 <label>Datei auswählen:</label>
-                <input type="file" id="uploadFile_new" accept=".csv" multiple style="width: 100%; padding: 10px;">
-                <button class="action-btn btn-upload" id="uploadBtn" onclick="uploadFileProcess()">Datei
-                    verarbeiten</button>
+                <!-- ID CHANGED TO uploadFile_update -->
+                <input type="file" id="uploadFile_update" accept=".csv" multiple style="width: 100%; padding: 10px;">
+
+                <button class="action-btn btn-upload" id="uploadBtn" onclick="uploadFileProcess()"
+                    style="width: 100%; margin-top: 20px;">
+                    Datei verarbeiten
+                </button>
             </section>
 
             <section id="delete" class="main-card">

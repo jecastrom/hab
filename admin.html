@@ -631,110 +631,70 @@
             reader.readAsText(fileInput.files[0], 'ISO-8859-1');
         }
 
-        async function createAndUploadProcess() {
-            const code = document.getElementById('obj_fld').value.trim().toUpperCase();
-            const fileInput = document.getElementById('uploadFile_new');
-            const btn = document.getElementById('createPairBtn');
-
-            if (!code) return showMessage("Bitte Objekt-Code eingeben", false);
-            if (fileInput.files.length === 0) return showMessage("Bitte mindestens eine CSV-Datei auswählen", false);
-
-            btn.disabled = true;
-            btn.textContent = "Verarbeite...";
-
-            try {
-                // 1. Create the Object Metadata
-                await fetch(`${API_BASE}/add-object`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code })
-                });
-
-                // 2. Process all files in parallel
-                const filePromises = Array.from(fileInput.files).map(file => {
-                    return new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => resolve(csvToJSON(e.target.result));
-                        reader.onerror = () => reject(new Error(`Fehler beim Lesen von ${file.name}`));
-                        reader.readAsText(file, 'ISO-8859-1');
-                    });
-                });
-
-                const results = await Promise.all(filePromises);
-
-                // 3. Merge and Deduplicate using the renamed ID ("Gruppe")
-                const masterMap = new Map();
-
-                results.flat().forEach(row => {
-                    // Since csvToJSON renamed "Nr" to "Gruppe", we use "Gruppe"
-                    const rowId = row["Gruppe"];
-                    if (rowId) {
-                        masterMap.set(rowId, row);
-                    }
-                });
-
-                // 4. Sort numerically by the new "Gruppe" (formerly "Nr")
-                const finalData = Array.from(masterMap.values()).sort((a, b) => {
-                    return parseInt(a.Gruppe || 0) - parseInt(b.Gruppe || 0);
-                });
-
-                // 5. Upload the cleaned, merged data
-                const uploadRes = await fetch(`${API_BASE}/upload-data`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: code, data: finalData, override: true })
-                });
-
-                if (!uploadRes.ok) throw new Error("Upload-Fehler");
-
-                showMessage(`${fileInput.files.length} Dateien zusammengeführt und geladen!`, true);
-
-                // Reset UI
-                document.getElementById('obj_fld').value = '';
-                fileInput.value = '';
-                btn.disabled = false;
-                btn.textContent = "Neues Objekt erstellen";
-                loadObjekte();
-
-            } catch (err) {
-                showMessage(err.message, false);
-                btn.disabled = false;
-                btn.textContent = "Neues Objekt erstellen";
-            }
-        }
-
+        // Updated Mapping: Nr->Gruppe, Zusatztext->Ort, Installationsort->Ring
         function csvToJSON(t) {
             const l = t.split(/\r?\n/);
             if (l.length < 4) return [];
-
-            // Detect delimiter (comma or semicolon)
             const d = l[2].includes(';') ? ';' : ',';
-
-            // Get headers from row 3 (index 2) and clean them
-            // Note: We strip the dot from "Nr." so it becomes "Nr"
             const h = l[2].split(d).map(v => v.replace(/["\r]/g, '').replace(/\./g, '').trim());
 
             return l.slice(3).filter(x => x.trim()).map(x => {
                 const v = x.split(d);
                 const o = {};
-
                 h.forEach((k, i) => {
-                    // Clean the data value: remove special characters and normalize spaces
                     let val = v[i] ? v[i].replace(/["\r´°%()]/g, '').replace(/[@\/.]/g, ' ').replace(/\s+/g, ' ').trim() : "";
-
-                    // Mapping logic
-                    if (k === "Nr") {
-                        o["Gruppe"] = val;
-                    } else if (k === "Zusatztext") {
-                        o["Ort"] = val;
-                    } else if (k === "Installationsort") {
-                        o["Ring"] = val;
-                    } else {
-                        o[k] = val; // Keep other columns as they are
-                    }
+                    if (k === "Nr") o["Gruppe"] = val;
+                    else if (k === "Zusatztext") o["Ort"] = val; // NEW NAME
+                    else if (k === "Installationsort") o["Ring"] = val; // MOVED HERE
+                    else o[k] = val;
                 });
                 return o;
             });
+        }
+
+        async function createAndUploadProcess() {
+            const code = document.getElementById('obj_fld').value.trim().toUpperCase();
+            const fileInput = document.getElementById('uploadFile_new');
+            const btn = document.getElementById('createPairBtn');
+
+            if (!code || fileInput.files.length === 0) return showMessage("Code und Datei(en) fehlen", false);
+
+            btn.disabled = true;
+            btn.textContent = "Verarbeite...";
+
+            try {
+                await fetch(`${API_BASE}/add-object`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) });
+
+                const filePromises = Array.from(fileInput.files).map(file => {
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(csvToJSON(e.target.result));
+                        reader.readAsText(file, 'ISO-8859-1');
+                    });
+                });
+
+                const results = await Promise.all(filePromises);
+                const masterMap = new Map();
+
+                results.flat().forEach(row => {
+                    if (row["Gruppe"]) masterMap.set(row["Gruppe"], row);
+                });
+
+                const finalData = Array.from(masterMap.values()).sort((a, b) => parseInt(a.Gruppe || 0) - parseInt(b.Gruppe || 0));
+
+                await fetch(`${API_BASE}/upload-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: code, data: finalData, override: true })
+                });
+
+                showMessage(`Erfolgreich! ${fileInput.files.length} Dateien verarbeitet.`, true);
+                document.getElementById('obj_fld').value = '';
+                fileInput.value = '';
+                loadObjekte();
+            } catch (err) { showMessage("Fehler beim Upload", false); }
+            btn.disabled = false;
+            btn.textContent = "Neues Objekt erstellen";
         }
 
         async function deleteObject() {

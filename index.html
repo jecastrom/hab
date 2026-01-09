@@ -664,6 +664,19 @@
             const div = document.createElement('div');
             div.className = 'result-item';
             div.innerHTML = `
+        <div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div>
+        <div class="card-row"><span class="card-label">Ort:</span> <span>${item.Ort || '-'}</span></div>
+        <div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div>
+        <div class="card-row"><span class="card-label">AnzMelder:</span> <span>${item.AnzMelder || '-'}</span></div>
+        <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button>
+        <div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>`;
+            document.getElementById('mobile-cards').appendChild(div);
+        }
+
+        function renderMobileCard(item, index) {
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            div.innerHTML = `
         <div class="card-row">
             <span class="card-label">Gruppe:</span> 
             <strong>${item.Gruppe || '-'}</strong>

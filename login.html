@@ -250,8 +250,12 @@
     }
 
     function showMessage(t, s) {
-      const m = document.getElementById('message'); m.textContent = t;
-      m.className = s ? 'success' : 'error'; m.style.display = 'block';
+      const m = document.getElementById('message');
+      m.textContent = t;
+      m.className = s ? 'success' : 'error';
+      m.style.display = 'block';
+      // Increased from 3000 to 6000
+      setTimeout(() => m.style.display = 'none', 6000);
     }
   </script>
 </body>

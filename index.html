@@ -703,8 +703,14 @@
         function formatTechnicalDetails(item) { const technicalKeys = ["Gruppentyp", "Betriebsart", "Meldertechnik", "Alarmreaktion"]; return technicalKeys.map(key => `<div><strong>${key}:</strong> ${item[key] || '-'}</div>`).join(''); }
         function toggleDetails(id, btn) { const el = document.getElementById(id); const isVisible = el.style.display === 'block'; el.style.display = isVisible ? 'none' : 'block'; const isMobile = window.innerWidth < 768; btn.textContent = isVisible ? (isMobile ? "Details anzeigen" : "Details") : (isMobile ? "Details schließen" : "Schließen"); }
         function updateSearchUI() { const type = document.getElementById('searchType').value; document.getElementById('searchLabel').textContent = type === 'gruppe' ? 'Gruppe eingeben:' : 'Ring eingeben:'; document.getElementById('search').placeholder = type === 'gruppe' ? 'z.B. 101' : 'z.B. 121'; clearSearch(); }
-        function showMessage(t, s) { const m = document.getElementById('message'); m.textContent = t; m.className = s ? 'success' : 'error'; m.style.display = 'block'; setTimeout(() => m.style.display = 'none', 3000); }
-
+        function showMessage(t, s) {
+            const m = document.getElementById('message');
+            m.textContent = t;
+            m.className = s ? 'success' : 'error';
+            m.style.display = 'block';
+            // Increased from 3000 to 6000
+            setTimeout(() => m.style.display = 'none', 6000);
+        }
         document.getElementById('search').addEventListener('keypress', (e) => { if (e.key === 'Enter') filterResults(); });
         window.onload = initialize;
         // This code actually starts the Service Worker

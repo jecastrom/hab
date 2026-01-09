@@ -462,7 +462,7 @@
 
                 <div class="input-group" style="margin-bottom: 25px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: bold;">Datei auswählen:</label>
-                    <input type="file" id="uploadFile_new" accept=".csv" style="width: 100%; padding: 10px;">
+                    <input type="file" id="uploadFile_new" accept=".csv" multiple style="width: 100%; padding: 10px;">
                 </div>
 
                 <button class="action-btn btn-add" id="createPairBtn" onclick="createAndUploadProcess()"
@@ -636,71 +636,68 @@
             const fileInput = document.getElementById('uploadFile_new');
             const btn = document.getElementById('createPairBtn');
 
-            // 1. Validation
             if (!code) return showMessage("Bitte Objekt-Code eingeben", false);
-            if (!fileInput.files[0]) return showMessage("Bitte eine CSV-Datei auswählen", false);
+            if (fileInput.files.length === 0) return showMessage("Bitte mindestens eine CSV-Datei auswählen", false);
 
             btn.disabled = true;
             btn.textContent = "Verarbeite...";
 
             try {
-                // 2. Step One: Create the Object
-                // We attempt to create it. If it already exists, we proceed anyway to upload the data.
-                const addRes = await fetch(`${API_BASE}/add-object`, {
+                // 1. Create the Object Metadata
+                await fetch(`${API_BASE}/add-object`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
                 });
 
-                // 3. Step Two: Read and Process the File
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const data = csvToJSON(e.target.result);
-
-                    // 4. Step Three: Upload the data to the new Object
-                    // Note: The 'code' serves as the 'id' for the upload-data endpoint
-                    const uploadRes = await fetch(`${API_BASE}/upload-data`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: code, data, override: false })
+                // 2. Process all files in parallel
+                const filePromises = Array.from(fileInput.files).map(file => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(csvToJSON(e.target.result));
+                        reader.onerror = () => reject(new Error(`Fehler beim Lesen von ${file.name}`));
+                        reader.readAsText(file, 'ISO-8859-1');
                     });
+                });
 
-                    // Handle Conflict (File already exists)
-                    if (uploadRes.status === 409) {
-                        if (confirm("Dieses Objekt hat bereits Daten. Überschreiben?")) {
-                            await fetch(`${API_BASE}/upload-data`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ id: code, data, override: true })
-                            });
-                        } else {
-                            btn.disabled = false;
-                            btn.textContent = "Neues Objekt erstellen";
-                            return;
-                        }
+                const results = await Promise.all(filePromises);
+
+                // 3. Merge and Deduplicate using the renamed ID ("Gruppe")
+                const masterMap = new Map();
+
+                results.flat().forEach(row => {
+                    // Since csvToJSON renamed "Nr" to "Gruppe", we use "Gruppe"
+                    const rowId = row["Gruppe"];
+                    if (rowId) {
+                        masterMap.set(rowId, row);
                     }
+                });
 
-                    // Success
-                    showMessage('Objekt erstellt und Daten geladen!', true);
+                // 4. Sort numerically by the new "Gruppe" (formerly "Nr")
+                const finalData = Array.from(masterMap.values()).sort((a, b) => {
+                    return parseInt(a.Gruppe || 0) - parseInt(b.Gruppe || 0);
+                });
 
-                    // Reset UI
-                    document.getElementById('obj_fld').value = '';
-                    fileInput.value = '';
-                    btn.disabled = false;
-                    btn.textContent = "Neues Objekt erstellen";
+                // 5. Upload the cleaned, merged data
+                const uploadRes = await fetch(`${API_BASE}/upload-data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: code, data: finalData, override: true })
+                });
 
-                    // Refresh the lists in other sections
-                    loadObjekte();
-                };
+                if (!uploadRes.ok) throw new Error("Upload-Fehler");
 
-                reader.onerror = () => {
-                    throw new Error("Fehler beim Lesen der Datei");
-                };
+                showMessage(`${fileInput.files.length} Dateien zusammengeführt und geladen!`, true);
 
-                reader.readAsText(fileInput.files[0], 'ISO-8859-1');
+                // Reset UI
+                document.getElementById('obj_fld').value = '';
+                fileInput.value = '';
+                btn.disabled = false;
+                btn.textContent = "Neues Objekt erstellen";
+                loadObjekte();
 
             } catch (err) {
-                showMessage(err.message || "Ein Fehler ist aufgetreten", false);
+                showMessage(err.message, false);
                 btn.disabled = false;
                 btn.textContent = "Neues Objekt erstellen";
             }

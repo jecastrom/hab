@@ -471,7 +471,7 @@
                 </button>
             </section>
 
-            <!-- Upload Section remains as fallback -->
+            <!-- Upload Section remains as the update an existing objekt -->
             <section id="upload" class="main-card">
                 <h2>Objektdaten aktualisieren</h2>
                 <label>Objekt wählen:</label>
@@ -635,18 +635,47 @@
         function csvToJSON(t) {
             const l = t.split(/\r?\n/);
             if (l.length < 4) return [];
+
+            // 1. Detect delimiter (Semicolon for German systems, Comma for others)
             const d = l[2].includes(';') ? ';' : ',';
-            const h = l[2].split(d).map(v => v.replace(/["\r]/g, '').replace(/\./g, '').trim());
+
+            // 2. Smart Split: Handles delimiters inside quotes and supports dynamic delimiters
+            const smartSplit = (line, delimiter) => {
+                // Escapes the delimiter for the regex if it's a special character
+                const escapedD = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const pattern = new RegExp(`(?:^|${escapedD})(?:"([^"]*(?:""[^"]*)*)"|([^${escapedD}]*))`, 'g');
+                const results = [];
+                let match;
+                while ((match = pattern.exec(line)) !== null) {
+                    // match[1] is quoted content, match[2] is unquoted
+                    let val = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
+                    results.push(val ? val.trim() : "");
+                }
+                return results;
+            };
+
+            // 3. Get and clean headers
+            const h = smartSplit(l[2], d).map(v => v.replace(/\./g, '').trim().toLowerCase());
 
             return l.slice(3).filter(x => x.trim()).map(x => {
-                const v = x.split(d);
+                const v = smartSplit(x, d);
                 const o = {};
+
                 h.forEach((k, i) => {
-                    let val = v[i] ? v[i].replace(/["\r´°%()]/g, '').replace(/[@\/.]/g, ' ').replace(/\s+/g, ' ').trim() : "";
-                    if (k === "Nr") o["Gruppe"] = val;
-                    else if (k === "Zusatztext") o["Ort"] = val; // NEW NAME
-                    else if (k === "Installationsort") o["Ring"] = val; // MOVED HERE
-                    else o[k] = val;
+                    // 4. Data Cleaning: We REMOVE the double quotes but KEEP the comma inside the text
+                    let val = v[i] ? v[i].replace(/[\r´°%()]/g, '').replace(/[@\/.]/g, ' ').replace(/\s+/g, ' ').trim() : "";
+
+                    // 5. Unified Mapping
+                    if (k === "nr") o["Gruppe"] = val;
+                    else if (k.includes("zusatztext")) o["Ort"] = val;
+                    else if (k.includes("installationsort")) o["Ring"] = val;
+                    else if (k.includes("anzmelder") || k.includes("anz")) o["AnzMelder"] = val;
+                    else {
+                        // Keep other technical keys for the details pane
+                        const rawHeaders = smartSplit(l[2], d);
+                        const originalKey = rawHeaders[i] ? rawHeaders[i].replace(/["\r]/g, '').trim() : `Col${i}`;
+                        o[originalKey] = val;
+                    }
                 });
                 return o;
             });

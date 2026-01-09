@@ -495,7 +495,7 @@
                 <thead>
                     <tr>
                         <th>Gruppe</th>
-                        <th>Installationsort</th>
+                        <th>Ort</th>
                         <th>Ring</th>
                         <th>AnzMelder</th>
                         <th>Details</th>
@@ -646,8 +646,47 @@
 
         function clearSearch(keepStatus = false) { document.getElementById('search').value = ''; document.getElementById('mobile-cards').classList.add('hidden'); document.getElementById('table-wrapper').classList.add('hidden'); document.getElementById('mobile-cards').innerHTML = ''; document.getElementById('table-body').innerHTML = ''; if (!keepStatus) document.getElementById('status').textContent = `${data.length} Einträge geladen.`; }
         function filterResults() { const query = document.getElementById('search').value.trim(); const type = document.getElementById('searchType').value; const mobile = document.getElementById('mobile-cards'); const table = document.getElementById('table-wrapper'); const tableBody = document.getElementById('table-body'); tableBody.innerHTML = ''; mobile.innerHTML = ''; if (!query) { table.classList.add('hidden'); mobile.classList.add('hidden'); return; } const filtered = data.filter(item => { const val = type === 'gruppe' ? String(item.Gruppe || '') : String(item.Ring || ''); return val === query; }); if (filtered.length === 0) { table.classList.add('hidden'); mobile.classList.remove('hidden'); mobile.innerHTML = '<div class="status">Keine Treffer gefunden.</div>'; document.getElementById('status').textContent = ""; } else { table.classList.remove('hidden'); mobile.classList.remove('hidden'); document.getElementById('status').textContent = `${filtered.length} Treffer gefunden.`; filtered.forEach((item, index) => { renderTableRow(item, index); renderMobileCard(item, index); }); } }
-        function renderTableRow(item, index) { const tr = document.createElement('tr'); tr.innerHTML = `<td><strong>${item.Gruppe || '-'}</strong></td><td>${item.Installationsort || '-'}</td><td>${item.Ring || '-'}</td><td>${item.AnzMelder || '-'}</td><td><button class="btn-details" onclick="toggleDetails('dt-${index}', this)">Details</button><div id="dt-${index}" class="details-pane">${formatTechnicalDetails(item)}</div></td>`; document.getElementById('table-body').appendChild(tr); }
-        function renderMobileCard(item, index) { const div = document.createElement('div'); div.className = 'result-item'; div.innerHTML = `<div class="card-row"><span class="card-label">Gruppe:</span> <strong>${item.Gruppe || '-'}</strong></div><div class="card-row"><span class="card-label">Installationsort:</span> <span>${item.Installationsort || '-'}</span></div><div class="card-row"><span class="card-label">Ring:</span> <span>${item.Ring || '-'}</span></div><div class="card-row"><span class="card-label">AnzMelder:</span> <span>${item.AnzMelder || '-'}</span></div><button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">Details anzeigen</button><div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>`; document.getElementById('mobile-cards').appendChild(div); }
+        function renderTableRow(item, index) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+        <td><strong>${item.Gruppe || '-'}</strong></td>
+        <td>${item.Ort || '-'}</td>
+        <td>${item.Ring || '-'}</td>
+        <td>${item.AnzMelder || '-'}</td>
+        <td>
+            <button class="btn-details" onclick="toggleDetails('dt-${index}', this)">Details</button>
+            <div id="dt-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
+        </td>`;
+            document.getElementById('table-body').appendChild(tr);
+        }
+
+        function renderMobileCard(item, index) {
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            div.innerHTML = `
+        <div class="card-row">
+            <span class="card-label">Gruppe:</span> 
+            <strong>${item.Gruppe || '-'}</strong>
+        </div>
+        <div class="card-row">
+            <span class="card-label">Ort:</span> 
+            <span>${item.Ort || '-'}</span>
+        </div>
+        <div class="card-row">
+            <span class="card-label">Ring:</span> 
+            <span>${item.Ring || '-'}</span>
+        </div>
+        <div class="card-row">
+            <span class="card-label">AnzMelder:</span> 
+            <span>${item.AnzMelder || '-'}</span>
+        </div>
+        <button class="btn-details" style="width:100%; margin-top:10px" onclick="toggleDetails('dm-${index}', this)">
+            Details anzeigen
+        </button>
+        <div id="dm-${index}" class="details-pane">${formatTechnicalDetails(item)}</div>
+    `;
+            document.getElementById('mobile-cards').appendChild(div);
+        }
         function formatTechnicalDetails(item) { const technicalKeys = ["Gruppentyp", "Betriebsart", "Meldertechnik", "Alarmreaktion"]; return technicalKeys.map(key => `<div><strong>${key}:</strong> ${item[key] || '-'}</div>`).join(''); }
         function toggleDetails(id, btn) { const el = document.getElementById(id); const isVisible = el.style.display === 'block'; el.style.display = isVisible ? 'none' : 'block'; const isMobile = window.innerWidth < 768; btn.textContent = isVisible ? (isMobile ? "Details anzeigen" : "Details") : (isMobile ? "Details schließen" : "Schließen"); }
         function updateSearchUI() { const type = document.getElementById('searchType').value; document.getElementById('searchLabel').textContent = type === 'gruppe' ? 'Gruppe eingeben:' : 'Ring eingeben:'; document.getElementById('search').placeholder = type === 'gruppe' ? 'z.B. 101' : 'z.B. 121'; clearSearch(); }

@@ -704,14 +704,34 @@
         }
 
         function csvToJSON(t) {
-            const l = t.split(/\r?\n/); if (l.length < 4) return [];
+            const l = t.split(/\r?\n/);
+            if (l.length < 4) return [];
+
+            // Detect delimiter (comma or semicolon)
             const d = l[2].includes(';') ? ';' : ',';
+
+            // Get headers from row 3 (index 2) and clean them
+            // Note: We strip the dot from "Nr." so it becomes "Nr"
             const h = l[2].split(d).map(v => v.replace(/["\r]/g, '').replace(/\./g, '').trim());
+
             return l.slice(3).filter(x => x.trim()).map(x => {
-                const v = x.split(d); const o = {};
+                const v = x.split(d);
+                const o = {};
+
                 h.forEach((k, i) => {
+                    // Clean the data value: remove special characters and normalize spaces
                     let val = v[i] ? v[i].replace(/["\r´°%()]/g, '').replace(/[@\/.]/g, ' ').replace(/\s+/g, ' ').trim() : "";
-                    if (k === "Nr") o["Gruppe"] = val; else if (k === "Zusatztext") o["Installationsort"] = val; else if (k === "Installationsort") o["Ring"] = val; else o[k] = val;
+
+                    // Mapping logic
+                    if (k === "Nr") {
+                        o["Gruppe"] = val;
+                    } else if (k === "Zusatztext") {
+                        o["Ort"] = val;
+                    } else if (k === "Installationsort") {
+                        o["Ring"] = val;
+                    } else {
+                        o[k] = val; // Keep other columns as they are
+                    }
                 });
                 return o;
             });

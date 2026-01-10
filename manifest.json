@@ -1,15 +1,22 @@
 {
-  "short_name": "MelderSuche",
-  "name": "Meldergruppen & Ringe Suche",
+  "name": "Melder Suche",
+  "short_name": "Suche",
+  "start_url": "login.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
-  ],
-  "start_url": "/index.html",
-  "display": "standalone",
-  "theme_color": "#0d6efd",
-  "background_color": "#ffffff"
+  ]
 }

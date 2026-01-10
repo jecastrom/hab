@@ -1,6 +1,6 @@
 {
-  "name": "Melder Suche",
-  "short_name": "Suche",
+  "name": "Meldergruppen Suche",
+  "short_name": "Meldergruppen",
   "start_url": "login.html",
   "display": "standalone",
   "background_color": "#ffffff",

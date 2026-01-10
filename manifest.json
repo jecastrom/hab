@@ -1,6 +1,6 @@
 {
-  "name": "Meldergruppen Suche",
-  "short_name": "Meldergruppen",
+  "name": "Melder Suche",
+  "short_name": "Suche",
   "start_url": "login.html",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -8,13 +8,13 @@
   "icons": [
     {
       "src": "favicon.svg",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
       "src": "favicon.svg",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"
     }

@@ -9,14 +9,19 @@
     <script src="auth-guard.js"></script>
     <script src="webauthn-json.js"></script>
 
-    <!-- Standard Favicon for Browser Tabs -->
+    <!-- Main Favicon -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
-    <!-- iOS Home Screen Icon -->
+    <!-- iOS Home Screen App Icon -->
     <link rel="apple-touch-icon" href="favicon.svg">
 
-    <!-- Theme Color for Mobile Browser Bars -->
-    <meta name="theme-color" content="#0d6efd">
+    <!-- Mobile Browser Theme -->
+    <meta name="theme-color" content="#0d6efd" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+
+    <!-- iOS specific "App Mode" styling -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         :root {
             --bg-color: #f8f9fa;
